@@ -1,0 +1,922 @@
+{
+ "run": "runs/v3-f20",
+ "episodes": 100,
+ "seeds": [
+  20000000,
+  20000099
+ ],
+ "mean": 204.54,
+ "std": 17.06,
+ "median": 207.57,
+ "min": 47.1,
+ "max": 216.99,
+ "falls": 1,
+ "fell_frac": 0.01,
+ "n_ge_300": 0,
+ "timeouts": 30,
+ "timeout_mean_x": 87.19,
+ "finished": 69,
+ "mean_steps": 1565.9,
+ "episodes_detail": [
+  {
+   "seed": 20000000,
+   "reward": 204.632,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.676
+  },
+  {
+   "seed": 20000001,
+   "reward": 200.452,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.547
+  },
+  {
+   "seed": 20000002,
+   "reward": 208.731,
+   "steps": 1566,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.689
+  },
+  {
+   "seed": 20000003,
+   "reward": 205.112,
+   "steps": 1590,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.731
+  },
+  {
+   "seed": 20000004,
+   "reward": 211.273,
+   "steps": 1541,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.7
+  },
+  {
+   "seed": 20000005,
+   "reward": 193.092,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 86.106
+  },
+  {
+   "seed": 20000006,
+   "reward": 207.067,
+   "steps": 1577,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.716
+  },
+  {
+   "seed": 20000007,
+   "reward": 204.944,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.622
+  },
+  {
+   "seed": 20000008,
+   "reward": 209.044,
+   "steps": 1561,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.699
+  },
+  {
+   "seed": 20000009,
+   "reward": 197.829,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.32
+  },
+  {
+   "seed": 20000010,
+   "reward": 200.209,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.386
+  },
+  {
+   "seed": 20000011,
+   "reward": 208.945,
+   "steps": 1565,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.694
+  },
+  {
+   "seed": 20000012,
+   "reward": 214.359,
+   "steps": 1508,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.714
+  },
+  {
+   "seed": 20000013,
+   "reward": 208.447,
+   "steps": 1580,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.709
+  },
+  {
+   "seed": 20000014,
+   "reward": 206.591,
+   "steps": 1590,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.713
+  },
+  {
+   "seed": 20000015,
+   "reward": 209.539,
+   "steps": 1556,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.699
+  },
+  {
+   "seed": 20000016,
+   "reward": 201.718,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.317
+  },
+  {
+   "seed": 20000017,
+   "reward": 207.982,
+   "steps": 1564,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.728
+  },
+  {
+   "seed": 20000018,
+   "reward": 208.018,
+   "steps": 1571,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.716
+  },
+  {
+   "seed": 20000019,
+   "reward": 216.256,
+   "steps": 1485,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.686
+  },
+  {
+   "seed": 20000020,
+   "reward": 207.939,
+   "steps": 1558,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.73
+  },
+  {
+   "seed": 20000021,
+   "reward": 212.033,
+   "steps": 1522,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.716
+  },
+  {
+   "seed": 20000022,
+   "reward": 207.584,
+   "steps": 1581,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.698
+  },
+  {
+   "seed": 20000023,
+   "reward": 209.083,
+   "steps": 1538,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.681
+  },
+  {
+   "seed": 20000024,
+   "reward": 204.247,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.452
+  },
+  {
+   "seed": 20000025,
+   "reward": 192.553,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 85.902
+  },
+  {
+   "seed": 20000026,
+   "reward": 213.339,
+   "steps": 1516,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.684
+  },
+  {
+   "seed": 20000027,
+   "reward": 209.012,
+   "steps": 1566,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.677
+  },
+  {
+   "seed": 20000028,
+   "reward": 208.827,
+   "steps": 1567,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.722
+  },
+  {
+   "seed": 20000029,
+   "reward": 210.446,
+   "steps": 1543,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.678
+  },
+  {
+   "seed": 20000030,
+   "reward": 200.54,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.43
+  },
+  {
+   "seed": 20000031,
+   "reward": 205.454,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.624
+  },
+  {
+   "seed": 20000032,
+   "reward": 206.737,
+   "steps": 1576,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.731
+  },
+  {
+   "seed": 20000033,
+   "reward": 200.5,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.525
+  },
+  {
+   "seed": 20000034,
+   "reward": 47.104,
+   "steps": 1216,
+   "saved": 0,
+   "fell": true,
+   "stalled": false,
+   "x": 68.482
+  },
+  {
+   "seed": 20000035,
+   "reward": 212.117,
+   "steps": 1525,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.726
+  },
+  {
+   "seed": 20000036,
+   "reward": 208.418,
+   "steps": 1556,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.688
+  },
+  {
+   "seed": 20000037,
+   "reward": 203.33,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.127
+  },
+  {
+   "seed": 20000038,
+   "reward": 206.906,
+   "steps": 1589,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.725
+  },
+  {
+   "seed": 20000039,
+   "reward": 208.163,
+   "steps": 1578,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.712
+  },
+  {
+   "seed": 20000040,
+   "reward": 199.178,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.138
+  },
+  {
+   "seed": 20000041,
+   "reward": 210.538,
+   "steps": 1529,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.69
+  },
+  {
+   "seed": 20000042,
+   "reward": 209.445,
+   "steps": 1546,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.674
+  },
+  {
+   "seed": 20000043,
+   "reward": 202.164,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.343
+  },
+  {
+   "seed": 20000044,
+   "reward": 174.997,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 81.516
+  },
+  {
+   "seed": 20000045,
+   "reward": 206.903,
+   "steps": 1587,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.712
+  },
+  {
+   "seed": 20000046,
+   "reward": 207.331,
+   "steps": 1578,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.69
+  },
+  {
+   "seed": 20000047,
+   "reward": 211.219,
+   "steps": 1544,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.684
+  },
+  {
+   "seed": 20000048,
+   "reward": 199.554,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.367
+  },
+  {
+   "seed": 20000049,
+   "reward": 200.073,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.485
+  },
+  {
+   "seed": 20000050,
+   "reward": 208.557,
+   "steps": 1565,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.695
+  },
+  {
+   "seed": 20000051,
+   "reward": 206.439,
+   "steps": 1581,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.747
+  },
+  {
+   "seed": 20000052,
+   "reward": 212.833,
+   "steps": 1520,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.721
+  },
+  {
+   "seed": 20000053,
+   "reward": 195.454,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 86.529
+  },
+  {
+   "seed": 20000054,
+   "reward": 212.847,
+   "steps": 1518,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.677
+  },
+  {
+   "seed": 20000055,
+   "reward": 204.609,
+   "steps": 1589,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.675
+  },
+  {
+   "seed": 20000056,
+   "reward": 198.826,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.216
+  },
+  {
+   "seed": 20000057,
+   "reward": 205.716,
+   "steps": 1585,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.676
+  },
+  {
+   "seed": 20000058,
+   "reward": 208.003,
+   "steps": 1577,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.675
+  },
+  {
+   "seed": 20000059,
+   "reward": 209.355,
+   "steps": 1568,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.698
+  },
+  {
+   "seed": 20000060,
+   "reward": 208.938,
+   "steps": 1576,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.695
+  },
+  {
+   "seed": 20000061,
+   "reward": 208.022,
+   "steps": 1568,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.691
+  },
+  {
+   "seed": 20000062,
+   "reward": 208.505,
+   "steps": 1561,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.679
+  },
+  {
+   "seed": 20000063,
+   "reward": 209.625,
+   "steps": 1554,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.667
+  },
+  {
+   "seed": 20000064,
+   "reward": 212.65,
+   "steps": 1526,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.679
+  },
+  {
+   "seed": 20000065,
+   "reward": 211.196,
+   "steps": 1520,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.707
+  },
+  {
+   "seed": 20000066,
+   "reward": 211.633,
+   "steps": 1533,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.682
+  },
+  {
+   "seed": 20000067,
+   "reward": 206.461,
+   "steps": 1577,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.73
+  },
+  {
+   "seed": 20000068,
+   "reward": 215.176,
+   "steps": 1501,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.673
+  },
+  {
+   "seed": 20000069,
+   "reward": 207.557,
+   "steps": 1577,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.697
+  },
+  {
+   "seed": 20000070,
+   "reward": 206.47,
+   "steps": 1585,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.701
+  },
+  {
+   "seed": 20000071,
+   "reward": 206.258,
+   "steps": 1599,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.694
+  },
+  {
+   "seed": 20000072,
+   "reward": 185.966,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 84.213
+  },
+  {
+   "seed": 20000073,
+   "reward": 216.986,
+   "steps": 1505,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.701
+  },
+  {
+   "seed": 20000074,
+   "reward": 208.505,
+   "steps": 1559,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.712
+  },
+  {
+   "seed": 20000075,
+   "reward": 208.044,
+   "steps": 1563,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.688
+  },
+  {
+   "seed": 20000076,
+   "reward": 210.393,
+   "steps": 1524,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.684
+  },
+  {
+   "seed": 20000077,
+   "reward": 211.023,
+   "steps": 1544,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.674
+  },
+  {
+   "seed": 20000078,
+   "reward": 209.293,
+   "steps": 1547,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.711
+  },
+  {
+   "seed": 20000079,
+   "reward": 205.987,
+   "steps": 1586,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.68
+  },
+  {
+   "seed": 20000080,
+   "reward": 214.575,
+   "steps": 1517,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.711
+  },
+  {
+   "seed": 20000081,
+   "reward": 201.383,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.801
+  },
+  {
+   "seed": 20000082,
+   "reward": 207.145,
+   "steps": 1567,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.721
+  },
+  {
+   "seed": 20000083,
+   "reward": 208.058,
+   "steps": 1595,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.667
+  },
+  {
+   "seed": 20000084,
+   "reward": 198.241,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.179
+  },
+  {
+   "seed": 20000085,
+   "reward": 211.204,
+   "steps": 1539,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.671
+  },
+  {
+   "seed": 20000086,
+   "reward": 206.529,
+   "steps": 1588,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.69
+  },
+  {
+   "seed": 20000087,
+   "reward": 212.373,
+   "steps": 1533,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.706
+  },
+  {
+   "seed": 20000088,
+   "reward": 195.371,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 86.249
+  },
+  {
+   "seed": 20000089,
+   "reward": 201.612,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.766
+  },
+  {
+   "seed": 20000090,
+   "reward": 209.698,
+   "steps": 1566,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.701
+  },
+  {
+   "seed": 20000091,
+   "reward": 212.886,
+   "steps": 1524,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.704
+  },
+  {
+   "seed": 20000092,
+   "reward": 215.116,
+   "steps": 1505,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.697
+  },
+  {
+   "seed": 20000093,
+   "reward": 206.05,
+   "steps": 1585,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.688
+  },
+  {
+   "seed": 20000094,
+   "reward": 195.309,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 86.373
+  },
+  {
+   "seed": 20000095,
+   "reward": 203.436,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.71
+  },
+  {
+   "seed": 20000096,
+   "reward": 199.809,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 87.442
+  },
+  {
+   "seed": 20000097,
+   "reward": 202.648,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.087
+  },
+  {
+   "seed": 20000098,
+   "reward": 195.493,
+   "steps": 1600,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 86.376
+  },
+  {
+   "seed": 20000099,
+   "reward": 205.279,
+   "steps": 1598,
+   "saved": 0,
+   "fell": false,
+   "stalled": false,
+   "x": 88.705
+  }
+ ]
+}

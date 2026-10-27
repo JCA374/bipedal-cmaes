@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 7 · Results</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+</head>
+<body data-root="../.." data-lesson="07-results">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 7 of 7</div>
+  <h1>Results and comparison</h1>
+  <p class="lede">The honest test: 100 tracks the walker has never seen, full episodes, the unmodified reward.
+  Then the same tracks for my NEAT walker, and where CMA-ES sits next to PPO and TD3.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>read a final evaluation: mean, spread, falls, finishes and time-outs;</li>
+    <li>explain where the walker's points go, and what limits its score;</li>
+    <li>compare methods fairly: paired tests, and cost as well as score.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+<p class="note" id="status"></p>
+
+<section>
+<h2><span class="num">1</span>The final test</h2>
+<div class="stats" id="stats"></div>
+<div class="demo">
+  <p class="demo-title">Scores on 100 unseen tracks</p>
+  <canvas id="hist"></canvas>
+  <p class="readout" id="hinfo"></p>
+</div>
+</section>
+
+<section>
+<h2><span class="num">2</span>Where the points go</h2>
+<p>Every unit of forward progress earns 130/30 ≈ 4.3 points; every unit of motor command costs 0.028 per step. Splitting each episode into
+"earned by moving" and "spent on effort" shows what really limits the score.</p>
+<div class="demo"><canvas id="budget"></canvas><p class="readout" id="binfo"></p></div>
+<div class="key" id="limit"><b>What limits it</b>Loading…</div>
+</section>
+
+<section>
+<h2><span class="num">3</span>Against NEAT, track by track</h2>
+<p>Both walkers ran the same 100 comparison tracks (seeds 40,000,000+). Each dot is one track: right of the diagonal means CMA-ES scored higher there.
+Comparing on the same tracks removes the track luck from the comparison (lesson 4).</p>
+<div class="demo"><canvas id="pair" style="max-width:440px;margin:0 auto"></canvas><p class="readout" id="pinfo"></p></div>
+</section>
+
+<section>
+<h2><span class="num">4</span>Where CMA-ES sits</h2>
+<table class="t" id="cmp">
+<tr><th>method</th><th>score (100 tracks)</th><th>policy size</th><th>env steps</th><th>laptop time</th></tr>
+<tr><td>NEAT (evolves shape + weights)</td><td>173–179</td><td>30 connections, 4 hidden</td><td>414 M</td><td>~12 h</td></tr>
+<tr><td>PPO (policy gradient)</td><td>272</td><td>–</td><td>8 M</td><td>~8–10 h</td></tr>
+<tr><td>TD3 (actor-critic)</td><td>308–319</td><td>131,504 (actor) + 2 critics</td><td>~2 M</td><td>~2 h</td></tr>
+<tr id="cma-row"><td><b>CMA-ES (this project)</b></td><td>…</td><td>932</td><td>…</td><td>…</td></tr>
+</table>
+<p>The pattern: gradient methods (PPO, TD3) learn from individual steps and need far fewer simulation steps.
+Evolution only sees whole-episode totals, so it needs many more steps, but it's simple, parallel and very stable,
+and here it finds a policy about 140 times smaller than TD3's actor.</p>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="2"><p>1. The walker reaches the finish on most tracks, but averages well under 300. Why?</p>
+  <button>It falls near the end</button><button>The tracks are too long</button><button>It spends a lot of points on motor effort</button>
+  <div class="why">The finish is worth about 360 in progress. Whatever is missing went to effort (and the occasional fall or time-out).</div></div>
+<div class="q" data-answer="0"><p>2. Why compare with NEAT on the same 100 tracks instead of using each project's own numbers?</p>
+  <button>Paired tracks remove the track luck, so even a small difference shows up clearly</button><button>It's faster</button><button>NEAT can't run on new tracks</button>
+  <div class="why">Track difficulty affects both walkers the same way and cancels out of the difference (lesson 4).</div></div>
+<div class="q" data-answer="1"><p>3. TD3 scores higher with far fewer environment steps. What does CMA-ES offer instead?</p>
+  <button>Nothing</button><button>A much smaller policy, no gradients, and stable, embarrassingly parallel training</button><button>Better sample efficiency</button>
+  <div class="why">ES trades samples for simplicity: no critic, no replay buffer, no learning-rate schedules, and a 932-number policy.</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+const J = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+Promise.all([J("../../data/eval_best.json"), J("../../data/compare_neat.json"), J("../../data/progress.json")]).then(([E, P, G]) => {
+  if (!E) { document.getElementById("status").textContent = "Results appear here when training is done."; return; }
+  const eps = E.episodes_detail, rw = eps.map(e => e.reward);
+  document.getElementById("status").textContent = G ? `Champion from run ${G.run}, ${G.champion.label === "mean" ? "the CMA mean" : "a sampled candidate"} at generation ${G.champion.generation}.` : "";
+  const st = (b, s) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`;
+  document.getElementById("stats").innerHTML = st(`${E.mean.toFixed(0)}`, `mean score (± ${E.std.toFixed(0)})`) + st(`${E.falls}`, "falls in 100") +
+    st(`${E.finished}`, "reached the finish") + st(`${E.n_ge_300}`, "runs ≥ 300");
+  // histogram
+  const hc = document.getElementById("hist"), hctx = setupCanvas(hc, 720, 200);
+  const draw = () => {
+    hctx.clearRect(0, 0, 720, 200);
+    const lo = -150, hi = 350, nb = 25, bins = new Array(nb).fill(0);
+    rw.forEach(v => bins[Math.max(0, Math.min(nb - 1, Math.floor((v - lo) / (hi - lo) * nb)))]++);
+    const mx = Math.max(...bins);
+    bins.forEach((b, i) => { hctx.fillStyle = css("--blue"); const h = 150 * b / mx; hctx.fillRect(20 + i * 27, 170 - h, 24, h); });
+    hctx.fillStyle = css("--muted"); hctx.font = "11px system-ui";
+    for (let v = -100; v <= 300; v += 100) hctx.fillText(v, 20 + (v - lo) / (hi - lo) * 675 - 8, 188);
+    hctx.strokeStyle = css("--accent"); hctx.setLineDash([5, 4]); const x3 = 20 + (300 - lo) / (hi - lo) * 675;
+    hctx.beginPath(); hctx.moveTo(x3, 10); hctx.lineTo(x3, 172); hctx.stroke(); hctx.setLineDash([]); hctx.fillStyle = css("--accent"); hctx.fillText("solved", x3 + 4, 20);
+    // budget
+    const bc = document.getElementById("budget"), bctx = setupCanvas(bc, 720, 120);
+    const prog = eps.map(e => 130 / 30 * (Math.min(e.x, 88.67) - 4.67)), fallp = eps.map(e => e.fell ? 100 : 0);
+    const effort = eps.map((e, i) => prog[i] - fallp[i] - e.reward);
+    const m = a => a.reduce((s, v) => s + v, 0) / a.length, P_ = m(prog), Ef = m(effort), F = m(fallp);
+    const sc = 600 / 380;
+    bctx.clearRect(0, 0, 720, 120);
+    bctx.fillStyle = css("--green"); bctx.fillRect(20, 20, P_ * sc, 30);
+    bctx.fillStyle = css("--neg"); bctx.fillRect(20 + (P_ - Ef - F) * sc, 60, Ef * sc, 30);
+    bctx.fillStyle = css("--red"); bctx.fillRect(20 + (P_ - F) * sc, 60, F * sc, 30);
+    bctx.fillStyle = css("--text"); bctx.font = "12px system-ui";
+    bctx.fillText(`earned by moving: ${P_.toFixed(0)}`, 26, 40); bctx.fillText(`effort + tilt: −${Ef.toFixed(0)}`, 26 + (P_ - Ef - F) * sc, 80);
+    bctx.fillStyle = css("--muted"); bctx.fillText(`falls: −${F.toFixed(0)}  →  score ${(P_ - Ef - F).toFixed(0)}`, 26, 112);
+    document.getElementById("binfo").textContent = `Averages over the 100 tracks. "Effort + tilt" is what's left after progress and falls: mostly motor effort.`;
+    document.getElementById("limit").innerHTML = `<b>What limits it</b>` + (E.finished >= 50
+      ? `The walker reaches the finish on ${E.finished} of 100 tracks and falls on ${E.falls}. Neither falls nor speed are the main problem: it spends about ${Ef.toFixed(0)} points on effort, pushing its motors nearly flat out. To reach 300, it has to walk as far while working less hard.`
+      : `It reaches the finish on only ${E.finished} of 100 tracks (${E.timeouts} time-outs, ${E.falls} falls): speed and safety are the limits, as well as effort (about ${Ef.toFixed(0)} points).`);
+    if (P) {
+      const pc = document.getElementById("pair"), pctx = setupCanvas(pc, 420, 420), L = 40, S = 360, X = v => L + (v + 150) / 500 * S, Y = v => 400 - (v + 150) / 500 * S;
+      pctx.clearRect(0, 0, 420, 420);
+      pctx.strokeStyle = css("--line"); pctx.beginPath(); pctx.moveTo(X(-150), Y(-150)); pctx.lineTo(X(350), Y(350)); pctx.stroke();
+      pctx.fillStyle = css("--muted"); pctx.font = "11px system-ui";
+      for (let v = -100; v <= 300; v += 100) { pctx.fillText(v, X(v) - 8, 415); pctx.fillText(v, 4, Y(v) + 4); }
+      pctx.fillText("CMA-ES →", 340, 400); pctx.save(); pctx.translate(12, 120); pctx.rotate(-Math.PI / 2); pctx.fillText("NEAT →", 0, 0); pctx.restore();
+      P.pairs.forEach(([s, a, b]) => { pctx.beginPath(); pctx.arc(X(a), Y(b), 3.5, 0, 7); pctx.fillStyle = a >= b ? css("--accent") : css("--blue"); pctx.fill(); });
+      document.getElementById("pinfo").textContent = `CMA-ES ${P.mean_a} vs NEAT ${P.mean_b}: difference ${P.diff_mean > 0 ? "+" : ""}${P.diff_mean} (95% CI ${P.diff_ci95[0]} to ${P.diff_ci95[1]}), CMA-ES higher on ${P.a_better_on} of ${P.episodes} tracks; falls ${P.falls_a} vs ${P.falls_b}.`;
+    }
+  };
+  draw(); window.addEventListener("themechange", draw);
+  document.getElementById("hinfo").textContent = `mean ${E.mean} ± ${E.std}, median ${E.median}, worst ${E.min}, best ${E.max}. Finished ${E.finished}, timed out ${E.timeouts}${E.timeout_mean_x ? ` (at x ≈ ${E.timeout_mean_x}, finish 88.7)` : ""}, fell ${E.falls}.`;
+  if (G) {
+    const r = document.getElementById("cma-row").children;
+    r[1].innerHTML = `<b>${E.mean.toFixed(0)}</b>`; r[3].textContent = `${(G.env_steps / 1e6).toFixed(0)} M`; r[4].textContent = `~${G.hours.toFixed(1)} h`;
+  }
+});
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>

@@ -145,7 +145,7 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
         steps += 1
         total += float(reward)
         if terminated:
-            fell = reward <= -100
+            fell = bool(reward <= -100)
             break
         if truncated:
             break

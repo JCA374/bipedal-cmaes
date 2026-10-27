@@ -51,3 +51,13 @@ held-out terrains (HOF: 20 terrains, seeds 1e7+) unless stated otherwise.
   non-interactive shell have SIGINT ignored, so `kill -INT` did nothing and 8 workers shared
   the CPU for ~20 min. train.py now turns SIGTERM/SIGINT into a clean checkpointed stop
   (`test_sigterm_saves_checkpoint`). f40 was killed at gen 115 (stalls 94%, never walked).
+
+## Preliminary check, v3-f20 at gen ~105 (champion = CMA mean, 194 on 20 HOF tracks)
+- 100 unseen tracks (seeds 2e7+): **204.5 ± 17.1**, 1 fall, 69 finished, 30 timeouts at x ≈ 87.2
+  (finish line 88.7), 0 runs ≥ 300.
+- Paired vs NEAT champion on 100 comparison tracks (4e7+): CMA 202.7 vs NEAT 179.5, diff +23.2,
+  CMA better on 63/100; falls 1 vs 10.
+- **The ceiling is effort, not falls or speed**: it finishes, but finishing (~360 progress) only
+  nets ~204, so ≈150 goes to the torque cost (max 179). Raw reward already includes effort, so
+  training keeps optimising it; watch whether |action| falls over the coming generations.
+- Fixed: `run_episode` returned a numpy bool for `fell` (JSON dump in evaluate.py failed).
