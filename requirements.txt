@@ -1,0 +1,7 @@
+numpy<2
+gymnasium[box2d]==0.29.1
+cma
+opencv-python-headless
+Pillow
+matplotlib
+pytest==8.3.4

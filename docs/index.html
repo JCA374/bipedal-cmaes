@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bipedal CMA-ES</title>
+<meta name="description" content="Evolving a neural network that walks, with CMA-ES. A narrated explainer video and seven interactive lessons.">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js"></script>
+<script src="assets/walker.js"></script>
+</head>
+<body data-root=".">
+<header id="top"></header>
+<main class="wrap">
+
+<div class="hero">
+  <h1>Teaching a network to walk <em>without gradients</em></h1>
+  <p class="lede">A 932-parameter neural network learns to walk in BipedalWalker-v3. No backpropagation, no
+  reinforcement-learning tricks: just CMA-ES sampling, ranking and reshaping a cloud of candidate walkers, on a 4-core laptop.
+  Below is the explainer video, seven lessons to learn the ideas behind it, and the live training run.</p>
+</div>
+
+<section id="video" style="padding-top:10px">
+  <div id="video-slot"><div class="placeholder"><b>The explainer video is coming.</b><br>
+    It's rendered once training finishes, from the real run. In the meantime, lessons 1–4 cover everything you need to follow it.</div></div>
+</section>
+
+<section id="lessons">
+  <h2>Lessons</h2>
+  <p class="intro">Each lesson is a short page with an interactive demo, a narrated clip and a three-question self-check.
+  Lessons 1–4 are the background; 5–7 use the results of the training run.</p>
+  <div class="lessons" id="lesson-list"></div>
+</section>
+
+<section id="training">
+  <h2>The training run, live</h2>
+  <p class="intro" id="tr-intro">Loading…</p>
+  <div class="stats" id="tr-stats"></div>
+  <div class="demo">
+    <p class="demo-title">Fitness per generation</p>
+    <p class="demo-sub"><span style="color:var(--accent)">best</span> and <span style="color:var(--muted)">mean</span> training fitness of the 48 candidates (5 tracks each, shaped),
+    and <span style="color:var(--blue)">the champion's score</span> on 20 held-out tracks (raw reward, full episodes).</p>
+    <canvas id="curve"></canvas>
+    <p class="demo-title" style="margin-top:14px">Step size σ and falls</p>
+    <canvas id="sig"></canvas>
+  </div>
+  <h3>What changed during training, and why</h3>
+  <div id="history"></div>
+</section>
+
+<section>
+  <h2>Where this fits</h2>
+  <table class="t">
+    <tr><th>Method</th><th>Project</th><th>Score on 100 new tracks</th></tr>
+    <tr><td>NEAT (evolves shape + weights)</td><td>bipedal-neat</td><td>173–179</td></tr>
+    <tr><td>PPO (policy gradient)</td><td>bipedal-claude-ppo</td><td>272</td></tr>
+    <tr><td>TD3 (actor-critic)</td><td>bipedal-claude</td><td>308–319</td></tr>
+    <tr><td><b>CMA-ES (weights of a fixed net)</b></td><td>this one</td><td id="cma-score">training…</td></tr>
+  </table>
+</section>
+</main>
+<footer class="wrap">Code, training log and data: <a href="https://github.com/JCA374/bipedal-cmaes">github.com/JCA374/bipedal-cmaes</a>.</footer>
+
+<script>
+(async function () {
+  try { if ((await fetch("video/explainer.mp4", { method: "HEAD" })).ok)
+    document.getElementById("video-slot").innerHTML = `<div class="video-card"><video controls preload="metadata" poster="video/explainer.jpg">
+      <source src="video/explainer.mp4" type="video/mp4"><track kind="captions" src="video/explainer.vtt" srclang="en" label="English" default></video></div>`;
+  } catch (e) {}
+  let d;
+  try { d = await (await fetch("data/progress.json")).json(); } catch (e) { document.getElementById("tr-intro").textContent = "No training data yet."; return; }
+  const ch = d.champion || {};
+  document.getElementById("tr-intro").textContent =
+    `Run "${d.run}", last updated ${d.updated}. Each generation tests 48 walkers on 5 tracks; every 10 generations the CMA mean and the best 3 are re-tested on 20 held-out tracks.`;
+  const stat = (b, s) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`;
+  document.getElementById("tr-stats").innerHTML =
+    stat(d.generation, "generations") + stat(ch.mean != null ? ch.mean.toFixed(0) : "–", "champion, 20 held-out tracks") +
+    stat((d.env_steps / 1e6).toFixed(0) + "M", "simulation steps") + stat(d.hours.toFixed(1) + " h", "laptop time");
+  const cv = document.getElementById("curve"), ctx = setupCanvas(cv, 960, 260);
+  const sv = document.getElementById("sig"), sctx = setupCanvas(sv, 960, 140);
+  function draw() {
+    const c = d.curve, champ = []; let last = null;
+    for (const p of c) { if (p.champ != null) last = p.champ; champ.push(last ?? NaN); }
+    const firstChamp = champ.findIndex(v => !isNaN(v));
+    drawSeries(cv, ctx, [{ ys: c.map(p => p.mean), color: css("--muted"), width: 1.5 }, { ys: c.map(p => p.best), color: css("--accent") },
+      { ys: champ.map((v, i) => i < firstChamp ? champ[firstChamp] : v), color: css("--blue"), width: 2.5 }], null,
+      { lo: Math.min(-120, ...c.map(p => p.mean)), hi: Math.max(320, ...c.map(p => p.best)), ticks: [-100, 0, 100, 200, 300], xlabel: `generation → ${c[c.length - 1].g}` });
+    drawSeries(sv, sctx, [{ ys: c.map(p => p.sigma * 100), color: css("--blue") }, { ys: c.map(p => p.falls * 100), color: css("--neg"), width: 1.5 }], null,
+      { lo: 0, hi: 100, ticks: [0, 50, 100], xlabel: "blue: σ × 100 · orange: % of training episodes that fell" });
+  }
+  draw(); window.addEventListener("themechange", draw);
+  document.getElementById("history").innerHTML = '<table class="t"><tr><th>from gen</th><th>setting</th><th>why</th></tr>' +
+    d.history.map(h => `<tr><td>${h.generation}</td><td>λ ${h.popsize}, K ${h.k}, σ0 ${h.sigma0}, fall cost ${h.fall_cost}, stall cost ${h.stall_penalty}</td><td>${h.reason || "start of run"}</td></tr>`).join("") +
+    '</table><p class="note">Earlier failed starts (the "dive" and "lunge" traps) are described in TRAINING_LOG.md and in lesson 5.</p>';
+})();
+</script>
+</body>
+</html>

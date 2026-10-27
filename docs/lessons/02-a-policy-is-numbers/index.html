@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 2 · A policy is numbers</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+<script src="../../assets/mlp-demo.js"></script>
+</head>
+<body data-root="../.." data-lesson="02-a-policy-is-numbers">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 2 of 7</div>
+  <h1>A policy is just numbers</h1>
+  <p class="lede">The walker's "brain" is a small neural network: 932 numbers and two layers of arithmetic.
+  This lesson takes it apart, so that in lesson 3 "learning" can mean something very concrete:
+  <i>changing those 932 numbers</i>.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>compute what one neuron does, by hand;</li>
+    <li>explain what the hidden layer adds compared with a plain linear controller;</li>
+    <li>count the parameters of a network, and explain why training is a search through a 932-dimensional space.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+
+<section>
+<h2><span class="num">1</span>One neuron</h2>
+<p>A neuron takes a list of inputs <i>x</i>, multiplies each by its own <b>weight</b> <i>w</i>, adds them up,
+adds a <b>bias</b> <i>b</i>, and squashes the result with <b>tanh</b>:</p>
+<div class="eq">z = w₁x₁ + w₂x₂ + … + w₂₄x₂₄ + b &nbsp;&nbsp;&nbsp; y = tanh(z)</div>
+<p>tanh is an S-shaped curve. Small <i>z</i> passes through almost unchanged; large <i>z</i> gets squashed to ±1.
+That's handy: motor commands must be in [−1, 1], and tanh guarantees it. A positive weight means
+"this input pushes me up"; a negative weight means "this input pushes me down"; the bias sets the default.</p>
+<p>Example: a neuron with weight +2 on <i>hull angle</i> and −1.5 on <i>leg 1 contact</i> fires positive when the body
+tilts forward <i>and</i> leg 1 is in the air.</p>
+</section>
+
+<section>
+<h2><span class="num">2</span>The walker's network</h2>
+<p>The network has three layers of neurons:</p>
+<ul>
+  <li><b>24 inputs</b>: the observation from lesson 1 (not really neurons, just the numbers);</li>
+  <li><b>32 hidden neurons</b>: each looks at all 24 inputs (24 weights + 1 bias);</li>
+  <li><b>4 outputs</b>: each looks at all 32 hidden neurons (32 weights + 1 bias) and gives one motor command.</li>
+</ul>
+<table class="t">
+<tr><th>Part</th><th>Shape</th><th>Numbers</th></tr>
+<tr><td>W1, input → hidden weights</td><td>32 × 24</td><td>768</td></tr>
+<tr><td>b1, hidden biases</td><td>32</td><td>32</td></tr>
+<tr><td>W2, hidden → output weights</td><td>4 × 32</td><td>128</td></tr>
+<tr><td>b2, output biases</td><td>4</td><td>4</td></tr>
+<tr><th>Total</th><th></th><th>932</th></tr>
+</table>
+<p>Every step, the walker runs this exact calculation once: <code>action = tanh(W2 · tanh(W1 · obs + b1) + b2)</code>.
+It has no memory between steps. On a laptop that takes about a microsecond.</p>
+
+<div class="demo">
+  <p class="demo-title">Play with a real forward pass</p>
+  <p class="demo-sub">Lines are weights: <span style="color:var(--pos)">blue = positive</span>, <span style="color:var(--neg)">orange = negative</span>, brightness shows how much signal flows through right now.
+  <b>Click a hidden neuron</b> to see its sum and tanh. Feed it real observations from the walking episode, or move the sliders.</p>
+  <canvas id="net"></canvas>
+  <div class="cols" style="margin-top:10px">
+    <div>
+      <div class="controls"><label>real observation from step <input type="range" id="t" min="0" max="799" value="120"> <span id="tval" class="readout"></span></label></div>
+      <div id="sliders"></div>
+    </div>
+    <div>
+      <canvas id="tanh"></canvas>
+      <p class="readout" id="neuron"></p>
+    </div>
+  </div>
+</div>
+<p class="note">These weights are random (as at the start of training), so the outputs don't make a walker yet.
+After training this demo will load the champion's weights.</p>
+</section>
+
+<section>
+<h2><span class="num">3</span>Why a hidden layer?</h2>
+<p>Without the hidden layer, each output would be <code>tanh(w · obs + b)</code>: a <b>linear</b> controller, 100 numbers in total.
+It can only express rules like "push the hip harder the more you tilt". It can't express
+"<i>if</i> leg 1 is on the ground <i>and</i> I'm tilting forward, swing leg 2", because that depends on a <i>combination</i> of inputs.</p>
+<p>The hidden neurons are learned features: each one detects some combination of inputs, and the outputs combine those detections.
+One hidden layer of tanh neurons can, in principle, approximate any smooth controller. This project also has
+a hard rule that the policy must have at least one hidden layer (asserted in the code and the tests), because a linear policy would be a different, easier comparison.</p>
+<div class="key"><b>A design choice: the shape is fixed</b>My previous project used NEAT, which evolves the network's <i>shape</i> as well as its weights.
+It ended up with 4 hidden neurons and 30 connections, and kept pruning capacity away. Here the shape is fixed at 24→32→4,
+and we only search for the weights. That keeps the problem simple: one list of 932 numbers.</div>
+</section>
+
+<section>
+<h2><span class="num">4</span>932 numbers = one point</h2>
+<p>Write all the weights and biases in one long list, θ ("theta"), always in the same order. That list <i>is</i> the policy:
+save it to a file (7 KB) and you have saved the walker.</p>
+<div class="demo">
+  <p class="demo-title">θ, the whole walker in one strip</p>
+  <p class="demo-sub">Each thin stripe is one of the 932 numbers. Press "nudge" to add a little random noise, which is exactly what the
+  training algorithm does to make new candidates. The orange marks below the strip show which numbers moved, and the network above reacts.</p>
+  <canvas id="theta"></canvas>
+  <div class="controls">
+    <button class="btn primary" id="nudge">Nudge θ (add noise)</button>
+    <label>noise size σ <input type="range" id="sigma" min="0.01" max="1" step="0.01" value="0.1"> <span id="sval" class="readout"></span></label>
+    <button class="btn" id="reset">New random θ</button>
+  </div>
+  <p class="readout" id="delta"></p>
+</div>
+<p>Now picture a space with 932 axes, one per number. Every possible walker is a single point in that space.
+Some points are walkers that fall immediately, some shuffle, and somewhere there are points that walk to the finish.
+Give each point a height, its <b>fitness</b>: the average reward it earns over a few tracks. Training means
+<b>finding a high point in this 932-dimensional landscape</b>.</p>
+<p>Here's the catch: we can <i>evaluate</i> a point (run the walker and read off the reward), but the physics
+simulator can't tell us which direction is uphill. Falls are sudden, reward is noisy, and the simulator isn't differentiable.
+Lesson 3 is about climbing a landscape you can only sample.</p>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="1"><p>1. How many numbers would a 24 → 16 → 4 network have?</p>
+  <button>24·16 + 16·4 = 448</button><button>24·16 + 16 + 16·4 + 4 = 468</button><button>24 + 16 + 4 = 44</button>
+  <div class="why">Weights plus biases: 384 + 16 + 64 + 4 = 468. Every non-input neuron has one bias.</div></div>
+<div class="q" data-answer="0"><p>2. Why use tanh on the outputs?</p>
+  <button>It keeps every motor command inside [−1, 1]</button><button>It makes the network learn faster</button><button>It gives the network memory</button>
+  <div class="why">The environment expects actions in [−1, 1]; tanh maps any number into that range. It doesn't add memory: the network still only sees the current step.</div></div>
+<div class="q" data-answer="2"><p>3. What does "training" change in this project?</p>
+  <button>The number of hidden neurons</button><button>The observation scaling</button><button>Only the 932 numbers in θ</button>
+  <div class="why">The shape (24→32→4) and the input scaling are fixed. Training is a search for θ.</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+const NAMES = ["hull angle","hull ang. vel","vel x","vel y","hip 1 angle","hip 1 speed","knee 1 angle","knee 1 speed","leg 1 contact",
+  "hip 2 angle","hip 2 speed","knee 2 angle","knee 2 speed","leg 2 contact"].concat([...Array(10)].map((_, i) => "lidar " + i));
+const OUT = ["hip 1", "knee 1", "hip 2", "knee 2"];
+const net = new MLP([24, 32, 4]);
+let seed = 7, theta, prev = null, x = new Array(24).fill(0), sel = null, ep = null, pos = null;
+function newTheta() { const r = mulberry32(seed++); theta = Array.from({ length: net.n }, () => .5 * randn(r)); prev = null; }
+newTheta();
+const cv = document.getElementById("net"), ctx = setupCanvas(cv, 640, 470);
+const tc = document.getElementById("tanh"), tctx = setupCanvas(tc, 300, 150);
+const thc = document.getElementById("theta"), thctx = setupCanvas(thc, 640, 80);
+const SL = [0, 2, 8, 13, 15, 19];
+document.getElementById("sliders").innerHTML = SL.map(i =>
+  `<div class="controls"><label style="width:100%">${NAMES[i]} <input style="flex:1" type="range" min="-1" max="1" step="0.01" data-i="${i}"></label></div>`).join("");
+
+function render() {
+  const res = net.forward(theta, x);
+  pos = drawNet(cv, ctx, net, theta, res, sel, NAMES, OUT);
+  drawTheta(thc, thctx, net, theta, prev);
+  document.querySelectorAll("#sliders input").forEach(s => s.value = x[+s.dataset.i]);
+  if (sel != null) {
+    const z = res.pre[0][sel];
+    let top = [...Array(24).keys()].map(i => [i, theta[net.w(0, sel, i)] * x[i]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
+    drawTanh(tc, tctx, z, `hidden neuron ${sel + 1}: z = ${z.toFixed(2)}, y = ${Math.tanh(z).toFixed(2)}`);
+    document.getElementById("neuron").innerHTML = `bias ${theta[net.b(0, sel)].toFixed(2)}; biggest contributions: ` +
+      top.map(([i, c]) => `${NAMES[i]} (w ${theta[net.w(0, sel, i)].toFixed(2)} × x ${x[i].toFixed(2)} = ${c.toFixed(2)})`).join(", ");
+  } else {
+    drawTanh(tc, tctx, 0, "click a hidden neuron (middle column)");
+    document.getElementById("neuron").textContent = "";
+  }
+}
+cv.addEventListener("click", e => {
+  const r = cv.getBoundingClientRect(), mx = (e.clientX - r.left) * 640 / r.width, my = (e.clientY - r.top) * 470 / r.height;
+  let best = null, bd = 1e9;
+  pos[1].forEach(([px, py], i) => { const d = (px - mx) ** 2 + (py - my) ** 2; if (d < bd) { bd = d; best = i; } });
+  sel = bd < 400 ? (sel === best ? null : best) : null;
+  render();
+});
+document.getElementById("sliders").addEventListener("input", e => { x[+e.target.dataset.i] = +e.target.value; render(); });
+const t = document.getElementById("t");
+t.oninput = () => { if (!ep) return; const f = ep.frames[+t.value]; x = f.o.slice(); document.getElementById("tval").textContent = (+t.value * ep.every); render(); };
+const sg = document.getElementById("sigma");
+sg.oninput = () => document.getElementById("sval").textContent = (+sg.value).toFixed(2); sg.oninput();
+document.getElementById("nudge").onclick = () => {
+  const r = mulberry32(Math.floor(Math.random() * 1e9)), s = +sg.value, before = net.forward(theta, x).acts[2];
+  prev = theta.slice(); theta = theta.map(v => v + s * randn(r));
+  const after = net.forward(theta, x).acts[2];
+  document.getElementById("delta").textContent = "outputs before → after: " + OUT.map((o, i) => `${o} ${before[i].toFixed(2)} → ${after[i].toFixed(2)}`).join(" · ");
+  render();
+};
+document.getElementById("reset").onclick = () => { newTheta(); document.getElementById("delta").textContent = ""; render(); };
+window.addEventListener("themechange", render);
+fetch("../../data/episodes/neat.json").then(r => r.json()).then(d => { ep = d; t.max = d.frames.length - 1; t.oninput(); });
+render();
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>

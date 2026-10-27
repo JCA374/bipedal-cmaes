@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 1 · The task</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+</head>
+<body data-root="../.." data-lesson="01-the-task">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 1 of 7</div>
+  <h1>The task</h1>
+  <p class="lede">Before we can talk about how a network <em>learns</em> to walk, we need to be exact about
+  what it can see, what it can do, and what counts as doing well.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>name the 24 numbers the walker senses and the 4 numbers it outputs;</li>
+    <li>work out where the score of an episode comes from, and why 300 means "solved";</li>
+    <li>explain why the 1600-step time limit matters as much as falling.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+
+<section>
+<h2><span class="num">1</span>Meet the walker</h2>
+<p><b>BipedalWalker-v3</b> is a small 2-D physics simulation (Box2D). A box-shaped body, the <i>hull</i>,
+sits on two legs. Each leg has two joints, a <b>hip</b> and a <b>knee</b>, and each joint has a motor.
+The ground is a bumpy grass track, generated from a random seed, so it is different every episode.
+The walker starts on the left and has to get to the finish line on the right, about 84 units away.</p>
+<p>The simulation runs at 50 steps per second. An episode ends when the walker <b>falls</b> (the hull touches
+the ground), <b>reaches the finish</b>, or uses up <b>1600 steps</b> (32 seconds of simulated time).</p>
+
+<div class="demo" id="demo1">
+  <p class="demo-title">Watch it, one step at a time</p>
+  <p class="demo-sub">The orange lines are the lidar rays. Dots on the feet light up when a foot touches the ground.
+  The bars on the right are the exact numbers the network receives and sends <i>at this step</i>.</p>
+  <canvas id="world"></canvas>
+  <div class="controls">
+    <button class="btn primary" id="play">▶ Play</button>
+    <button class="btn" id="back">−1 step</button><button class="btn" id="fwd">+1 step</button>
+    <label>speed <select id="speed"><option value="0.25">¼×</option><option value="1" selected>1×</option><option value="3">3×</option></select></label>
+    <label>policy <select id="which">
+      <option value="neat">a trained walker (NEAT, preview)</option>
+      <option value="random">a random network</option>
+    </select></label>
+  </div>
+  <input type="range" id="scrub" min="0" value="0" style="width:100%;margin-top:8px">
+  <div class="cols" style="margin-top:8px">
+    <div>
+      <div class="readout">24 inputs (scaled to −1…1)</div>
+      <canvas id="inputs"></canvas>
+    </div>
+    <div>
+      <div class="readout">4 outputs (motor commands)</div>
+      <canvas id="outputs"></canvas>
+      <div class="readout" style="margin-top:10px">running reward</div>
+      <canvas id="reward"></canvas>
+      <p class="readout" id="rr"></p>
+    </div>
+  </div>
+</div>
+<p class="note">The "trained walker" is the champion from my previous project (NEAT, about 173 on average).
+Once the CMA-ES walker is trained it replaces it here.</p>
+</section>
+
+<section>
+<h2><span class="num">2</span>What it senses: 24 numbers</h2>
+<p>At every step the walker gets an <b>observation</b>: a list of 24 numbers. It never sees a picture. This is everything it knows:</p>
+<table class="t">
+<tr><th>#</th><th>What</th><th>Tells it</th></tr>
+<tr><td>0–3</td><td>hull angle, hull angular velocity, velocity x, velocity y</td><td>am I tilting, spinning, moving forward, bouncing?</td></tr>
+<tr><td>4–8</td><td>leg 1: hip angle, hip speed, knee angle, knee speed, foot contact</td><td>where leg 1 is and whether its foot is on the ground</td></tr>
+<tr><td>9–13</td><td>leg 2: the same five</td><td>the same for leg 2</td></tr>
+<tr><td>14–23</td><td>10 lidar distances</td><td>how far away the ground is along 10 rays, from straight down to almost straight ahead</td></tr>
+</table>
+<p>The raw numbers have different ranges, so each one is divided by a fixed constant and clipped to [−1, 1].
+The scaling never changes during training, so a trained walker is fully described by its weights alone.</p>
+<div class="key"><b>Important</b>Notice what is <i>missing</i>: the walker gets no x position, no clock and no memory.
+A plain feed-forward network has to decide each step from this snapshot alone. If it needs a rhythm,
+the rhythm has to come out of the legs' own angles and speeds.</div>
+</section>
+
+<section>
+<h2><span class="num">3</span>What it does: 4 numbers</h2>
+<p>The <b>action</b> is four numbers in [−1, 1], one per joint: hip 1, knee 1, hip 2, knee 2.
+The sign says which way to turn the joint; the size says how hard to push (up to a maximum torque of 80).
+That's all the control there is: four motor commands, 50 times per second.</p>
+</section>
+
+<section>
+<h2><span class="num">4</span>How it's scored</h2>
+<p>The <b>reward</b> at each step has three parts:</p>
+<div class="eq">reward = 130 · Δx / 30 &nbsp;−&nbsp; 5 · Δ|hull angle| &nbsp;−&nbsp; 0.028 · (|a₁|+|a₂|+|a₃|+|a₄|)</div>
+<ul>
+  <li><b>Progress</b>: moving the hull forward earns reward. Walking the whole course is worth about 360.</li>
+  <li><b>Keep the head level</b>: tilting the hull costs a little.</li>
+  <li><b>Effort</b>: every unit of motor command costs 0.028 per step. Pushing all four joints at full power for 1600 steps would cost 179; a good walker spends about 30–60.</li>
+  <li><b>Falling</b>: if the hull touches the ground, that step's reward becomes <b>−100</b> and the episode ends.</li>
+</ul>
+<p>So a walker that crosses the finish without falling scores about 360 − effort ≈ <b>300–330</b>.
+The environment counts as <b>solved</b> when the average over 100 random tracks is <b>≥ 300</b>.
+A walker that falls halfway scores about 180 − 100 − effort ≈ 50: the fall wipes out more than half of what it earned.</p>
+<div class="key"><b>The hidden constraint: time</b>About 84 units in 1600 steps means you have to average
+<b>2.6 units per second</b>. My NEAT walker fell on only 9% of tracks but still scored only about 175, because it ran out of
+time around x ≈ 74. To reach 300 you need to be both <i>safe</i> and <i>fast</i>, and those two pull against each other:
+fast walkers tend to pitch forward and fall.</div>
+</section>
+
+<section>
+<h2><span class="num">5</span>The job, stated precisely</h2>
+<p>We want a function, called a <b>policy</b>, that maps 24 numbers to 4 numbers:</p>
+<div class="eq">π(observation) → action &nbsp;&nbsp;&nbsp; ℝ²⁴ → [−1, 1]⁴</div>
+<p>and makes the total reward over an episode as large as possible, on tracks it has never seen.
+Lesson 2 shows what this function looks like (a small neural network), and lesson 3 shows how to find good settings
+for it without ever computing a gradient.</p>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="2"><p>1. The walker stands perfectly still for all 1600 steps without falling. Roughly what does it score?</p>
+  <button>About +300, because it never fell</button><button>−100</button><button>Slightly below 0: no progress, a little effort</button>
+  <div class="why">Reward comes from progress. With no progress it only pays the small effort cost, so it ends just below zero. Not falling isn't rewarded by itself.</div></div>
+<div class="q" data-answer="0"><p>2. Which input could tell the walker that a bump is coming up ahead?</p>
+  <button>The lidar distances (14–23)</button><button>Foot contact (8 and 13)</button><button>Hull angular velocity (1)</button>
+  <div class="why">The lidar rays fan out forward and measure the distance to the ground, so a bump ahead shortens the forward rays before the walker gets there.</div></div>
+<div class="q" data-answer="1"><p>3. A walker never falls but scores only 175 on average. What's the most likely reason?</p>
+  <button>It uses too much torque</button><button>It's too slow and runs out of time before the finish</button><button>The lidar is broken</button>
+  <div class="why">Progress is worth about 360 for the full course. Stopping at x ≈ 74 out of 88 when the 1600 steps run out leaves a lot of that reward behind. Effort costs only 30–60.</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+const GROUP = i => i < 4 ? "--accent" : i < 9 ? "--s1" : i < 14 ? "--s2" : "--s3";
+const world = document.getElementById("world");
+const inCv = document.getElementById("inputs"), outCv = document.getElementById("outputs"), rwCv = document.getElementById("reward");
+const inCtx = setupCanvas(inCv, 340, 400), outCtx = setupCanvas(outCv, 340, 110), rwCtx = setupCanvas(rwCv, 340, 150);
+const NAMES = ["hull angle","hull ang. vel","vel x","vel y","hip 1 angle","hip 1 speed","knee 1 angle","knee 1 speed","leg 1 contact",
+  "hip 2 angle","hip 2 speed","knee 2 angle","knee 2 speed","leg 2 contact"].concat([...Array(10)].map((_, i) => "lidar " + i));
+const OUT = ["hip 1", "knee 1", "hip 2", "knee 2"];
+let rewards = [];
+const rp = new WalkerReplay(world, {
+  onFrame: (f, i) => {
+    drawBars(inCv, inCtx, f.o, NAMES, k => css(GROUP(k)), { labelW: 92, pad: 3 });
+    drawBars(outCv, outCtx, f.a, OUT, k => css(k < 2 ? "--s1" : "--s2"), { labelW: 92, pad: 5 });
+    drawSeries(rwCv, rwCtx, [{ ys: rewards, color: css("--blue") }], i, { n: 1600 / rp.ep.every, xlabel: "step →" });
+    document.getElementById("scrub").value = i;
+    document.getElementById("rr").textContent =
+      `this policy: ${rp.ep.label}, final reward ${rp.ep.reward} after ${rp.ep.steps} steps${rp.ep.fell ? " (fell)" : ""}`;
+  }
+});
+const play = document.getElementById("play");
+rp.onEnd = () => play.textContent = "▶ Play";
+async function load(which) {
+  rp.pause(); play.textContent = "▶ Play";
+  const ep = await rp.load(`../../data/episodes/${which}.json`);
+  rewards = ep.frames.map(f => f.r);
+  document.getElementById("scrub").max = ep.frames.length - 1;
+  rp.seek(0);
+}
+play.onclick = () => { if (rp.playing) { rp.pause(); play.textContent = "▶ Play"; } else { rp.play(); play.textContent = "❚❚ Pause"; } };
+document.getElementById("back").onclick = () => { rp.pause(); play.textContent = "▶ Play"; rp.seek(rp.i - 1); };
+document.getElementById("fwd").onclick = () => { rp.pause(); play.textContent = "▶ Play"; rp.seek(rp.i + 1); };
+document.getElementById("scrub").oninput = e => { rp.pause(); play.textContent = "▶ Play"; rp.seek(+e.target.value); };
+document.getElementById("speed").onchange = e => rp.speed = +e.target.value;
+document.getElementById("which").onchange = e => load(e.target.value);
+window.addEventListener("themechange", () => rp.draw());
+load("neat");
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>

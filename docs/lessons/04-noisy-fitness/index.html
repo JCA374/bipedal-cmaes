@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 4 · Noisy fitness</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+<script src="../../assets/mlp-demo.js"></script>
+</head>
+<body data-root="../.." data-lesson="04-noisy-fitness">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 4 of 7</div>
+  <h1>Noisy fitness, honest selection</h1>
+  <p class="lede">A walker's score depends on the track it gets. Every time we measure fitness, we're rolling dice.
+  This lesson is about not fooling yourself, during training and when you claim a result.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>explain the "winner's curse": why the best-looking candidate is usually worse than it looks;</li>
+    <li>say what common random numbers are and why they make ranking fairer;</li>
+    <li>describe how this project picks its champion and checks its final score.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+
+<section>
+<h2><span class="num">1</span>The same walker, different scores</h2>
+<p>Each track is generated from a random seed. Some are gentle, some have awkward bumps exactly where the walker
+puts its foot down. In my NEAT project, a single walker's score varied by about <b>±65</b> from one track to the next.
+That's huge compared with the differences we care about: 280 vs 300 is "nearly solved" vs "solved".</p>
+<p>So a fitness measurement is really <b>true skill + luck</b>. Averaging over K tracks shrinks the luck by a factor of √K:
+with ±65 per track, 5 tracks give about ±29 and 100 tracks about ±6.5. More tracks cost more time, though: every
+generation already runs 48 candidates × 5 tracks = 240 episodes.</p>
+</section>
+
+<section>
+<h2><span class="num">2</span>The winner's curse</h2>
+<p>Now pick the <i>best-looking</i> candidate out of 48. It's probably good, but it's also probably the one that got the luckiest tracks.
+Selecting on a noisy measurement favours luck, so the winner's measured score is <b>inflated</b>. Measure it again on fresh tracks and it drops.</p>
+
+<div class="demo">
+  <p class="demo-title">Pick a champion under noise</p>
+  <p class="demo-sub">48 candidates with true skill spread between 150 and 250 (unknown to the selector). Each is measured on K tracks
+  with ±65 noise per track. We pick the top-scoring one and then re-measure it on 100 fresh tracks.</p>
+  <canvas id="dots"></canvas>
+  <div class="controls">
+    <label>tracks per candidate K <input type="range" id="k" min="1" max="40" value="5"> <span id="kv" class="readout"></span></label>
+    <label><input type="checkbox" id="crn" checked> same tracks for everyone (common random numbers)</label>
+    <button class="btn" id="once">Run once</button>
+    <button class="btn primary" id="many">Run 500 times</button>
+  </div>
+  <p class="readout" id="out1"></p>
+  <canvas id="histo" style="margin-top:8px"></canvas>
+  <p class="readout" id="out2"></p>
+</div>
+<p>Things to try (numbers from 4,000 simulated runs):</p>
+<ul>
+  <li>K = 1, run 500 times: the winner looks about <b>80 points</b> better than it is, and the truly best candidate is picked only about 10% of the time.</li>
+  <li>K = 5 (what training uses): the inflation drops to about 30, and a top-5 candidate is picked about two times in three.</li>
+  <li>K = 20: about 12 points of inflation, a top-5 pick 87% of the time.</li>
+  <li>At K = 5, untick "same tracks": the inflation rises from 30 to about 50, and top-5 picks drop from 66% to 51%. That's the next section.</li>
+</ul>
+</section>
+
+<section>
+<h2><span class="num">3</span>Common random numbers</h2>
+<p>Part of the luck is <i>shared</i>: an awkward track is awkward for everyone. In the demo, each track has a difficulty that shifts
+every candidate's score, plus a smaller part that depends on the candidate.
+If every candidate in a generation walks the <b>same 5 tracks</b>, the shared part shifts all scores equally and cancels out of the
+ranking. Only the candidate-specific part still adds noise.</p>
+<p>This trick is called <b>common random numbers</b>. It costs nothing: same number of episodes, fairer comparisons.
+<code>train.py</code> does exactly this: one set of 5 seeds per generation, drawn fresh each generation so no candidate can
+overfit to particular tracks.</p>
+<div class="key"><b>And CMA-ES only needs the ranking</b>Recall lesson 3: CMA-ES never uses the scores themselves, only their order.
+With common random numbers, a hard generation (all scores low) and an easy one (all scores high) produce the same kind of update.</div>
+</section>
+
+<section>
+<h2><span class="num">4</span>How the champion is chosen</h2>
+<p>The training fitness is noisy (5 tracks) and shaped (lesson 5 explains the shaping). So the champion is never chosen from it directly. Instead:</p>
+<ol>
+  <li>Every 10 generations, take the <b>CMA mean</b> and the <b>best 3 candidates</b> of that generation.</li>
+  <li>Re-test each on the same <b>20 held-out tracks</b>, never used in training, with full 1600-step episodes and the raw reward.</li>
+  <li>The best of these on the held-out tracks becomes the champion if it beats the previous one.</li>
+</ol>
+<p>Why include the CMA mean? It isn't a candidate anyone sampled; it's the <i>centre</i> of the cloud, an average of many good candidates.
+Averaging tends to cancel out quirks that only worked on lucky tracks, so the mean is often more robust than any single sample.</p>
+<p>Even 20 tracks have about ±15 of noise, and picking the best of many re-tests on the same 20 tracks brings the
+winner's curse back. That's why the final number comes from a separate test.</p>
+</section>
+
+<section>
+<h2><span class="num">5</span>Claiming a result</h2>
+<table class="t">
+<tr><th>Purpose</th><th>Track seeds</th><th>Used for</th></tr>
+<tr><td>training</td><td>0 – 999,999</td><td>fitness, 5 fresh tracks per generation</td></tr>
+<tr><td>hall of fame</td><td>10,000,000+</td><td>choosing the champion (20 tracks)</td></tr>
+<tr><td>evaluation</td><td>20,000,000+</td><td>the final score (100 tracks)</td></tr>
+<tr><td>recording</td><td>30,000,000+</td><td>videos and examples</td></tr>
+<tr><td>comparisons</td><td>40,000,000+</td><td>paired comparisons between two walkers</td></tr>
+</table>
+<p>The ranges never overlap, and a test checks that. The headline number is the mean over 100 tracks the walker has never seen, from full episodes with the
+unmodified reward. In my NEAT project this mattered: the champion that scored "200" during selection scored 180 on 20 new tracks and
+173–179 on 100.</p>
+<p>To compare two walkers, both run on the <b>same 100 new tracks</b> (common random numbers again), and the result is the
+average <i>difference</i> with a bootstrap confidence interval. A difference smaller than about ±20 is usually noise.</p>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="2"><p>1. The top candidate of a generation scored 290 on its 5 training tracks. What's the best guess for its score on 100 new tracks?</p>
+  <button>About 290</button><button>Higher than 290</button><button>Lower than 290</button>
+  <div class="why">It was selected <i>because</i> it scored highest, so part of that 290 is luck. On fresh tracks it regresses toward its true skill.</div></div>
+<div class="q" data-answer="0"><p>2. What do common random numbers remove?</p>
+  <button>The part of the luck that all candidates share (how hard the track is)</button><button>All noise</button><button>The need for held-out tracks</button>
+  <div class="why">The shared difficulty cancels out of the comparison. The candidate-specific part, and the winner's curse, remain.</div></div>
+<div class="q" data-answer="1"><p>3. Why does the champion search include the CMA mean?</p>
+  <button>It is always the best candidate</button><button>It averages many good candidates and is often more robust on new tracks</button><button>It's cheaper to evaluate</button>
+  <div class="why">The mean is the centre of the search cloud, which smooths out single lucky solutions. It isn't always the best, so it competes with the top 3.</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+const N = 48, NOISE = 65, SHARED = 50, OWN = Math.sqrt(NOISE * NOISE - SHARED * SHARED);  // per-track noise split into shared + own
+const dc = document.getElementById("dots"), dctx = setupCanvas(dc, 720, 220);
+const hc = document.getElementById("histo"), hctx = setupCanvas(hc, 720, 160);
+const kS = document.getElementById("k"), crn = document.getElementById("crn");
+let rng = mulberry32(11);
+const skill = Array.from({ length: N }, (_, i) => 150 + 100 * i / (N - 1));
+function measure(K, shared) {
+  const tracks = Array.from({ length: K }, () => SHARED * randn(rng));
+  return skill.map(s => {
+    let t = 0;
+    for (let k = 0; k < K; k++) t += s + (shared ? tracks[k] : SHARED * randn(rng)) + OWN * randn(rng);
+    return t / K;
+  });
+}
+function once() {
+  const K = +kS.value, m = measure(K, crn.checked);
+  const w = m.indexOf(Math.max(...m));
+  const re = skill[w] + NOISE / 10 * randn(rng);  // 100 fresh tracks: ±6.5
+  return { m, w, re };
+}
+function drawDots(r) {
+  const W = 720, H = 220; dctx.clearRect(0, 0, W, H);
+  const X = s => 40 + (W - 60) * (s - 50) / 350;
+  dctx.strokeStyle = css("--grid"); dctx.fillStyle = css("--muted"); dctx.font = "11px system-ui";
+  for (let v = 50; v <= 400; v += 50) { dctx.beginPath(); dctx.moveTo(X(v), 20); dctx.lineTo(X(v), H - 20); dctx.stroke(); dctx.fillText(v, X(v) - 9, H - 6); }
+  dctx.fillText("true skill (grey)  →  measured on K tracks (blue)", 40, 13);
+  r.m.forEach((v, i) => {
+    const y = 26 + (H - 52) * i / (N - 1);
+    dctx.strokeStyle = css("--line"); dctx.beginPath(); dctx.moveTo(X(skill[i]), y); dctx.lineTo(X(v), y); dctx.stroke();
+    dctx.fillStyle = css("--muted"); dctx.fillRect(X(skill[i]) - 2, y - 2, 4, 4);
+    dctx.beginPath(); dctx.arc(X(v), y, i === r.w ? 6 : 3, 0, 7); dctx.fillStyle = i === r.w ? css("--accent") : css("--blue"); dctx.fill();
+  });
+  const y = 26 + (H - 52) * r.w / (N - 1);
+  dctx.fillStyle = css("--text"); dctx.font = "600 12px system-ui";
+  dctx.fillText(`picked: measured ${r.m[r.w].toFixed(0)}, true ${skill[r.w].toFixed(0)}, on 100 fresh tracks ${r.re.toFixed(0)}`, Math.min(X(r.m[r.w]) + 10, 420), Math.max(16, y + 4));
+}
+document.getElementById("once").onclick = () => {
+  const r = once(); drawDots(r);
+  const d = r.m[r.w] - skill[r.w];
+  document.getElementById("out1").textContent = `The picked candidate looked ${Math.abs(d).toFixed(0)} points ${d >= 0 ? "better" : "worse"} than it really is` +
+    (d < 0 ? " (this time the shared tracks were hard for everyone)" : "") + `. Its true rank: ${N - r.w} of ${N}.`;
+};
+document.getElementById("many").onclick = () => {
+  const infl = [], ranks = []; let last;
+  for (let t = 0; t < 500; t++) { last = once(); infl.push(last.m[last.w] - skill[last.w]); ranks.push(N - last.w); }
+  drawDots(last);
+  const bins = new Array(30).fill(0), lo = -60, hi = 240;
+  infl.forEach(v => bins[Math.max(0, Math.min(29, Math.floor((v - lo) / (hi - lo) * 30)))]++);
+  const W = 720, H = 160, mx = Math.max(...bins); hctx.clearRect(0, 0, W, H);
+  bins.forEach((b, i) => { hctx.fillStyle = css("--accent"); const h = (H - 30) * b / mx; hctx.fillRect(20 + i * (W - 40) / 30, H - 20 - h, (W - 40) / 30 - 2, h); });
+  hctx.fillStyle = css("--muted"); hctx.font = "11px system-ui";
+  for (let v = lo; v <= hi; v += 60) hctx.fillText(v, 20 + (v - lo) / (hi - lo) * (W - 40) - 6, H - 5);
+  hctx.fillText("how much the winner's measured score exceeded its true skill, 500 runs", 20, 12);
+  const mean = infl.reduce((a, b) => a + b) / infl.length, top1 = ranks.filter(r => r === 1).length / 5, top5 = ranks.filter(r => r <= 5).length / 5;
+  document.getElementById("out2").textContent = `K = ${kS.value}, ${crn.checked ? "same" : "different"} tracks: average inflation ${mean.toFixed(0)} points · picked the truly best ${top1.toFixed(0)}% of the time · picked a top-5 candidate ${top5.toFixed(0)}% of the time`;
+};
+kS.oninput = () => document.getElementById("kv").textContent = kS.value; kS.oninput();
+window.addEventListener("themechange", () => document.getElementById("once").click());
+document.getElementById("once").click();
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>

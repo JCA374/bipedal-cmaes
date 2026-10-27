@@ -1,0 +1,45 @@
+# Training log
+
+Every change to a run, with the generation and the reason. Scores are raw env reward on
+held-out terrains (HOF: 20 terrains, seeds 1e7+) unless stated otherwise.
+
+## Setup (2026-10-27)
+- bench: 4 workers 15.9k steps/s, 6 workers 16.2k (hyperthreads), ~78 MB RSS/worker. Use 4.
+- Found: BipedalWalker on a reused env is **not reproducible** (same seed + policy, 3rd reset
+  gave -119.8 vs -118.4). `common.fresh_reset` builds a new Box2D world each reset (no cost);
+  tested in `test_episodes_are_reproducible_on_a_reused_env`.
+
+## v0-dive (gens 0-178, stopped)
+- 24-32-4 tanh, λ=48, K=5, σ0=0.5, stall cost 100, training fitness = raw reward - stall cost.
+- **Stuck in a "dive" optimum**: from gen ~60, 100% of episodes fall at x≈6.7 (start 4.7),
+  fitness -98..-101 for every candidate, σ shrinking 0.67 -> 0.17. Cause: the stall cost made
+  standing still (≈-108) worse than lunging forward and falling (≈-99), and every lunge scores
+  about the same, so there is no slope to follow. NEAT had the opposite trap (standing still).
+- Fix for the next run: training fitness swaps the env's -100 for `--fall-cost` (0). Fitness is
+  then distance walked minus torque, so getting further before falling always helps, and not
+  falling is still rewarded through the progress it keeps earning. Reported scores stay raw.
+
+## baseline (from gen 0)
+- 24-32-4 tanh (932 params), λ=48, K=5, σ0=0.5, stall cost 100, fall cost 0.
+- **Stuck again (gens 0-209, archived as runs/v1-lunge)**: 100% falls at x≈7.4, fitness ≈+2.5,
+  σ collapsed 0.5 -> 0.084. A side run with σ0=0.1 (runs/s01, 38 gens) behaved the same.
+  Cause: the stall cost (100). The obvious stepping stone, "lunge, catch yourself and stand", is cut
+  by the stall detector and scores ≈ -90, worse than lunging and falling (+2.5). So the walker never
+  learns to recover from the first lunge.
+
+## v2 (from gen 0)
+- Same as v1 but stall cost 0 (fall cost 0). Then "lunge and stand" (≈+8) beats "lunge and fall"
+  (+2.5), and every further step adds progress reward: a monotone path. Standing can't beat walking,
+  because nothing pays for not falling except the progress it keeps earning. Early stop is still on (it saves steps).
+- **Stuck again (archived as runs/v2-torque, 92 gens)**: still 100% falls. Cause: the torque cost.
+  A saturated random net pays ≈0.11/step. Falling at step ~50 ends that bill, while catching
+  yourself and standing until the stall detector fires (150+ steps) costs ≈17. With fall cost 0,
+  falling early is the cheapest thing to do.
+
+## v3: fall cost 20 vs 40 (side by side, 4 workers each)
+- Fall cost must exceed the torque saved by falling early, but stay far below -100 so standing
+  still doesn't become a dead end (NEAT's trap). Tested 20 and 40, ~45 gens each:
+  both left the fall regime (falls 100% -> ~12%, stalls ~88%). f20 was ahead (best train fitness
+  -5.8 vs -7.8, champion -78 vs -112), so f40 was stopped at gen 48 and **v3-f20 continues as the main run**.
+- train.py default fall cost is now 20 (resume uses current defaults: it would otherwise
+  silently have switched v3-f20 back to 0). Also pinned in runs/v3-f20/overrides.json.

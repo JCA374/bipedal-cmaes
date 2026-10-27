@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 3 · CMA-ES</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+<script src="../../assets/mlp-demo.js"></script>
+<script src="../../assets/cmaes-demo.js"></script>
+</head>
+<body data-root="../.." data-lesson="03-cma-es">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 3 of 7</div>
+  <h1>Evolution strategies and CMA-ES</h1>
+  <p class="lede">How do you climb a landscape you can't see, when the only thing you can do is stand somewhere and
+  measure the height? You throw a cloud of guesses, keep the best, and learn the shape of the cloud as you go.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>describe one generation of an evolution strategy: sample, evaluate, rank, update;</li>
+    <li>explain the three things CMA-ES adapts (mean, step size, covariance) and why each one matters;</li>
+    <li>read the ten-line training loop that evolves the walker.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+
+<section>
+<h2><span class="num">1</span>Guess, test, keep the best</h2>
+<p>Lesson 2 ended with a problem: we have a fitness function f(θ) over 932 numbers. We can <i>measure</i> it
+(run the walker, read the reward), but we have no gradient telling us which way is uphill.</p>
+<p>An <b>evolution strategy</b> (ES) works like this:</p>
+<ol>
+  <li>Keep a current best guess, the <b>mean</b> <i>m</i>.</li>
+  <li><b>Sample</b> λ ("lambda") candidates around it: <i>m</i> + σ · (random noise). σ ("sigma") is the <b>step size</b>.</li>
+  <li><b>Evaluate</b> every candidate: let each one walk and record its reward.</li>
+  <li><b>Rank</b> them and move <i>m</i> to a weighted average of the best half.</li>
+  <li>Repeat. One round is one <b>generation</b>.</li>
+</ol>
+<p>Only the <i>ranking</i> matters, not the exact scores. That makes ES robust: a reward of 280 vs 290 and one of
+−100 vs 290 lead to the same update, so a few wild outliers can't throw it off.</p>
+</section>
+
+<section>
+<h2><span class="num">2</span>Watch it in two dimensions</h2>
+<p>The walker has 932 dimensions, which we can't draw. So here are the same algorithms on a 2-D landscape.
+Darker/greener is better; the cross marks the optimum. <b>Dots</b> are the λ candidates of this generation (green = the selected best half),
+the <b>orange dot</b> is the mean and the orange line its path. The <b>blue ellipse</b> is the shape of the cloud the next candidates are drawn from.</p>
+
+<div class="demo">
+  <div class="cols">
+    <canvas id="cvA"></canvas>
+    <canvas id="cvB"></canvas>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="run">▶ Run</button>
+    <button class="btn" id="step">One generation</button>
+    <button class="btn" id="reset">Reset</button>
+    <label>landscape <select id="fn"></select></label>
+    <label>λ <input type="range" id="lam" min="4" max="40" step="2" value="8"> <span id="lamv" class="readout"></span></label>
+    <label><input type="checkbox" id="noisy"> noisy fitness</label>
+  </div>
+  <canvas id="hist" style="margin-top:10px"></canvas>
+  <p class="readout" id="info"></p>
+</div>
+<p>Things to try:</p>
+<ul>
+  <li>On the <b>tilted valley</b>, watch the CMA-ES ellipse stretch and rotate to line up with the valley,
+  while the plain ES keeps a fixed circle and zig-zags.</li>
+  <li>Watch σ in the lower plot: CMA-ES <b>grows</b> σ while it's making steady progress and <b>shrinks</b> it near the optimum.</li>
+  <li>On the <b>bumpy bowl</b>, try a small λ (4) and then a large one (30). A bigger population sees more of the landscape at once and is
+  less likely to get stuck in a small trap.</li>
+  <li>Tick <b>noisy fitness</b>: every measurement gets random noise added, like a walker on a random terrain. Lesson 4 is about this.</li>
+</ul>
+</section>
+
+<section>
+<h2><span class="num">3</span>What CMA-ES adapts</h2>
+<p><b>CMA-ES</b> (Covariance Matrix Adaptation Evolution Strategy, Hansen &amp; Ostermeier, 1996–2001) is an ES
+that learns three things as it goes:</p>
+<h3>The mean <i>m</i>: where to search</h3>
+<p>A weighted average of the best μ = λ/2 candidates, with the best one counting most.</p>
+<h3>The step size σ: how far to search</h3>
+<p>CMA-ES keeps an <b>evolution path</b>, a running sum of its recent moves. If recent moves point the same way,
+it is walking up a long slope, and σ grows. If they cancel each other out (back and forth), it's circling around something, and σ shrinks.
+This is called <i>cumulative step-size adaptation</i>.</p>
+<h3>The covariance matrix C: in what shape to search</h3>
+<p>This is the "CMA" part. C describes the shape of the cloud: an ellipse in 2-D, an ellipsoid in 932-D.
+After each generation, C is stretched toward the directions the successful candidates came from. Over time the cloud lines up with the
+landscape, so it samples mostly along the valley and wastes few samples climbing its walls.</p>
+<div class="key"><b>For the walker this means "which weights should move together"</b>Here C is a 932 × 932 table:
+868,624 numbers, one for every pair of weights. If increasing a hip weight only helps when a knee weight increases too,
+C learns that correlation and starts proposing both changes together. A plain ES would have to stumble on that
+combination by luck every time.</div>
+<p>All of this needs no gradient and no knowledge of the physics: just "which candidates ranked best".
+Because the cloud's size and shape adapt by themselves, CMA-ES has almost no knobs to tune. The main ones are λ and the starting σ.</p>
+</section>
+
+<section>
+<h2><span class="num">4</span>The training loop</h2>
+<p>This is the actual core of <code>train.py</code> (using the <code>cma</code> Python package):</p>
+<pre>es = cma.CMAEvolutionStrategy(np.zeros(932), 0.5, {"popsize": 48})
+while not done:
+    thetas  = es.ask()                         # 48 candidate walkers
+    terrain = new_random_terrains(k=5)          # the same 5 tracks for all 48
+    fitness = [mean(walk(θ, t) for t in terrain) for θ in thetas]   # 240 episodes, on 4 CPU cores
+    es.tell(thetas, [-f for f in fitness])     # cma minimises, so negate
+    every 10 generations: re-test es.mean and the best 3 on 20 held-out tracks → champion</pre>
+<p>The starting point is all zeros, a network that outputs nothing. σ = 0.5 means the first candidates are fairly random.
+Each generation costs up to 48 × 5 × 1600 = 384,000 simulation steps, but most early walkers fall quickly,
+so early generations take 1–3 seconds on this laptop.</p>
+</section>
+
+<section>
+<h2><span class="num">5</span>Why not gradients?</h2>
+<p>Deep RL methods like PPO and TD3 (which I tried in earlier projects) estimate a gradient from individual
+steps: "this action at this moment led to more reward than expected". That's powerful and uses fewer simulation steps, but it needs value
+estimates, replay buffers and many hyperparameters, and it can be unstable.</p>
+<p>An ES only looks at the <b>total reward of whole episodes</b>. It's simpler, every episode runs in parallel, and it doesn't care
+whether the reward is smooth, delayed or sparse. The price is <b>samples</b>: it usually needs many more episodes.
+This project tests how far that simple approach gets: NEAT reached about 175, PPO 272, TD3 308–319. Can CMA-ES reach 300?</p>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="1"><p>1. Two candidates score 250 and 260 in one generation; in another, they score −100 and 260. How does CMA-ES treat these differently?</p>
+  <button>The second case pulls the mean much harder</button><button>Not at all: only the ranking matters</button><button>It discards the generation with −100</button>
+  <div class="why">CMA-ES uses ranks. The better candidate is better by the same rank in both cases, so the update is the same.</div></div>
+<div class="q" data-answer="0"><p>2. CMA-ES's last few steps all point roughly the same way. What happens to σ?</p>
+  <button>It grows: steady progress means bigger steps are safe</button><button>It shrinks</button><button>Nothing; σ is fixed</button>
+  <div class="why">A long evolution path (moves that add up) means it hasn't reached the optimum yet, so σ increases.</div></div>
+<div class="q" data-answer="2"><p>3. What does the covariance matrix capture for the walker?</p>
+  <button>How noisy each terrain is</button><button>The order of the layers</button><button>Which weights tend to improve the walker when changed together</button>
+  <div class="why">C learns correlated directions in weight space and shapes the sampling cloud along them.</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+const fnSel = document.getElementById("fn");
+for (const [k, v] of Object.entries(FUNCS)) fnSel.innerHTML += `<option value="${k}">${v.name}</option>`;
+const A = new ESView(document.getElementById("cvA"), "CMA-ES"), B = new ESView(document.getElementById("cvB"), "plain ES (fixed σ, round cloud)");
+const hc = document.getElementById("hist"), hctx = setupCanvas(hc, 720, 140);
+let F, cma, ses, trailA, trailB, histA, histB, sigA, timer = null, seed = 1;
+const OPT = { valley: [0, 0], rosen: [1.5, .75], bumpy: [0, 0] };
+const lam = document.getElementById("lam");
+function evalf(x) { const v = F.f(x[0], x[1]); return document.getElementById("noisy").checked ? v + 6 * randn(Math.random) : v; }
+function reset() {
+  F = FUNCS[fnSel.value];
+  const r1 = mulberry32(seed), r2 = mulberry32(seed++);
+  cma = new CMA2(F.start, 1.0, +lam.value, r1); ses = new SimpleES(F.start, 1.0, +lam.value, r2);
+  trailA = [cma.m.slice()]; trailB = [ses.m.slice()]; histA = [F.f(...cma.m)]; histB = [F.f(...ses.m)]; sigA = [cma.sigma];
+  A.background(F); B.background(F); draw();
+}
+function step() {
+  for (const [es, tr, h] of [[cma, trailA, histA], [ses, trailB, histB]]) {
+    const pop = es.ask(); es.tell(pop.map(p => evalf(p.x))); tr.push(es.m.slice()); h.push(F.f(...es.m));
+  }
+  sigA.push(cma.sigma); draw();
+  if (cma.gen >= 150 || F.f(...cma.m) < 1e-12) stop();
+}
+function draw() {
+  A.draw(cma, trailA, OPT[fnSel.value]); B.draw(ses, trailB, OPT[fnSel.value]);
+  const lg = a => a.map(v => Math.log10(v + 1e-6));
+  drawSeries(hc, hctx, [{ ys: lg(histA), color: css("--accent") }, { ys: lg(histB), color: css("--muted") },
+    { ys: sigA.map(s => Math.log10(s)), color: css("--blue"), width: 1.5 }], null,
+    { lo: -6, hi: 2, n: 150, ticks: [-6, -4, -2, 0, 2], xlabel: "generation →  (log10: orange = CMA-ES error, grey = plain ES error, blue = CMA-ES σ)" });
+  document.getElementById("info").textContent =
+    `generation ${cma.gen} · CMA-ES: error ${F.f(...cma.m).toExponential(1)}, σ ${cma.sigma.toFixed(3)} · plain ES: error ${F.f(...ses.m).toExponential(1)}, σ ${ses.sigma.toFixed(3)} (fixed)`;
+}
+function stop() { clearInterval(timer); timer = null; document.getElementById("run").textContent = "▶ Run"; }
+document.getElementById("run").onclick = () => { if (timer) return stop(); if (cma.gen >= 150) reset(); timer = setInterval(step, 160); document.getElementById("run").textContent = "❚❚ Pause"; };
+document.getElementById("step").onclick = () => { stop(); step(); };
+document.getElementById("reset").onclick = () => { stop(); reset(); };
+fnSel.onchange = () => { stop(); reset(); };
+lam.oninput = () => { document.getElementById("lamv").textContent = lam.value; };
+lam.onchange = () => { stop(); reset(); };
+lam.oninput();
+window.addEventListener("themechange", () => { A.background(F); B.background(F); draw(); });
+reset();
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>
