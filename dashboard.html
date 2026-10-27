@@ -106,6 +106,27 @@
 
 <script>
 let S = null, range = "all", champMtime = null;
+try { range = localStorage.getItem("dash-range") || "all"; } catch (e) {}
+if (["#all", "#300", "#100"].includes(location.hash)) range = location.hash.slice(1);   // bookmarkable view
+
+// Y-axis from the values actually visible: rounded limits + ~5 ticks with a sensible step.
+function nice(vals, opt = {}) {
+  let v = vals.filter(x => x != null && isFinite(x));
+  if (!v.length) v = [0, 1];
+  let lo = Math.min(...v), hi = Math.max(...v);
+  if (opt.min != null) lo = Math.max(lo, opt.min);
+  if (opt.max != null) hi = Math.min(hi, opt.max);
+  if (opt.zero) lo = Math.min(lo, 0);
+  if (hi - lo < 1e-9) { lo -= Math.abs(lo) * .1 || 1; hi += Math.abs(hi) * .1 || 1; }
+  const raw = (hi - lo) / 5, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
+  const step = (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * mag;
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  if (opt.min != null) lo = Math.max(lo, opt.min);
+  if (opt.max != null) hi = Math.min(hi, opt.max);
+  const ticks = []; for (let t = lo; t <= hi + step / 2; t += step) ticks.push(+t.toPrecision(12));
+  const dec = Math.max(0, -Math.floor(Math.log10(step)));
+  return { lo, hi, ticks, tf: t => t.toFixed(dec) + (opt.unit || "") };
+}
 const rp = new WalkerReplay(document.getElementById("c-walk"));
 rp.speed = 2;
 const fmt = (v, d = 0) => v == null || isNaN(v) ? "–" : (+v).toFixed(d);
@@ -125,7 +146,7 @@ function chart(id, xs, series, opt, onHover) {
     for (const v of opt.ticks) { ctx.strokeStyle = css("--grid"); ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(W - R, Y(v)); ctx.stroke(); ctx.fillStyle = css("--muted"); ctx.fillText(opt.tf ? opt.tf(v) : v, 4, Y(v) + 4); }
     const xt = Math.max(1, Math.round((x1 - x0) / 8 / 10) * 10);
     for (let g = Math.ceil(x0 / xt) * xt; g <= x1; g += xt) { ctx.fillStyle = css("--muted"); ctx.fillText(g, X(g) - 8, H - 6); }
-    for (const l of opt.hlines || []) { ctx.strokeStyle = css(l.color); ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(L, Y(l.v)); ctx.lineTo(W - R, Y(l.v)); ctx.stroke(); ctx.setLineDash([]); }
+    for (const l of (opt.hlines || []).filter(l => l.v >= lo && l.v <= hi)) { ctx.strokeStyle = css(l.color); ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(L, Y(l.v)); ctx.lineTo(W - R, Y(l.v)); ctx.stroke(); ctx.setLineDash([]); }
     for (const vl of opt.vlines || []) { ctx.strokeStyle = css("--red"); ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(X(vl), T); ctx.lineTo(X(vl), H - B); ctx.stroke(); ctx.setLineDash([]); }
     for (const s of series) {
       ctx.strokeStyle = ctx.fillStyle = css(s.color);
@@ -175,36 +196,34 @@ function render() {
 
   // fitness chart
   let champ = [], lastc = null; for (const r of st) { if (r.best_score != null) lastc = r.best_score; champ.push(lastc); }
-  const lo = Math.min(-120, ...st.map(r => r.mean_fitness)), hi = Math.max(320, ...st.map(r => r.best_fitness)) + 10;
+  const yf = nice([...st.map(r => r.mean_fitness), ...st.map(r => r.best_fitness), ...st.map(r => r.hof_mean), ...st.map(r => r.hof_best), ...champ]);
   chart("c-fit", g, [
     { ys: st.map(r => r.mean_fitness), color: "--muted", width: 1 }, { ys: st.map(r => r.median_fitness), color: "--s3", width: 1.5 },
     { ys: st.map(r => r.best_fitness), color: "--accent", width: 1.5 }, { ys: champ, color: "--blue", width: 3 },
     { ys: st.map(r => r.hof_mean), color: "--text", dots: true, r: 3 }, { ys: st.map(r => r.hof_best), color: "--s2", dots: true, r: 2.5 },
-  ], { w: 900, h: 300, lo, hi, ticks: [-100, 0, 100, 200, 300].filter(v => v >= lo && v <= hi), hlines: [{ v: 300, color: "--accent" }],
+  ], { w: 900, h: 300, ...yf, hlines: [{ v: 300, color: "--accent" }],
        vlines: restartGens() }, i => {
     const r = st[i];
     document.getElementById("h-fit").textContent = `gen ${r.generation}: best ${fmt(r.best_fitness, 1)} · median ${fmt(r.median_fitness, 1)} · mean ${fmt(r.mean_fitness, 1)}` +
       (r.hof_mean != null ? ` · held-out: mean ${fmt(r.hof_mean, 1)}, best ${fmt(r.hof_best, 1)}` : "") + ` · champion ${fmt(champ[i], 1)}`;
   });
-  const smax = Math.max(...st.map(r => r.sigma)) * 1.1;
-  chart("c-sig", g, [{ ys: st.map(r => r.sigma), color: "--s1", width: 2 }], { w: 420, h: 200, lo: 0, hi: smax, ticks: [0, smax / 2, smax].map(v => +v.toFixed(2)), vlines: restartGens() },
+  chart("c-sig", g, [{ ys: st.map(r => r.sigma), color: "--s1", width: 2 }], { w: 420, h: 200, ...nice(st.map(r => r.sigma), { min: 0 }), vlines: restartGens() },
     i => document.getElementById("h-sig").textContent = `gen ${st[i].generation}: σ ${fmt(st[i].sigma, 4)}, λ ${st[i].popsize}`);
   chart("c-beh", g, [{ ys: st.map(r => 100 * r.fall_frac), color: "--red", width: 1.5 }, { ys: st.map(r => 100 * r.stall_frac), color: "--s3", width: 1.5 },
-    { ys: st.map(r => 100 * r.mean_x / 88.7), color: "--blue", width: 2 }], { w: 420, h: 200, lo: 0, hi: 100, ticks: [0, 50, 100], tf: v => v + "%" },
+    { ys: st.map(r => 100 * r.mean_x / 88.7), color: "--blue", width: 2 }], { w: 420, h: 200, ...nice([...st.map(r => 100 * r.fall_frac), ...st.map(r => 100 * r.stall_frac), ...st.map(r => 100 * r.mean_x / 88.7)], { min: 0, max: 100, unit: "%" }) },
     i => document.getElementById("h-beh").textContent = `gen ${st[i].generation}: fell ${fmt(100 * st[i].fall_frac)}% · stalled ${fmt(100 * st[i].stall_frac)}% · mean x ${fmt(st[i].mean_x, 1)}`);
-  const tmax = Math.max(...st.map(r => Math.max(r.gen_seconds, r.env_steps_gen / 1e4))) * 1.1;
   chart("c-thr", g, [{ ys: st.map(r => r.gen_seconds), color: "--accent", width: 1.5 }, { ys: st.map(r => r.env_steps_gen / 1e4), color: "--blue", width: 1.5 }],
-    { w: 420, h: 200, lo: 0, hi: tmax, ticks: [0, Math.round(tmax / 2), Math.round(tmax)] },
+    { w: 420, h: 200, ...nice([...st.map(r => r.gen_seconds), ...st.map(r => r.env_steps_gen / 1e4)], { min: 0 }) },
     i => document.getElementById("h-thr").textContent = `gen ${st[i].generation}: ${fmt(st[i].gen_seconds, 1)} s · ${fmt(st[i].env_steps_gen / 1e3)} k steps · ${fmt(st[i].env_steps_gen / st[i].gen_seconds / 1e3, 1)} k steps/s · RAM free ${st[i].mem_avail_mb} MB`);
 
   // gait (gait.csv, runs started after gait tracking existed)
   if (S.gait && S.gait.length) {
     document.getElementById("gait-card").style.display = "";
     const gs = range === "all" ? S.gait : S.gait.slice(-+range), gg = gs.map(r => r.generation);
-    const cmax = Math.max(10, ...gs.map(r => Math.max(r.crossings, r.crossings_best))) * 1.1;
+    const yg = nice([...gs.map(r => r.crossings), ...gs.map(r => r.crossings_best)], { min: 0 });
     chart("c-gait", gg, [{ ys: gs.map(r => r.crossings), color: "--accent", width: 2 }, { ys: gs.map(r => r.crossings_best), color: "--accent", width: 1, dash: [4, 3] },
-      { ys: gs.map(r => r.front2_share * cmax), color: "--blue", width: 1.5 }], { w: 900, h: 200, lo: 0, hi: cmax, ticks: [0, Math.round(cmax / 2), Math.round(cmax)],
-      hlines: [{ v: cmax / 2, color: "--line" }] },
+      { ys: gs.map(r => yg.lo + r.front2_share * (yg.hi - yg.lo)), color: "--blue", width: 1.5 }], { w: 900, h: 200, ...yg,
+      hlines: [{ v: (yg.lo + yg.hi) / 2, color: "--line" }] },
       i => document.getElementById("h-gait").textContent = `gen ${gs[i].generation}: ${fmt(gs[i].crossings, 1)} crossing steps per episode (best candidate ${fmt(gs[i].crossings_best, 1)}) · ${fmt(gs[i].lead_changes, 1)} front-foot changes · foot 2 in front ${fmt(100 * gs[i].front2_share)}% of the time`);
   }
 
@@ -264,7 +283,8 @@ const play = document.getElementById("play");
 play.onclick = () => { if (rp.playing) { rp.pause(); play.textContent = "▶ Play"; } else { rp.play(); play.textContent = "❚❚ Pause"; } };
 rp.onEnd = () => { setTimeout(() => { rp.seek(0); rp.play(); }, 1200); };
 document.getElementById("spd").onchange = e => rp.speed = +e.target.value;
-document.querySelectorAll("#range button").forEach(b => b.onclick = () => { range = b.dataset.r; document.querySelectorAll("#range button").forEach(x => x.classList.toggle("on", x === b)); render(); });
+document.querySelectorAll("#range button").forEach(b => b.classList.toggle("on", b.dataset.r === range));
+document.querySelectorAll("#range button").forEach(b => b.onclick = () => { range = b.dataset.r; try { localStorage.setItem("dash-range", range); } catch (e) {} document.querySelectorAll("#range button").forEach(x => x.classList.toggle("on", x === b)); render(); });
 document.getElementById("theme").onclick = () => { const d = document.documentElement; d.dataset.theme = (d.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark" ? "light" : "dark"; render(); rp.draw(); };
 
 let next = 0;
