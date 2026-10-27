@@ -4,6 +4,7 @@ const LESSONS = [
   { slug: "02-a-policy-is-numbers", title: "A policy is just numbers", sub: "The neural network, and how 932 weights become one point" },
   { slug: "03-cma-es", title: "Evolution strategies and CMA-ES", sub: "Sample, rank, move, stretch: learning without gradients" },
   { slug: "04-noisy-fitness", title: "Noisy fitness, honest selection", sub: "Why ten terrains lie, and how to pick a champion" },
+  { slug: "the-reward", title: "The reward function", sub: "What the walker is actually paid for, and what it isn't" },
   { slug: "05-the-training-run", title: "The training run", sub: "Three false starts, and the fitness that finally produced a walker", draft: true },
   { slug: "06-inside-the-champion", title: "Inside the champion", sub: "What the hidden neurons do while it walks", draft: true },
   { slug: "07-results", title: "Results and comparison", sub: "100 unseen terrains; CMA-ES against NEAT, PPO and TD3", draft: true },

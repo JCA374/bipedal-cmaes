@@ -66,8 +66,8 @@ def sec(name, text):
 def lesson5(d):
     ms = d["ms"]
     stages = [k for k in ("first_positive", "100", "200", "300") if k in ms]
-    s = ["# Lesson 5: The training run\n",
-         sec("intro", "Lesson five. CMA-ES climbs whatever you tell it to climb. My first three attempts climbed the wrong hill. The walker learned to dive, to lunge, and to fall on purpose. Here's why, and what finally worked."),
+    s = ["# Lesson 6: The training run\n",
+         sec("intro", "Lesson six. CMA-ES climbs whatever you tell it to climb. My first three attempts climbed the wrong hill. The walker learned to dive, to lunge, and to fall on purpose. Here's why, and what finally worked."),
          sec("shaping", "First, a distinction. The score we report is fixed: the raw reward over full episodes. But the fitness that training climbs is ours to design."),
          sec("shaping.2", "Two choices matter. Episodes are cut short when the walker stops moving, which saves a lot of time. And the price of a fall, or of a stall, can be changed for training only."),
          sec("traps", "Attempt one used the real fall penalty of a hundred, plus a stall penalty of a hundred. Standing still scored worse than falling. So the walker learned to dive forward and fall, and every dive scored about the same. There was no slope left to climb."),
@@ -101,8 +101,8 @@ def lesson6(d):
     g = I["gait"]
     top_in = ", ".join(x["name"] for x in inp[:3])
     blind = d["lidar"] < d["body"] / 10
-    s = ["# Lesson 6: Inside the champion\n",
-         sec("intro", "Lesson six. The champion is nine hundred and thirty two numbers. What do they do? Let's open the network while it walks."),
+    s = ["# Lesson 7: Inside the champion\n",
+         sec("intro", "Lesson seven. The champion is nine hundred and thirty two numbers. What do they do? Let's open the network while it walks."),
          sec("heat", "Each row is one of the thirty two hidden neurons, and time runs to the right. Blue is positive, orange is negative. At the bottom, you can see when each foot is on the ground."),
          sec("heat.2", f"Look for repeating stripes. Many neurons switch in step with the feet. And about {words(round(I['saturation'] * 100))} percent of the time, a neuron sits at its limit, fully on or fully off. Many of them act like switches."),
          ]
@@ -123,8 +123,8 @@ def lesson6(d):
 def lesson7(d):
     E, P = d["E"], d["P"]
     solved = E["mean"] >= 300
-    s = ["# Lesson 7: Results and comparison\n",
-         sec("intro", "Lesson seven, the honest test. A hundred tracks the walker has never seen, full episodes, and the unmodified reward."),
+    s = ["# Lesson 8: Results and comparison\n",
+         sec("intro", "Lesson eight, the honest test. A hundred tracks the walker has never seen, full episodes, and the unmodified reward."),
          sec("final", f"The champion averages {words(E['mean'])} points, give or take {words(E['std'])}. It falls on {'none' if E['falls'] == 0 else words(E['falls'])} of a hundred tracks, and reaches the finish on {words(E['finished'])}."),
          sec("final.2", ("That's above three hundred. By the usual definition, the task is solved, with a network of just nine hundred and thirty two numbers."
                          if solved else f"So it's not solved. Three hundred is the bar, and {'none' if E['n_ge_300'] == 0 else words(E['n_ge_300'])} of a hundred runs reached it. But look at how consistent it is: almost every track lands close to the average.")),

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 5 · The reward function</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+</head>
+<body data-root="../.." data-lesson="the-reward">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 5 of 9</div>
+  <h1>The reward function</h1>
+  <p class="lede">The walker never sees our goal ("walk well"). It sees one number per step, and learns whatever makes the total
+  of those numbers large. This lesson reads that number line by line: what it pays for, what it doesn't, and what that does to the gait.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>write down the exact reward and split an episode's score into its parts;</li>
+    <li>say what the reward does <i>not</i> pay for, and predict the side effects;</li>
+    <li>explain why a reward is only a proxy for what we want, and how the walkers here "gamed" it.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+
+<section>
+<h2><span class="num">1</span>The actual code</h2>
+<p>This is the reward from the environment's source (gymnasium 0.29, <code>bipedal_walker.py</code>), lightly trimmed. It runs once per simulation step, 50 times per second:</p>
+<pre>shaping  = 130 * hull.x / SCALE          # SCALE = 30: distance, in points
+shaping -= 5.0 * abs(hull_angle)          # keep the body level
+reward   = shaping - prev_shaping         # only the CHANGE counts each step
+prev_shaping = shaping
+
+for a in action:                          # four motor commands
+    reward -= 0.00035 * 80 * min(abs(a), 1)   # = 0.028 per unit of effort
+
+if hull touches the ground or x &lt; 0:
+    reward = -100                         # replaces this step's reward
+    terminated = True
+if hull.x &gt; finish:                        # x ≈ 88.7
+    terminated = True                     # no bonus for finishing</pre>
+<p>Four parts, then:</p>
+<table class="t">
+<tr><th>part</th><th>per step</th><th>over a whole episode</th></tr>
+<tr><td style="color:var(--green)"><b>progress</b></td><td>+4.33 per unit moved forward</td><td>≈ 364 from start (x = 4.7) to finish (x = 88.7)</td></tr>
+<tr><td style="color:var(--accent)"><b>effort</b></td><td>−0.028 × (|a₁|+|a₂|+|a₃|+|a₄|)</td><td>0 to −179 (all motors flat out for 1600 steps)</td></tr>
+<tr><td><b>tilt</b></td><td>−5 × change in |hull angle|</td><td>tiny: only the final tilt counts, since the changes add up</td></tr>
+<tr><td style="color:var(--red)"><b>fall</b></td><td>−100, episode over</td><td>−100 plus the progress you never made</td></tr>
+</table>
+</section>
+
+<section>
+<h2><span class="num">2</span>Where each walker's score comes from</h2>
+<p>Split recorded episodes into those parts. Green is what the walker earned by moving, orange what it spent on effort, red the fall.
+The numbers add up to the real score, within a point.</p>
+<div class="demo">
+  <canvas id="bud"></canvas>
+  <p class="readout" id="budinfo"></p>
+</div>
+<p id="budtxt"></p>
+</section>
+
+<section>
+<h2><span class="num">3</span>What it does <i>not</i> pay for</h2>
+<table class="t">
+<tr><th>not in the reward</th><th>so…</th></tr>
+<tr><td>footsteps, or how many steps you take</td><td>a shuffle and a stride over the same distance earn the same</td></tr>
+<tr><td>style: feet passing, symmetry, a human-like gait</td><td>a skip that covers ground cheaply is as good as a walk (lesson 9)</td></tr>
+<tr><td>staying alive</td><td>no points for standing; not falling only pays through the progress you keep making</td></tr>
+<tr><td>finishing</td><td>no bonus at the line; finishing early only saves effort you'd otherwise spend</td></tr>
+<tr><td>time, directly</td><td>but every step costs effort, so slow walking is expensive: the reward quietly favours speed</td></tr>
+</table>
+<div class="key"><b>The reward is a proxy</b>We want "walk well". The reward says "move right, spend little, don't touch the ground".
+An optimizer doesn't know the difference, and it will find any loophole between the two. In this project it found several:
+diving forward, lunging, falling early to stop paying for effort, standing still (NEAT), and skipping with one leg as a prop.
+Each was a perfectly good answer to the question the reward actually asked.</div>
+</section>
+
+<section>
+<h2><span class="num">4</span>Change the reward yourself</h2>
+<p>Here are real recorded episodes, rescored with weights you choose. The ranking shows which behaviour a reward like yours would prefer.
+Try making effort expensive, removing the fall penalty, or paying per footstep (counted as foot touchdowns).</p>
+<div class="demo">
+  <div class="controls">
+    <label>progress × <input type="range" id="wp" min="0" max="2" step="0.1" value="1"> <b id="wpv"></b></label>
+    <label>effort × <input type="range" id="we" min="0" max="3" step="0.1" value="1"> <b id="wev"></b></label>
+    <label>fall penalty <input type="range" id="wf" min="0" max="200" step="10" value="100"> <b id="wfv"></b></label>
+    <label>per footstep <input type="range" id="ws" min="0" max="3" step="0.1" value="0"> <b id="wsv"></b></label>
+    <button class="btn" id="wreset">real reward</button>
+  </div>
+  <table class="t" id="rank"></table>
+  <p class="readout" id="rankinfo"></p>
+</div>
+<p id="ranktxt"></p>
+</section>
+
+<section>
+<h2><span class="num">5</span>Reward vs training fitness</h2>
+<p>Everything on this site is reported with the reward above, unchanged. But during training we're allowed to optimise something slightly different,
+the <b>training fitness</b>, if that leads the search to a better walker on the real reward. Lesson 6 shows how much that choice matters:
+the first three attempts used fitness functions that made falling the best thing to do.</p>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="1"><p>1. Two walkers cover the same distance; one takes 60 steps, the other 120. Who gets more reward?</p>
+  <button>The one with 120 steps</button><button>Neither, if they spend the same effort: only distance and effort count</button><button>The one with 60 steps, always</button>
+  <div class="why">There's no term for footsteps. Fewer, bigger steps only help if they cost less effort.</div></div>
+<div class="q" data-answer="2"><p>2. Why does a slow but safe walker score poorly even if it never falls?</p>
+  <button>There's a time penalty</button><button>Falling is rewarded</button><button>Every step costs effort, and the 1600-step limit stops it before the progress points run out</button>
+  <div class="why">Time isn't penalised directly, but effort accumulates per step and progress stops at the time limit.</div></div>
+<div class="q" data-answer="0"><p>3. The walker skips instead of walking. Is that a bug in the learning?</p>
+  <button>No: the reward doesn't ask for a walk, and the skip answers the question it does ask</button><button>Yes, CMA-ES is broken</button><button>Yes, the network is too small</button>
+  <div class="why">The optimizer did its job. If we want a particular gait, we have to ask for it, in the reward or in the network's structure (lesson 9).</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+const EPS = [["random", "random network (falls)"], ["stage_gen0", "generation 0 (stands, flails)"], ["neat", "NEAT walker"],
+             ["stage_100", "CMA-ES at 100"], ["stage_200", "CMA-ES at 200"], ["champion", "CMA-ES champion"]];
+let parts = [];
+function decompose(d, label) {
+  const F = d.frames, e = d.every, prog = 130 / 30 * (F[F.length - 1].x - 4.67);
+  const eff = F.reduce((s, f) => s + 0.028 * f.a.reduce((t, a) => t + Math.min(1, Math.abs(a)), 0), 0) * e;
+  const tilt = -5 * Math.abs(F[F.length - 1].o[0]);
+  let steps = 0;
+  for (let k = 1; k < F.length; k++) for (const c of [8, 13]) if (F[k].o[c] > .5 && F[k - 1].o[c] <= .5) steps++;
+  const fall = d.fell ? d.reward - (prog - eff + tilt) : 0;
+  return { label, reward: d.reward, prog, eff, tilt, fall, fell: d.fell, steps, len: d.steps };
+}
+const bc = document.getElementById("bud"), bctx = setupCanvas(bc, 720, 300);
+function drawBudget() {
+  const W = 720, H = 300, x0 = 200, sc = 300 / 400, zero = x0 + 170 * sc * 1.35, rh = 40;
+  bctx.clearRect(0, 0, W, H); bctx.font = "12px system-ui";
+  const X = v => zero + v * sc;
+  bctx.strokeStyle = css("--line"); bctx.beginPath(); bctx.moveTo(X(0), 0); bctx.lineTo(X(0), H - 20); bctx.stroke();
+  parts.forEach((p, i) => {
+    const y = 10 + i * (rh + 7);
+    bctx.fillStyle = css("--muted"); bctx.textAlign = "right"; bctx.fillText(p.label, x0 - 10, y + rh / 2 + 4); bctx.textAlign = "left";
+    bctx.fillStyle = css("--green"); bctx.fillRect(X(0), y, p.prog * sc, rh / 2 - 2);
+    let neg = 0;
+    for (const [v, c] of [[p.eff, "--accent"], [-p.tilt, "--muted"], [-p.fall, "--red"]]) { if (v > 0) { bctx.fillStyle = css(c); bctx.fillRect(X(-neg - v), y + rh / 2, v * sc, rh / 2 - 2); neg += v; } }
+    bctx.fillStyle = css("--text"); bctx.fillText(`= ${p.reward.toFixed(0)}`, X(Math.max(p.prog, 0)) + 6, y + 13);
+  });
+  bctx.fillStyle = css("--muted");
+  for (const v of [-200, -100, 0, 100, 200, 300]) bctx.fillText(v, X(v) - 8, H - 4);
+}
+function rank() {
+  const wp = +document.getElementById("wp").value, we = +document.getElementById("we").value, wf = +document.getElementById("wf").value, ws = +document.getElementById("ws").value;
+  for (const [k, v] of [["wpv", wp + "×"], ["wev", we + "×"], ["wfv", wf], ["wsv", ws]]) document.getElementById(k).textContent = v;
+  const rows = parts.map(p => ({ ...p, s: wp * p.prog - we * p.eff + p.tilt + (p.fell ? -wf + (p.fall + 100) : 0) + ws * p.steps })).sort((a, b) => b.s - a.s);
+  document.getElementById("rank").innerHTML = "<tr><th>rank</th><th>walker</th><th>progress</th><th>effort</th><th>footsteps</th><th>fell</th><th>score with your reward</th></tr>" +
+    rows.map((r, i) => `<tr><td>${i + 1}</td><td>${r.label}</td><td>${r.prog.toFixed(0)}</td><td>${r.eff.toFixed(0)}</td><td>${r.steps}</td><td>${r.fell ? "yes" : ""}</td><td style="color:var(--accent);font-weight:600">${r.s.toFixed(0)}</td></tr>`).join("");
+  document.getElementById("rankinfo").textContent = wp === 1 && we === 1 && wf === 100 && ws === 0 ? "This is the real reward (it matches each episode's actual score, within a point)." : "A different reward: different winners.";
+}
+["wp", "we", "wf", "ws"].forEach(k => document.getElementById(k).oninput = rank);
+document.getElementById("wreset").onclick = () => { document.getElementById("wp").value = 1; document.getElementById("we").value = 1; document.getElementById("wf").value = 100; document.getElementById("ws").value = 0; rank(); };
+Promise.all(EPS.map(([f, l]) => fetch(`../../data/episodes/${f}.json`).then(r => r.ok ? r.json() : null).then(d => d && decompose(d, l)))).then(ps => {
+  parts = ps.filter(Boolean);
+  drawBudget(); rank();
+  const c = parts.find(p => p.label === "CMA-ES champion"), n = parts.find(p => p.label === "NEAT walker");
+  if (c && n) document.getElementById("budinfo").textContent = `NEAT: earned ${n.prog.toFixed(0)}, spent ${n.eff.toFixed(0)} on effort (ran out of time at x ≈ ${(n.prog * 30 / 130 + 4.67).toFixed(0)}). CMA-ES champion: earned ${c.prog.toFixed(0)}, spent ${c.eff.toFixed(0)}.`;
+  window.addEventListener("themechange", () => drawBudget());
+  const b2 = parts.find(p => p.label === "CMA-ES at 200");
+  if (c && n && b2) {
+    document.getElementById("budtxt").textContent = `Compare: NEAT spends little effort (${n.eff.toFixed(0)}) but runs out of time before the finish. ` +
+      `CMA-ES at the 200 milestone covers the whole track but spends ${b2.eff.toFixed(0)} on effort; by the current champion that is down to ${c.eff.toFixed(0)}. ` +
+      `Different walkers, different weaknesses, and the reward makes them comparable as one number.`;
+    // per-footstep bonus at which NEAT (most, shortest steps) overtakes each CMA-ES walker
+    const cmas = parts.filter(p => p.label.startsWith("CMA-ES"));
+    const flip = cmas.map(p => ({ p, b: n.steps > p.steps ? (p.reward - n.reward) / (n.steps - p.steps) : Infinity }));
+    const eff2 = [...parts].sort((x, y) => (y.prog - 2 * y.eff) - (x.prog - 2 * x.eff))[0];
+    const fl = flip.filter(f => isFinite(f.b));
+    const ahead = fl.filter(f => f.b <= 0).map(f => f.p.label), later = fl.filter(f => f.b > 0);
+    document.getElementById("ranktxt").textContent = `Two things to notice. A per-footstep bonus pays for tiny steps: NEAT takes the most (${n.steps}). ` +
+      (ahead.length ? `It is already ahead of ${ahead.join(" and ")}, and it` : "It") +
+      ` overtakes ` + later.map(f => `${f.p.label} from about ${f.b.toFixed(1)} points per step`).join(", ") +
+      `, without walking any better. A bonus meant to encourage walking ends up paying for shuffling; that's how shaped rewards backfire. ` +
+      `And with effort weighted 2×, the ranking shifts toward frugal walkers: ${eff2.label} comes out on top. The "best" walker depends on what you decided to pay for.`;
+  }
+});
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>

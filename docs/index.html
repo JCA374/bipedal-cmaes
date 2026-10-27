@@ -22,13 +22,13 @@
 
 <section id="video" style="padding-top:10px">
   <div id="video-slot"><div class="placeholder"><b>The explainer video is coming.</b><br>
-    It's rendered once training finishes, from the real run. In the meantime, lessons 1–4 cover everything you need to follow it.</div></div>
+    It's rendered once training finishes, from the real run. In the meantime, lessons 1–5 cover everything you need to follow it.</div></div>
 </section>
 
 <section id="lessons">
   <h2>Lessons</h2>
   <p class="intro">Each lesson is a short page with an interactive demo, a narrated clip and a three-question self-check.
-  Lessons 1–4 are the background; 5–7 use the results of the training run.</p>
+  Lessons 1–5 are the background; 6–9 use the results of the training run.</p>
   <div class="lessons" id="lesson-list"></div>
 </section>
 
@@ -91,7 +91,7 @@
   draw(); window.addEventListener("themechange", draw);
   document.getElementById("history").innerHTML = '<table class="t"><tr><th>from gen</th><th>setting</th><th>why</th></tr>' +
     d.history.map(h => `<tr><td>${h.generation}</td><td>λ ${h.popsize}, K ${h.k}, σ0 ${h.sigma0}, fall cost ${h.fall_cost}, stall cost ${h.stall_penalty}</td><td>${h.reason || "start of run"}</td></tr>`).join("") +
-    '</table><p class="note">Earlier failed starts (the "dive" and "lunge" traps) are described in TRAINING_LOG.md and in lesson 5.</p>';
+    '</table><p class="note">Earlier failed starts (the "dive" and "lunge" traps) are described in TRAINING_LOG.md and in lesson 6.</p>';
 })();
 </script>
 </body>

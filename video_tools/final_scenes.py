@@ -232,13 +232,13 @@ def l5_outro():
         d = ImageDraw.Draw(img)
         text(d, (W // 2, 270), "flailing → standing → a step → walking", 40, FG, fade(t, .2), bold=True, anchor="mm")
         text(d, (W // 2, 350), "every link must score a little better than the one before", 26, MUTED, fade(t, 1), anchor="mm")
-        text(d, (W // 2, 470), "Next: lesson 6, inside the champion", 26, AMBER, fade(t, 3), anchor="mm")
+        text(d, (W // 2, 470), "Next: lesson 7, inside the champion", 26, AMBER, fade(t, 3), anchor="mm")
         return img
     return Scene("outro", render, [6])
 
 
 def lesson5():
-    return [title_card("intro", "LESSON 5", "The training run", "three false starts, and the fitness that worked", 6),
+    return [title_card("intro", "LESSON 6", "The training run", "three false starts, and the fitness that worked", 6),
             l5_shaping(), l5_traps(), l5_breakthrough(), l5_stages(modes=list(range(nbeats("lesson-05", "stages")))),
             l5_curve(), l5_outro()]
 
@@ -407,13 +407,13 @@ def l6_outro():
         img = blank()
         d = ImageDraw.Draw(img)
         text(d, (W // 2, 300), "a few switch-like neurons, driven by the legs' own feel", 34, FG, fade(t, .2), bold=True, anchor="mm")
-        text(d, (W // 2, 420), "Next: lesson 7, the final test", 26, AMBER, fade(t, 1.5), anchor="mm")
+        text(d, (W // 2, 420), "Next: lesson 8, the final test", 26, AMBER, fade(t, 1.5), anchor="mm")
         return img
     return Scene("outro", render, [6])
 
 
 def lesson6():
-    sc = [title_card("intro", "LESSON 6", "Inside the champion", "what the hidden neurons do while it walks", 6), l6_heat()]
+    sc = [title_card("intro", "LESSON 7", "Inside the champion", "what the hidden neurons do while it walks", 6), l6_heat()]
     if nbeats("lesson-06", "gait"):
         sc.append(l6_gait())
     return sc + [l6_ablation(), l6_inputs(), l6_outro()]
@@ -556,7 +556,7 @@ def l7_outro(name="outro"):
 
 
 def lesson7():
-    return [title_card("intro", "LESSON 7", "Results and comparison", "the honest test", 6),
+    return [title_card("intro", "LESSON 8", "Results and comparison", "the honest test", 6),
             l7_final(), l7_budget(), l7_neat(), l7_table(), l7_outro()]
 
 
@@ -757,10 +757,147 @@ def l8_outro():
 
 
 def lesson8():
-    sc = [title_card("intro", "LESSON 8", "Two ways to walk", "skipping, and a network built to take turns", 6), l8_skip(), l8_why(), l8_fix()]
+    sc = [title_card("intro", "LESSON 9", "Two ways to walk", "skipping, and a network built to take turns", 6), l8_skip(), l8_why(), l8_fix()]
     if nbeats("lesson-08", "results"):
         sc.append(l8_results())
     return sc + [l8_outro()]
 
 
 VIDEOS["08-two-ways-to-walk"] = ("lesson-08", lesson8)
+
+
+# =============================================================================
+# Lesson 5: the reward function (voice slug lesson-reward)
+# =============================================================================
+
+REWARD_CODE = """shaping  = 130 * hull.x / SCALE          # distance, in points
+shaping -= 5.0 * abs(hull_angle)          # keep the body level
+reward   = shaping - prev_shaping         # only the change counts
+prev_shaping = shaping
+for a in action:                          # four motor commands
+    reward -= 0.00035 * 80 * min(abs(a), 1)
+if hull touches the ground:
+    reward = -100;  episode ends
+if hull.x > finish:  episode ends         # no bonus"""
+
+
+def lr_code():
+    lines = REWARD_CODE.split("\n")
+    hl = {0: GREEN, 1: MUTED, 5: AMBER, 6: RED, 7: RED}
+
+    def render(t, b):
+        img = blank()
+        d = ImageDraw.Draw(img)
+        heading(d, "The reward, from the source code", t)
+        d.rectangle([50, 140, 1230, 600], fill=(7, 11, 24))
+        k, lt, _ = b.local(t)
+        for i, ln in enumerate(lines):
+            a = fade(t, 0.5 + i * 0.6)
+            y = 165 + i * 46
+            if k == 1 and i in hl:
+                d.rectangle([60, y - 6, 1220, y + 34], fill=C.mix((7, 11, 24), hl[i], .28))
+            text(d, (75, y), ln, 21, FG, a, mono=True, bg=(7, 11, 24))
+        if k == 1:
+            for i, (s, c) in enumerate([("progress: +4.33 / unit", GREEN), ("effort: −0.028 / unit", AMBER), ("tilt: small", MUTED), ("fall: −100, the end", RED)]):
+                text(d, (60 + i * 300, 640), s, 19, c, fade(lt, i * .8), bold=True)
+        return img
+    return Scene("code", render, [8, 10])
+
+
+def lr_budget():
+    def parts(policy, seed):
+        env = common.make_env()
+        acts, xs = [], []
+        common.run_episode(policy, env, seed, early_stop=False,
+                           on_step=lambda o, a, tot, e: (acts.append(np.clip(np.abs(a), 0, 1).sum()), xs.append(e.unwrapped.hull.position.x)))
+        return np.cumsum(130 / 30 * np.diff([4.67] + xs)), np.cumsum(0.028 * np.array(acts))
+    walkers = [(C.load_actions("neat"), 30_000_002, "NEAT walker"),
+               (common.load_policy(os.path.join(RUN, "milestones", "200"))[0], 30_000_008, "CMA-ES at 200")]
+    data = [parts(p, s) for p, s, _ in walkers]
+    players = [C.Player(C.load_actions("neat"), 30_000_002), C.Player(walkers[1][0], 30_000_008)]
+
+    def render(t, b):
+        img = blank()
+        k, lt, _ = b.local(t)
+        p = players[k]
+        paste_frame(img, p.at_time(lt, 2.0, loop_pause=0), (40, 40, 700, 467))
+        d = ImageDraw.Draw(img)
+        label(d, (55, 55), walkers[k][2] + "  (2× speed)", 20)
+        prog, eff = data[k]
+        i = min(len(prog) - 1, p.step)
+        sc = 1.4
+        text(d, (780, 80), "where the score comes from", 22, MUTED)
+        sc = 1.1
+        d.rectangle([780, 120, 780 + max(2, prog[i] * sc), 170], fill=GREEN)
+        text(d, (780, 185), f"earned by moving  +{prog[i]:.0f}", 20, GREEN, bold=True)
+        d.rectangle([780 + (prog[i] - eff[i]) * sc, 230, 780 + max(2, prog[i] * sc), 280], fill=AMBER)
+        text(d, (780, 295), f"effort spent  −{eff[i]:.0f}", 20, AMBER, bold=True)
+        text(d, (780, 370), f"score so far  {prog[i] - eff[i]:.0f}", 30, FG, bold=True)
+        text(d, (780, 430), f"step {p.step} / 1600", 18, MUTED)
+        if p.done or p.step >= 1600:
+            text(d, (780, 480), "finished" if p.step < 1600 else "out of time", 26, GREEN if p.step < 1600 else RED, bold=True)
+        return img
+    return Scene("budget", render, [10, 10])
+
+
+def lr_notpaid():
+    items = [("footsteps", "a shuffle and a stride over the same distance earn the same"),
+             ("style", "feet passing each other are worth nothing"),
+             ("staying alive", "standing still earns nothing"), ("finishing", "no bonus at the line")]
+
+    def render(t, b):
+        img = blank()
+        d = ImageDraw.Draw(img)
+        heading(d, "What the reward does NOT pay for", t)
+        for i, (h, s) in enumerate(items):
+            a = fade(t, .6 + i * 1.6)
+            y = 160 + i * 95
+            text(d, (80, y), "✗ " + h, 30, RED, a, bold=True)
+            text(d, (420, y + 6), s, 22, FG, a)
+        a = beat_alpha(b, t, 1)
+        d.rounded_rectangle([70, 560, 1210, 670], 14, outline=C.mix(BG, AMBER, a), width=3)
+        paragraph(d, (95, 580), "but every step costs effort and the clock stops at 1600 steps: the reward quietly favours speed", 80, 24, AMBER, a)
+        return img
+    return Scene("notpaid", render, [9, 7])
+
+
+def lr_proxy():
+    tiles = [("dive", "v0: dive forward"), ("early", "v2: fall early, stop paying effort"), ("stand", "v3 at fall cost 40: stand still"), ("walk", "v3: skip, one leg as a prop")]
+
+    def render(t, b):
+        img = blank()
+        d = ImageDraw.Draw(img)
+        k, lt, _ = b.local(t)
+        if k == 0:
+            heading(d, "The reward is a proxy", t)
+            text(d, (W // 2, 260), "what we want:  walk well", 40, GREEN, fade(t, .3), bold=True, anchor="mm")
+            text(d, (W // 2, 360), "what we pay for:  move right · spend little · don't touch the ground", 30, AMBER, fade(t, 1.5), anchor="mm")
+            text(d, (W // 2, 480), "an optimizer can't tell the difference", 26, FG, fade(t, 3.5), anchor="mm")
+        else:
+            text(d, (40, 30), "What the optimizer found", 32, FG, bold=True)
+            for i, (key, lab) in enumerate(tiles):
+                p = arche_player(key)
+                x, y = 40 + (i % 2) * 620, 90 + (i // 2) * 310
+                paste_frame(img, p.at_time(lt, 1.0, loop_pause=0.5, length=300), (x, y, 580, 280))
+                d = ImageDraw.Draw(img)
+                label(d, (x + 10, y + 10), lab, 18)
+        return img
+    return Scene("proxy", render, [9, 9])
+
+
+def lr_outro():
+    def render(t, b):
+        img = blank()
+        d = ImageDraw.Draw(img)
+        text(d, (W // 2, 300), "the reward decides what gets learned", 40, FG, fade(t, .2), bold=True, anchor="mm")
+        text(d, (W // 2, 400), "Next: lesson 6, the training run", 26, AMBER, fade(t, 1.5), anchor="mm")
+        return img
+    return Scene("outro", render, [6])
+
+
+def lesson_reward():
+    return [title_card("intro", "LESSON 5", "The reward function", "what the walker is actually paid for", 6),
+            lr_code(), lr_budget(), lr_notpaid(), lr_proxy(), lr_outro()]
+
+
+VIDEOS["the-reward"] = ("lesson-reward", lesson_reward)

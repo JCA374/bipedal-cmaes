@@ -899,7 +899,7 @@ def l4_outro():
         img = blank()
         d = ImageDraw.Draw(img)
         text(d, (W // 2, 300), "That's the background.", 44, FG, fade(t, .2), bold=True, anchor="mm")
-        text(d, (W // 2, 380), "Next: lesson 5, the training run, including three false starts", 26, AMBER, fade(t, 1.2), anchor="mm")
+        text(d, (W // 2, 380), "Next: lesson 5, what the reward really pays for", 26, AMBER, fade(t, 1.2), anchor="mm")
         return img
     return Scene("outro", render, [6])
 

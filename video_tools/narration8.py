@@ -14,8 +14,8 @@ def main():
     G = json.load(open(os.path.join(DATA, "gait.json")))
     W = {w["run"]: w for w in G["walkers"]}
     v3, v4, C = W["v3-f20"], W.get("v4-walk"), G.get("compare")
-    s = ["# Lesson 8: Two ways to walk\n",
-         sec("intro", "Lesson eight. The champion scores well, but it never puts one foot in front of the other. Let's look at why, and test a network built to take turns."),
+    s = ["# Lesson 9: Two ways to walk\n",
+         sec("intro", "Lesson nine. The champion scores well, but it never puts one foot in front of the other. Let's look at why, and test a network built to take turns."),
          sec("skip", "Watch the feet. The line below shows which foot is in front. Above the line, foot one leads. Below it, foot two leads. A normal walk crosses the line on every step."),
          sec("skip.2", f"This walker never crosses it. On a hundred tracks, foot two leads {words(round(v3['front2_share'] * 100))} percent of the time. Its touchdowns still alternate, so it isn't hopping. It's skipping, with one leg always reaching forward."),
          sec("why", "Why did evolution keep this gait? The reward pays for distance, not for style, and the skip earns well. To switch, the walker would have to pass through clumsy in between gaits that score worse. CMA-ES searches nearby, so it stays where it is."),

@@ -50,4 +50,4 @@ This matters. My previous champion scored two hundred during selection. On a hun
 
 ## outro
 
-That's the background. Next, the training run itself: how the walker went from falling over to walking, including three false starts.
+That's the background on searching and measuring. Next, lesson five: what the reward actually pays for, and what it doesn't.

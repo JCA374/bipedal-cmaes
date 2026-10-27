@@ -14,7 +14,7 @@
 <main class="wrap narrow">
 
 <div class="lesson-head">
-  <div class="n">Lesson 4 of 8</div>
+  <div class="n">Lesson 4 of 9</div>
   <h1>Noisy fitness, honest selection</h1>
   <p class="lede">A walker's score depends on the track it gets. Every time we measure fitness, we're rolling dice.
   This lesson is about not fooling yourself, during training and when you claim a result.</p>
@@ -84,7 +84,7 @@ With common random numbers, a hard generation (all scores low) and an easy one (
 
 <section>
 <h2><span class="num">4</span>How the champion is chosen</h2>
-<p>The training fitness is noisy (5 tracks) and shaped (lesson 5 explains the shaping). So the champion is never chosen from it directly. Instead:</p>
+<p>The training fitness is noisy (5 tracks) and shaped (lessons 5 and 6 explain the shaping). So the champion is never chosen from it directly. Instead:</p>
 <ol>
   <li>Every 10 generations, take the <b>CMA mean</b> and the <b>best 3 candidates</b> of that generation.</li>
   <li>Re-test each on the same <b>20 held-out tracks</b>, never used in training, with full 1600-step episodes and the raw reward.</li>
