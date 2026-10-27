@@ -1,0 +1,163 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:04.143
+This network learned to walk without a single gradient.
+
+00:00:04.143 --> 00:00:11.248
+It's nine hundred and thirty two numbers, tuned by an evolution strategy called CMA-ES, on a four core laptop.
+
+00:00:11.248 --> 00:00:12.692
+Here's how.
+
+00:00:13.292 --> 00:00:15.449
+The task is Bipedal Walker.
+
+00:00:15.449 --> 00:00:20.809
+A body on two legs, four motors, and a bumpy track that's different every time.
+
+00:00:20.809 --> 00:00:26.470
+Every step, the walker senses twenty four numbers and sets four motor commands.
+
+00:00:27.070 --> 00:00:31.932
+Moving forward earns points, effort costs points, and a fall costs a hundred.
+
+00:00:31.932 --> 00:00:35.078
+Reaching the finish scores about three hundred.
+
+00:00:35.078 --> 00:00:39.439
+Averaged over a hundred tracks, three hundred counts as solved.
+
+00:00:40.039 --> 00:00:46.762
+The controller is a small neural network: twenty four inputs, thirty two hidden neurons, and four outputs.
+
+00:00:46.762 --> 00:00:51.422
+All its weights fit in one list of nine hundred and thirty two numbers.
+
+00:00:51.422 --> 00:00:53.609
+That list is the walker.
+
+00:00:54.209 --> 00:01:04.775
+To improve it, CMA-ES samples a cloud of candidate walkers around its current best guess, lets each one walk, ranks them, and moves toward the winners.
+
+00:01:05.375 --> 00:01:11.984
+It also learns the shape of the cloud, which weights should change together, and how big a step to take.
+
+00:01:11.984 --> 00:01:15.471
+No gradients, only rankings of whole episodes.
+
+00:01:16.071 --> 00:01:19.911
+Every score is noisy, because every track is different.
+
+00:01:19.911 --> 00:01:28.622
+So all candidates in a generation walk the same five tracks, and the champion is chosen on twenty tracks that training never sees.
+
+00:01:29.222 --> 00:01:34.659
+Attempt one used the real fall penalty of a hundred, plus a stall penalty of a hundred.
+
+00:01:34.659 --> 00:01:37.463
+Standing still scored worse than falling.
+
+00:01:37.463 --> 00:01:42.785
+So the walker learned to dive forward and fall, and every dive scored about the same.
+
+00:01:42.785 --> 00:01:45.431
+There was no slope left to climb.
+
+00:01:46.031 --> 00:01:48.865
+Attempt four set the fall cost to twenty.
+
+00:01:48.865 --> 00:01:56.037
+That's more than the effort a fall saves, but far less than the hundred that made my old NEAT walker afraid to step.
+
+00:01:56.037 --> 00:02:01.195
+Standing became the safe choice, and from standing, every step forward paid.
+
+00:02:01.795 --> 00:02:07.800
+Then, within a few generations, the best candidate jumped from about zero to over a hundred.
+
+00:02:07.800 --> 00:02:09.541
+The first real steps.
+
+00:02:09.541 --> 00:02:15.365
+By generation fifty nine, the champion scored over a hundred on the held out tracks.
+
+00:02:15.965 --> 00:02:21.934
+Its first positive score and over one hundred, both at generation fifty nine.
+
+00:02:22.534 --> 00:02:26.987
+Over two hundred, at generation one hundred and nine.
+
+00:02:27.587 --> 00:02:29.619
+Look for repeating stripes.
+
+00:02:29.619 --> 00:02:32.521
+Many neurons switch in step with the feet.
+
+00:02:32.521 --> 00:02:38.384
+And about fifty seven percent of the time, a neuron sits at its limit, fully on or fully off.
+
+00:02:38.384 --> 00:02:40.948
+Many of them act like switches.
+
+00:02:41.548 --> 00:02:43.588
+Most neurons barely matter.
+
+00:02:43.588 --> 00:02:49.007
+But freeze neuron twenty five, and the score drops by three hundred and fifty points.
+
+00:02:49.007 --> 00:02:52.454
+The walker falls on eighteen of twenty tracks.
+
+00:02:53.054 --> 00:02:56.870
+And the lidar, the rays that look ahead, barely matters.
+
+00:02:56.870 --> 00:03:00.566
+This walker walks by feel, reacting to its own joints.
+
+00:03:00.566 --> 00:03:06.232
+That's enough on these gentle tracks, but it's a likely weakness on unusual bumps.
+
+00:03:06.832 --> 00:03:12.349
+The champion averages two hundred and sixty four points, give or take sixty seven.
+
+00:03:12.349 --> 00:03:17.921
+It falls on eleven of a hundred tracks, and reaches the finish on eighty nine.
+
+00:03:18.521 --> 00:03:20.075
+So it's not solved.
+
+00:03:20.075 --> 00:03:24.219
+Three hundred is the bar, and none of a hundred runs reached it.
+
+00:03:24.219 --> 00:03:29.583
+But look at how consistent it is: almost every track lands close to the average.
+
+00:03:30.183 --> 00:03:33.216
+So the limit isn't falling, and it isn't speed.
+
+00:03:33.216 --> 00:03:34.319
+It's effort.
+
+00:03:34.319 --> 00:03:37.297
+The network pushes its motors almost flat out.
+
+00:03:37.297 --> 00:03:41.899
+To score higher, it would have to walk as far while working less hard.
+
+00:03:42.499 --> 00:03:45.782
+Now the same hundred tracks for my NEAT walker.
+
+00:03:45.782 --> 00:03:48.469
+NEAT averages one hundred and eighty.
+
+00:03:48.469 --> 00:03:51.334
+CMA-ES averages two hundred and seventy.
+
+00:03:51.334 --> 00:03:58.081
+The difference is ninety one points, and CMA-ES scores higher on ninety three of the hundred tracks.
+
+00:03:58.681 --> 00:04:04.945
+The full lessons, with interactive demos for every idea in this video, are on the project page.
+
+00:04:04.945 --> 00:04:06.948
+Thanks for watching.

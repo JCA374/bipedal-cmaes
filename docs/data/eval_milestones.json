@@ -1,0 +1,82 @@
+{
+ "first_positive": {
+  "run": "runs/v3-f20/milestones/first_positive/",
+  "episodes": 100,
+  "seeds": [
+   20000000,
+   20000099
+  ],
+  "mean": 139.5,
+  "std": 22.58,
+  "median": 142.08,
+  "min": 29.55,
+  "max": 182.81,
+  "falls": 0,
+  "fell_frac": 0.0,
+  "n_ge_300": 0,
+  "timeouts": 100,
+  "timeout_mean_x": 71.41,
+  "finished": 0,
+  "mean_steps": 1600.0
+ },
+ "gen0": {
+  "run": "runs/v3-f20/milestones/gen0/",
+  "episodes": 100,
+  "seeds": [
+   20000000,
+   20000099
+  ],
+  "mean": -131.86,
+  "std": 0.29,
+  "median": -131.94,
+  "min": -132.34,
+  "max": -131.42,
+  "falls": 0,
+  "fell_frac": 0.0,
+  "n_ge_300": 0,
+  "timeouts": 100,
+  "timeout_mean_x": 5.18,
+  "finished": 0,
+  "mean_steps": 1600.0
+ },
+ "100": {
+  "run": "runs/v3-f20/milestones/100/",
+  "episodes": 100,
+  "seeds": [
+   20000000,
+   20000099
+  ],
+  "mean": 139.5,
+  "std": 22.58,
+  "median": 142.08,
+  "min": 29.55,
+  "max": 182.81,
+  "falls": 0,
+  "fell_frac": 0.0,
+  "n_ge_300": 0,
+  "timeouts": 100,
+  "timeout_mean_x": 71.41,
+  "finished": 0,
+  "mean_steps": 1600.0
+ },
+ "200": {
+  "run": "runs/v3-f20/milestones/200/",
+  "episodes": 100,
+  "seeds": [
+   20000000,
+   20000099
+  ],
+  "mean": 204.54,
+  "std": 17.06,
+  "median": 207.57,
+  "min": 47.1,
+  "max": 216.99,
+  "falls": 1,
+  "fell_frac": 0.01,
+  "n_ge_300": 0,
+  "timeouts": 30,
+  "timeout_mean_x": 87.19,
+  "finished": 69,
+  "mean_steps": 1565.9
+ }
+}

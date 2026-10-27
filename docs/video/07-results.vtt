@@ -1,0 +1,79 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:02.820
+Lesson eight, the honest test.
+
+00:00:02.820 --> 00:00:09.166
+A hundred tracks the walker has never seen, full episodes, and the unmodified reward.
+
+00:00:09.766 --> 00:00:15.283
+The champion averages two hundred and sixty four points, give or take sixty seven.
+
+00:00:15.283 --> 00:00:20.855
+It falls on eleven of a hundred tracks, and reaches the finish on eighty nine.
+
+00:00:21.455 --> 00:00:23.009
+So it's not solved.
+
+00:00:23.009 --> 00:00:27.153
+Three hundred is the bar, and none of a hundred runs reached it.
+
+00:00:27.153 --> 00:00:32.517
+But look at how consistent it is: almost every track lands close to the average.
+
+00:00:33.117 --> 00:00:34.906
+Where do the points go?
+
+00:00:34.906 --> 00:00:38.715
+Walking to the finish earns about three hundred and sixty.
+
+00:00:38.715 --> 00:00:45.825
+On average, this walker earns three hundred and fifty one from moving, and spends seventy six on motor effort.
+
+00:00:46.425 --> 00:00:49.458
+So the limit isn't falling, and it isn't speed.
+
+00:00:49.458 --> 00:00:50.561
+It's effort.
+
+00:00:50.561 --> 00:00:53.539
+The network pushes its motors almost flat out.
+
+00:00:53.539 --> 00:00:58.141
+To score higher, it would have to walk as far while working less hard.
+
+00:00:58.741 --> 00:01:02.024
+Now the same hundred tracks for my NEAT walker.
+
+00:01:02.024 --> 00:01:04.711
+NEAT averages one hundred and eighty.
+
+00:01:04.711 --> 00:01:07.576
+CMA-ES averages two hundred and seventy.
+
+00:01:07.576 --> 00:01:14.323
+The difference is ninety one points, and CMA-ES scores higher on ninety three of the hundred tracks.
+
+00:01:14.923 --> 00:01:18.467
+It also falls far less: seven falls against ten.
+
+00:01:18.467 --> 00:01:25.411
+A fixed network with the right size, plus covariance learning, beat evolving the network's shape.
+
+00:01:26.011 --> 00:01:29.019
+How does it compare with gradient methods?
+
+00:01:29.019 --> 00:01:31.907
+PPO reached two hundred and seventy two.
+
+00:01:31.907 --> 00:01:36.238
+TD3 reached about three hundred and ten, in only two hours.
+
+00:01:36.838 --> 00:01:42.420
+CMA-ES used far more simulation steps: about one hundred and eighteen million.
+
+00:01:42.420 --> 00:01:52.002
+But it needed no gradients, no critic and no replay buffer, and its whole policy is about a hundred and forty times smaller than TD3's.
+
+00:01:52.602 --> 00:02:05.519
+That's the whole story: a task, a network of nine hundred and thirty two numbers, an algorithm that only ranks whole episodes, and a fitness that leads it, one small step at a time, to walking.

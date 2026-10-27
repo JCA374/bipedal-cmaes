@@ -1,0 +1,121 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:01.428
+Lesson six.
+
+00:00:01.428 --> 00:00:04.378
+CMA-ES climbs whatever you tell it to climb.
+
+00:00:04.378 --> 00:00:07.498
+My first three attempts climbed the wrong hill.
+
+00:00:07.498 --> 00:00:11.412
+The walker learned to dive, to lunge, and to fall on purpose.
+
+00:00:11.412 --> 00:00:14.208
+Here's why, and what finally worked.
+
+00:00:14.808 --> 00:00:16.610
+First, a distinction.
+
+00:00:16.610 --> 00:00:21.082
+The score we report is fixed: the raw reward over full episodes.
+
+00:00:21.082 --> 00:00:25.296
+But the fitness that training climbs is ours to design.
+
+00:00:25.896 --> 00:00:27.459
+Two choices matter.
+
+00:00:27.459 --> 00:00:32.493
+Episodes are cut short when the walker stops moving, which saves a lot of time.
+
+00:00:32.493 --> 00:00:37.481
+And the price of a fall, or of a stall, can be changed for training only.
+
+00:00:38.081 --> 00:00:43.518
+Attempt one used the real fall penalty of a hundred, plus a stall penalty of a hundred.
+
+00:00:43.518 --> 00:00:46.322
+Standing still scored worse than falling.
+
+00:00:46.322 --> 00:00:51.644
+So the walker learned to dive forward and fall, and every dive scored about the same.
+
+00:00:51.644 --> 00:00:54.290
+There was no slope left to climb.
+
+00:00:54.890 --> 00:00:58.755
+Attempt two made falls free, but kept the stall penalty.
+
+00:00:58.755 --> 00:01:05.761
+Now the natural next step, lunge, catch yourself, and stand, was cut off by the stall detector and punished.
+
+00:01:05.761 --> 00:01:08.356
+So the walker lunged and fell.
+
+00:01:08.956 --> 00:01:12.928
+Attempt three made both free, and it still fell on purpose.
+
+00:01:12.928 --> 00:01:15.063
+The reason was motor effort.
+
+00:01:15.063 --> 00:01:19.983
+A random network pushes its motors hard, and every step alive costs points.
+
+00:01:19.983 --> 00:01:22.892
+Falling early simply ended the bill.
+
+00:01:23.492 --> 00:01:26.326
+Attempt four set the fall cost to twenty.
+
+00:01:26.326 --> 00:01:33.498
+That's more than the effort a fall saves, but far less than the hundred that made my old NEAT walker afraid to step.
+
+00:01:33.498 --> 00:01:38.656
+Standing became the safe choice, and from standing, every step forward paid.
+
+00:01:39.256 --> 00:01:43.213
+For about fifty four generations, nothing seemed to happen.
+
+00:01:43.213 --> 00:01:46.348
+Candidates learned to stand and shuffle.
+
+00:01:46.948 --> 00:01:52.953
+Then, within a few generations, the best candidate jumped from about zero to over a hundred.
+
+00:01:52.953 --> 00:01:54.694
+The first real steps.
+
+00:01:54.694 --> 00:02:00.518
+By generation fifty nine, the champion scored over a hundred on the held out tracks.
+
+00:02:01.118 --> 00:02:07.087
+Its first positive score and over one hundred, both at generation fifty nine.
+
+00:02:07.687 --> 00:02:12.140
+Over two hundred, at generation one hundred and nine.
+
+00:02:12.740 --> 00:02:22.308
+Here's the whole run: five hundred and thirty nine generations and about one hundred and eighteen million simulation steps, in three hours on this laptop.
+
+00:02:22.308 --> 00:02:25.438
+The orange line is the best training fitness.
+
+00:02:25.438 --> 00:02:29.105
+The blue line is the champion on held out tracks.
+
+00:02:29.705 --> 00:02:31.785
+Notice the step size, sigma.
+
+00:02:31.785 --> 00:02:38.026
+It stayed large through the breakthrough and only shrank later, as the walker settled into its gait.
+
+00:02:38.026 --> 00:02:41.447
+Progress came in bursts, not in a smooth line.
+
+00:02:42.047 --> 00:02:49.380
+The lesson: a good fitness makes every small improvement on the way to walking score a little better than the last.
+
+00:02:49.380 --> 00:02:52.900
+Next, we open up the champion and look inside.

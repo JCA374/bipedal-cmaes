@@ -61,11 +61,11 @@
    "name": "walk (v3 fall cost 20, champion)",
    "run": "runs/v3-f20",
    "params": "best",
-   "raw": 173.07,
+   "raw": 287.72,
    "fell": 0.0,
    "stalled": 0.0,
-   "x": 78.6,
-   "steps": 1600.0
+   "x": 88.72,
+   "steps": 973.8
   }
  ]
 }

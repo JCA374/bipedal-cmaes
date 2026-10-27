@@ -1,8 +1,8 @@
-# Lesson 5: The training run
+# Lesson 6: The training run
 
 ## intro
 
-Lesson five. CMA-ES climbs whatever you tell it to climb. My first three attempts climbed the wrong hill. The walker learned to dive, to lunge, and to fall on purpose. Here's why, and what finally worked.
+Lesson six. CMA-ES climbs whatever you tell it to climb. My first three attempts climbed the wrong hill. The walker learned to dive, to lunge, and to fall on purpose. Here's why, and what finally worked.
 
 ## shaping
 
@@ -46,7 +46,7 @@ Over two hundred, at generation one hundred and nine.
 
 ## curve
 
-Here's the whole run: one hundred and eighteen generations and about sixteen million simulation steps, in one hours on this laptop. The orange line is the best training fitness. The blue line is the champion on held out tracks.
+Here's the whole run: five hundred and thirty nine generations and about one hundred and eighteen million simulation steps, in three hours on this laptop. The orange line is the best training fitness. The blue line is the champion on held out tracks.
 
 ## curve.2
 

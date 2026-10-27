@@ -50,11 +50,11 @@ Over two hundred, at generation one hundred and nine.
 
 ## heat.2
 
-Look for repeating stripes. Many neurons switch in step with the feet. And about forty six percent of the time, a neuron sits at its limit, fully on or fully off. Many of them act like switches.
+Look for repeating stripes. Many neurons switch in step with the feet. And about fifty seven percent of the time, a neuron sits at its limit, fully on or fully off. Many of them act like switches.
 
 ## ablation.2
 
-Most neurons barely matter. But freeze neuron twenty three, and the score drops by two hundred and eighty five points. The walker falls on ten of ten tracks.
+Most neurons barely matter. But freeze neuron twenty five, and the score drops by three hundred and fifty points. The walker falls on eighteen of twenty tracks.
 
 ## inputs.2
 
@@ -62,7 +62,7 @@ And the lidar, the rays that look ahead, barely matters. This walker walks by fe
 
 ## final
 
-The champion averages two hundred and five points, give or take seventeen. It falls on one of a hundred tracks, and reaches the finish on sixty nine.
+The champion averages two hundred and sixty four points, give or take sixty seven. It falls on eleven of a hundred tracks, and reaches the finish on eighty nine.
 
 ## final.2
 
@@ -74,7 +74,7 @@ So the limit isn't falling, and it isn't speed. It's effort. The network pushes 
 
 ## neat
 
-Now the same hundred tracks for my NEAT walker. NEAT averages one hundred and eighty. CMA-ES averages two hundred and three. The difference is twenty three points, and CMA-ES scores higher on sixty three of the hundred tracks.
+Now the same hundred tracks for my NEAT walker. NEAT averages one hundred and eighty. CMA-ES averages two hundred and seventy. The difference is ninety one points, and CMA-ES scores higher on ninety three of the hundred tracks.
 
 ## outro
 
