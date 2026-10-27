@@ -1,0 +1,71 @@
+{
+ "episodes": 20,
+ "archetypes": [
+  {
+   "key": "random",
+   "name": "random network (gen 0)",
+   "run": "runs/v0-dive/milestones/gen0",
+   "params": "best",
+   "raw": -99.43,
+   "fell": 1.0,
+   "stalled": 0.0,
+   "x": 6.69,
+   "steps": 62.4
+  },
+  {
+   "key": "dive",
+   "name": "dive forward and fall (v0, end)",
+   "run": "runs/v0-dive",
+   "params": "mean_00170.npy",
+   "raw": -98.47,
+   "fell": 1.0,
+   "stalled": 0.0,
+   "x": 6.77,
+   "steps": 54.0
+  },
+  {
+   "key": "lunge",
+   "name": "lunge and fall (v1, end)",
+   "run": "runs/v1-lunge",
+   "params": "mean_00200.npy",
+   "raw": -96.99,
+   "fell": 1.0,
+   "stalled": 0.0,
+   "x": 7.51,
+   "steps": 78.5
+  },
+  {
+   "key": "early",
+   "name": "fall early, save effort (v2, end)",
+   "run": "runs/v2-torque",
+   "params": "mean_00110.npy",
+   "raw": -99.0,
+   "fell": 1.0,
+   "stalled": 0.0,
+   "x": 6.66,
+   "steps": 53.0
+  },
+  {
+   "key": "stand",
+   "name": "creep, then stand (v3 fall cost 40, end)",
+   "run": "runs/v3-f40",
+   "params": "mean_00110.npy",
+   "raw": -7.74,
+   "fell": 0.0,
+   "stalled": 1.0,
+   "x": 6.48,
+   "steps": 193.9
+  },
+  {
+   "key": "walk",
+   "name": "walk (v3 fall cost 20, champion)",
+   "run": "runs/v3-f20",
+   "params": "best",
+   "raw": 173.07,
+   "fell": 0.0,
+   "stalled": 0.0,
+   "x": 78.6,
+   "steps": 1600.0
+  }
+ ]
+}

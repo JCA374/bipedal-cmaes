@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 5 · The training run</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+</head>
+<body data-root="../.." data-lesson="05-the-training-run">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 5 of 7</div>
+  <h1>The training run</h1>
+  <p class="lede">CMA-ES climbs whatever you tell it to climb. The first three attempts climbed the wrong hill:
+  the walker learned to dive, to lunge, and to fall on purpose. This lesson is about why, and what it took to get a walker.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>explain the difference between the training fitness and the reported score;</li>
+    <li>predict which behaviour a fitness function rewards, and spot a local optimum it creates;</li>
+    <li>read a training curve: fitness, step size σ and falls.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+
+<section>
+<h2><span class="num">1</span>What CMA-ES actually climbs</h2>
+<p>The <b>reported score</b> is fixed: the environment's raw reward over a full 1600-step episode (lesson 1).
+The <b>training fitness</b> is ours to design, and it differs in two ways:</p>
+<ul>
+  <li><b>Early stop</b>: if the body moves less than 1 unit in 150 steps, the episode is cut short. A walker that's standing still
+  can't teach us anything new, and cutting saves a lot of simulation time.</li>
+  <li><b>Shaping</b>: the price of a fall (normally −100) and of a stall can be changed, for training only.</li>
+</ul>
+<p>These look like small bookkeeping choices. They decide everything.</p>
+</section>
+
+<section>
+<h2><span class="num">2</span>Three false starts</h2>
+<p>Every run starts the same way: random networks that fall over within about 60 steps. From there, CMA-ES follows
+whichever direction ranks better. Here is what each attempt converged to.</p>
+<table class="t">
+<tr><th>run</th><th>fall cost</th><th>stall cost</th><th>what it learned</th></tr>
+<tr><td>v0</td><td>100 (raw)</td><td>100</td><td><b>dive</b>: throw the body forward and fall</td></tr>
+<tr><td>v1</td><td>0</td><td>100</td><td><b>lunge</b>: one big step, then fall</td></tr>
+<tr><td>v2</td><td>0</td><td>0</td><td><b>fall early on purpose</b></td></tr>
+<tr><td>v3</td><td>20</td><td>0</td><td>stand, then step, then <b>walk</b></td></tr>
+</table>
+<ul>
+  <li><b>v0</b>: the stall cost made standing still (≈ −108) worse than falling (≈ −98). Falling forward was the best option, and every dive scored about the same, so there was no slope to follow.</li>
+  <li><b>v1</b>: with a free fall, "lunge, catch yourself, stand" should win. But the stall detector cut it short and charged 100.</li>
+  <li><b>v2</b>: with both free, it <i>still</i> fell. The reason is the effort cost: a random network pushes all four motors hard, about 0.11 per step. Falling at step 50 ends that bill; standing for 150+ steps until the stall detector fires costs about 8. Falling was simply cheaper.</li>
+  <li><b>v3</b>: a fall cost of 20 is more than the effort a fall saves, but far less than the −100 that made my NEAT walker afraid to take a step. Standing became the safe choice, and from standing, every step forward added reward.</li>
+</ul>
+
+<div class="demo">
+  <p class="demo-title">Design the fitness yourself</p>
+  <p class="demo-sub">Each row is a real policy from these runs, scored with the training rollout (early stop on) on the same 20 training tracks.
+  Move the sliders: the table recomputes each behaviour's training fitness as <code>raw + (100 − fall cost) · fell − stall cost · stalled</code>
+  and ranks them. CMA-ES drifts toward whatever is on top <i>among the behaviours it can reach from where it is</i>.</p>
+  <div class="controls">
+    <label>fall cost <input type="range" id="fc" min="0" max="100" step="5" value="20"> <b id="fcv"></b></label>
+    <label>stall cost <input type="range" id="sc" min="0" max="100" step="5" value="0"> <b id="scv"></b></label>
+    <button class="btn" data-p="100,100">v0</button><button class="btn" data-p="0,100">v1</button>
+    <button class="btn" data-p="0,0">v2</button><button class="btn" data-p="20,0">v3</button>
+  </div>
+  <table class="t" id="arch"></table>
+  <p class="readout" id="verdict"></p>
+</div>
+<div class="key"><b>The lesson</b>The walker always reaches the finish line in the long run by not falling, but evolution only sees the next
+small step. A good fitness function makes every small improvement on the way to walking score a little better than the one before:
+random flailing → standing → a step → several steps → walking. If one link in that chain scores worse than the one before it, the search stops there.</div>
+</section>
+
+<section>
+<h2><span class="num">3</span>The run that worked</h2>
+<p>With fall cost 20, the first ~50 generations look like nothing is happening: candidates learn to stand and shuffle.
+Then, within about ten generations, the best training fitness jumps from about 0 to over 120, and the average distance from 6 to 16 units.
+The first real steps. The step size σ stays large through all of this: CMA-ES is still exploring.</p>
+<div class="demo">
+  <p class="demo-title">Live training curve</p>
+  <p class="demo-sub"><span style="color:var(--accent)">best</span> and <span style="color:var(--muted)">mean</span> training fitness per generation, <span style="color:var(--blue)">champion</span> on 20 held-out tracks (raw).</p>
+  <canvas id="curve"></canvas>
+  <p class="readout" id="cinfo"></p>
+</div>
+<p class="note">This section gets the stage-by-stage clips (generation 0, first positive score, 100, 200, …) and the final numbers once training ends.</p>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="1"><p>1. Falls cost 100 and stalls cost nothing. A random walker can either fall right away or stand still. Which does training prefer?</p>
+  <button>Falling, because it ends the episode early</button><button>Standing: it scores about −8, against about −100 for falling</button><button>Neither; they tie</button>
+  <div class="why">That's NEAT's trap: standing is far better than any risky step, so the search can get stuck standing still.</div></div>
+<div class="q" data-answer="0"><p>2. Why did run v2 (no fall cost, no stall cost) still learn to fall?</p>
+  <button>Falling early ends the effort cost; standing until the stall detector fires costs more</button><button>The stall detector was broken</button><button>σ was too small</button>
+  <div class="why">A random network uses a lot of torque. Every extra step alive costs effort, so the cheapest episode was a short one.</div></div>
+<div class="q" data-answer="2"><p>3. The reported score changed in which runs?</p>
+  <button>Only in v3</button><button>In all of them</button><button>None: shaping only changes training fitness; reported scores are always raw</button>
+  <div class="why">Every number on this site outside the training curve is the raw environment reward from full episodes.</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+let A = null;
+const fc = document.getElementById("fc"), sc = document.getElementById("sc");
+function table() {
+  if (!A) return;
+  document.getElementById("fcv").textContent = fc.value; document.getElementById("scv").textContent = sc.value;
+  const rows = A.archetypes.map(a => ({ ...a, f: a.raw + (100 - fc.value) * a.fell - sc.value * a.stalled }));
+  const order = [...rows].sort((p, q) => q.f - p.f);
+  document.getElementById("arch").innerHTML = "<tr><th>rank</th><th>behaviour</th><th>raw</th><th>fell</th><th>stalled</th><th>training fitness</th></tr>" +
+    order.map((r, i) => `<tr style="${r.key === "walk" ? "font-weight:600" : ""}"><td>${i + 1}</td><td>${r.name}</td><td>${r.raw.toFixed(1)}</td>
+      <td>${Math.round(r.fell * 100)}%</td><td>${Math.round(r.stalled * 100)}%</td><td style="color:var(--accent)">${r.f.toFixed(1)}</td></tr>`).join("");
+  const early = rows.filter(r => r.key !== "walk").sort((p, q) => q.f - p.f)[0];
+  document.getElementById("verdict").textContent =
+    `Before anything can walk, the best reachable behaviour is: ${early.name}. ` +
+    (early.key === "stand" ? "Good: standing is the stepping stone to walking." : "A trap: from here, the first steps score worse, so the search stays put.");
+}
+fc.oninput = sc.oninput = table;
+document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const [f, s] = b.dataset.p.split(","); fc.value = f; sc.value = s; table(); });
+fetch("../../data/archetypes.json").then(r => r.json()).then(d => { A = d; table(); });
+
+fetch("../../data/progress.json").then(r => r.json()).then(d => {
+  const cv = document.getElementById("curve"), ctx = setupCanvas(cv, 760, 240);
+  const draw = () => {
+    const c = d.curve, champ = []; let last = null;
+    for (const p of c) { if (p.champ != null) last = p.champ; champ.push(last); }
+    const f0 = champ.findIndex(v => v != null);
+    drawSeries(cv, ctx, [{ ys: c.map(p => p.mean), color: css("--muted"), width: 1.5 }, { ys: c.map(p => p.best), color: css("--accent") },
+      { ys: champ.map((v, i) => v ?? champ[f0]), color: css("--blue"), width: 2.5 }], null,
+      { lo: -120, hi: 320, ticks: [-100, 0, 100, 200, 300], xlabel: `generation → ${c[c.length - 1].g}` });
+  };
+  draw(); window.addEventListener("themechange", draw);
+  document.getElementById("cinfo").textContent = `run ${d.run}, generation ${d.generation}, champion ${d.champion.mean?.toFixed(0)} on 20 held-out tracks, updated ${d.updated}`;
+});
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>
