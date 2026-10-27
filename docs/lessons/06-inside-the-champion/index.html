@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 6 · Inside the champion</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+</head>
+<body data-root="../.." data-lesson="06-inside-the-champion">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 6 of 7</div>
+  <h1>Inside the champion</h1>
+  <p class="lede">The trained walker is 932 numbers. What do they actually do? This lesson opens the network up:
+  which hidden neurons fire when, which ones it can't walk without, and which senses it really uses.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>read an activation heatmap and connect it to the walker's gait;</li>
+    <li>explain ablation (knock a neuron out, measure the damage) and what it tells you;</li>
+    <li>say which inputs this walker relies on, and what that means for its weaknesses.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+<p class="note" id="prelim"></p>
+
+<section>
+<h2><span class="num">1</span>Watch the neurons while it walks</h2>
+<p>Below, the champion walks a typical track (the median of nine). Under it, every row is one of the 32 hidden neurons
+and every column one moment in time: <span style="color:var(--pos)">blue</span> = positive, <span style="color:var(--neg)">orange</span> = negative.
+The strip at the bottom shows when each foot is on the ground.</p>
+<div class="demo">
+  <canvas id="world"></canvas>
+  <div class="controls">
+    <button class="btn primary" id="play">▶ Play</button>
+    <input type="range" id="scrub" min="0" value="0" style="flex:1">
+  </div>
+  <canvas id="heat" style="margin-top:10px"></canvas>
+  <p class="readout" id="hinfo"></p>
+</div>
+<p>Look for vertical stripes that repeat: neurons switching in step with the feet. A walker without memory still produces a rhythm,
+because each leg's position feeds back as input. The rhythm lives in the loop between body and network, not in the network alone.</p>
+</section>
+
+<section>
+<h2><span class="num">2</span>One stride, averaged</h2>
+<p>Cut the walk into strides, from one touchdown of foot 1 to the next, and average each neuron over all strides.
+Neurons sorted by how much they swing during a stride:</p>
+<div class="demo">
+  <canvas id="gait"></canvas>
+  <p class="readout" id="ginfo"></p>
+</div>
+</section>
+
+<section>
+<h2><span class="num">3</span>Which neurons matter? Ablation</h2>
+<p>To test a neuron, freeze it at its average value and let the walker try a set of held-out tracks. If the score collapses, the walk depends on it.
+<b>Click a bar</b> to see what that neuron reads and what it drives.</p>
+<div class="demo">
+  <canvas id="abl"></canvas>
+  <div class="cols" style="margin-top:8px">
+    <div><div class="readout">strongest input weights</div><canvas id="win"></canvas></div>
+    <div><div class="readout">weights to the 4 motors</div><canvas id="wout"></canvas></div>
+  </div>
+  <p class="readout" id="ainfo"></p>
+</div>
+</section>
+
+<section>
+<h2><span class="num">4</span>Which senses does it use?</h2>
+<p>Same test for the 24 inputs: freeze one input at its average and measure the drop.</p>
+<div class="demo"><canvas id="inp"></canvas><p class="readout" id="iinfo"></p></div>
+<div class="key" id="takeaway"><b>What this tells us</b>Loading…</div>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="1"><p>1. Freezing hidden neuron 7 drops the score by 2 points; freezing neuron 12 drops it by 150. What's the best conclusion?</p>
+  <button>Neuron 7 is broken</button><button>The walk depends on neuron 12; neuron 7 is close to redundant</button><button>Neuron 12 has the biggest weights</button>
+  <div class="why">Ablation measures dependence, not weight size. A big weight on an input that never changes can matter very little.</div></div>
+<div class="q" data-answer="0"><p>2. The network has no memory. Where does its rhythm come from?</p>
+  <button>From the legs: their angles and speeds feed back as inputs every step</button><button>From a hidden clock</button><button>From the lidar</button>
+  <div class="why">Body and network form a loop: the action moves the legs, and the new leg state changes the next action.</div></div>
+<div class="q" data-answer="2"><p>3. If freezing the lidar barely changes the score, what follows?</p>
+  <button>The lidar is broken</button><button>The walker sees the terrain perfectly</button><button>It walks mostly "blind", from its body's feel, and may struggle with unusual bumps</button>
+  <div class="why">The normal tracks are gentle enough to walk by feel. That's a hypothesis to check against the falls in lesson 7.</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+const NAMES = ["hull angle","hull ang. vel","vel x","vel y","hip 1 angle","hip 1 speed","knee 1 angle","knee 1 speed","leg 1 contact",
+  "hip 2 angle","hip 2 speed","knee 2 angle","knee 2 speed","leg 2 contact"].concat([...Array(10)].map((_, i) => "lidar " + i));
+const OUT = ["hip 1", "knee 1", "hip 2", "knee 2"];
+let D = null, sel = null;
+const heat = document.getElementById("heat"), hctx = setupCanvas(heat, 720, 260);
+const gait = document.getElementById("gait"), gctx = setupCanvas(gait, 720, 360);
+const abl = document.getElementById("abl"), actx = setupCanvas(abl, 720, 200);
+const win = document.getElementById("win"), wictx = setupCanvas(win, 340, 170);
+const wout = document.getElementById("wout"), woctx = setupCanvas(wout, 340, 110);
+const inp = document.getElementById("inp"), ictx = setupCanvas(inp, 720, 220);
+function col(v) {
+  const c = v >= 0 ? css("--pos") : css("--neg"), a = Math.min(1, Math.abs(v));
+  return [c, a];
+}
+function cell(ctx, x, y, w, h, v) { const [c, a] = col(v); ctx.globalAlpha = a; ctx.fillStyle = c; ctx.fillRect(x, y, w, h); ctx.globalAlpha = 1; }
+let order = null;
+function drawHeat(cursor) {
+  const W = 720, H = 260, T = D.trace.hid.length, rows = 32, top = 4, bh = 200 / rows;
+  hctx.clearRect(0, 0, W, H);
+  const cw = (W - 40) / T;
+  for (let t = 0; t < T; t++) for (let j = 0; j < rows; j++) cell(hctx, 40 + t * cw, top + j * bh, Math.ceil(cw), bh, D.trace.hid[t][order[j]]);
+  hctx.fillStyle = css("--muted"); hctx.font = "10px system-ui"; hctx.fillText("32 hidden", 0, 100);
+  for (let t = 0; t < T; t++) {
+    if (D.trace.obs[t][8] > .5) { hctx.fillStyle = css("--s1"); hctx.fillRect(40 + t * cw, 212, Math.ceil(cw), 14); }
+    if (D.trace.obs[t][13] > .5) { hctx.fillStyle = css("--s2"); hctx.fillRect(40 + t * cw, 232, Math.ceil(cw), 14); }
+  }
+  hctx.fillStyle = css("--muted"); hctx.fillText("foot 1", 0, 223); hctx.fillText("foot 2", 0, 243);
+  if (cursor != null) { hctx.strokeStyle = css("--accent"); hctx.lineWidth = 2; hctx.beginPath(); hctx.moveTo(40 + cursor * cw, 0); hctx.lineTo(40 + cursor * cw, H); hctx.stroke(); }
+}
+function drawGait() {
+  const g = D.gait; if (!g) { document.getElementById("ginfo").textContent = "No regular stride found."; return; }
+  const W = 720, H = 360, prof = g.profile, nb = prof[0].length, idx = [...prof.keys()].sort((a, b) => g.rhythmic[b] - g.rhythmic[a]);
+  gctx.clearRect(0, 0, W, H);
+  const rh = 250 / 32, cw = (W - 80) / nb;
+  idx.forEach((j, r) => { for (let k = 0; k < nb; k++) cell(gctx, 70 + k * cw, r * rh, cw - 1, rh - 1, prof[j][k]); gctx.fillStyle = css("--muted"); gctx.font = "9px system-ui"; gctx.fillText("n" + (j + 1), 40, r * rh + rh - 1); });
+  D.gait.action_profile.forEach((ap, i) => { for (let k = 0; k < nb; k++) cell(gctx, 70 + k * cw, 262 + i * 18, cw - 1, 16, ap[k]); gctx.fillStyle = css("--text"); gctx.font = "11px system-ui"; gctx.fillText(OUT[i], 10, 274 + i * 18); });
+  gctx.fillStyle = css("--muted"); gctx.font = "11px system-ui"; gctx.fillText("stride phase →  (0 = foot 1 touches down)", 70, H - 4);
+  document.getElementById("ginfo").textContent = `A stride takes ${g.stride_steps_median} steps (middle half: ${g.stride_steps_iqr[0]}–${g.stride_steps_iqr[1]}), about ${(g.stride_steps_median / 50).toFixed(2)} s. ` +
+    `Top rows swing the most; the bottom rows (motor commands) show the gait itself.`;
+}
+function drawAbl() {
+  const h = D.ablation.hidden, W = 720, H = 200, mx = Math.max(...h.map(d => d.drop), 1), bw = (W - 30) / h.length;
+  actx.clearRect(0, 0, W, H);
+  h.forEach((d, i) => {
+    const bh = Math.max(0, d.drop) / mx * (H - 40);
+    actx.fillStyle = i === sel ? css("--accent") : css("--blue"); actx.fillRect(25 + i * bw, H - 20 - bh, bw - 3, bh);
+    actx.fillStyle = css("--muted"); actx.font = "9px system-ui"; actx.fillText(i + 1, 25 + i * bw + 1, H - 6);
+  });
+  actx.fillStyle = css("--muted"); actx.font = "11px system-ui"; actx.fillText(`score drop when frozen (base ${D.ablation.base} on ${D.ablation.episodes} tracks)`, 25, 12);
+  if (sel != null) {
+    const w1 = D.W1[sel], top = [...w1.keys()].sort((a, b) => Math.abs(w1[b]) - Math.abs(w1[a])).slice(0, 8);
+    drawBars(win, wictx, top.map(i => w1[i] / 3), top.map(i => NAMES[i]), k => w1[top[k]] >= 0 ? css("--pos") : css("--neg"), { labelW: 92, pad: 4 });
+    const w2 = D.W2.map(r => r[sel]);
+    drawBars(wout, woctx, w2.map(v => v / 3), OUT, k => w2[k] >= 0 ? css("--pos") : css("--neg"), { labelW: 92, pad: 4 });
+    const d = h[sel];
+    document.getElementById("ainfo").textContent = `neuron ${sel + 1}: frozen, the walker scores ${d.mean} (−${d.drop}), falling on ${d.falls} of ${D.ablation.episodes} tracks.`;
+  }
+}
+abl.addEventListener("click", e => {
+  const r = abl.getBoundingClientRect(), x = (e.clientX - r.left) * 720 / r.width;
+  const i = Math.floor((x - 25) / ((720 - 30) / 32)); if (i >= 0 && i < 32) { sel = i; drawAbl(); }
+});
+function drawInp() {
+  const v = D.ablation.inputs, mx = Math.max(...v.map(d => d.drop), 1);
+  drawBars(inp, ictx, v.map(d => Math.max(0, d.drop) / mx), v.map(d => d.name), k => css(k < 4 ? "--accent" : k < 9 ? "--s1" : k < 14 ? "--s2" : "--s3"), { labelW: 100, pad: 2 });
+  const lid = v.slice(14).reduce((a, d) => a + Math.max(0, d.drop), 0), body = v.slice(0, 14).reduce((a, d) => a + Math.max(0, d.drop), 0);
+  const top = [...v].sort((a, b) => b.drop - a.drop).slice(0, 3).map(d => `${d.name} (−${d.drop})`).join(", ");
+  document.getElementById("iinfo").textContent = `Bars only show the positive side (score lost). Most important: ${top}.`;
+  document.getElementById("takeaway").innerHTML = `<b>What this tells us</b>Freezing all the body and leg inputs one at a time costs ${body.toFixed(0)} points in total; the ten lidar rays together cost ${lid.toFixed(0)}. ` +
+    (lid < body / 10 ? "This walker mostly walks by feel: it reacts to its own joints, not to the terrain ahead. That's enough for gentle tracks, and a likely weakness on unusual bumps." :
+      "The lidar matters too: the walker adjusts to the terrain ahead, not only to its own joints.");
+}
+const world = document.getElementById("world");
+const rp = new WalkerReplay(world, { onFrame: (f, i) => { if (D) { drawHeat(Math.min(D.trace.hid.length - 1, Math.round(i * rp.ep.every / D.trace.every))); document.getElementById("scrub").value = i; } } });
+const play = document.getElementById("play");
+rp.onEnd = () => play.textContent = "▶ Play";
+play.onclick = () => { if (rp.playing) { rp.pause(); play.textContent = "▶ Play"; } else { rp.play(); play.textContent = "❚❚ Pause"; } };
+document.getElementById("scrub").oninput = e => { rp.pause(); play.textContent = "▶ Play"; rp.seek(+e.target.value); };
+Promise.all([fetch("../../data/inside.json").then(r => r.json()), rp.load("../../data/episodes/champion.json")]).then(([d, ep]) => {
+  D = d;
+  document.getElementById("scrub").max = ep.frames.length - 1;
+  const rh = d.gait ? d.gait.rhythmic : d.trace.hid[0].map(() => 0);
+  order = [...rh.keys()].sort((a, b) => rh[b] - rh[a]);
+  sel = d.ablation.hidden.reduce((b, x, i, a) => x.drop > a[b].drop ? i : b, 0);
+  document.getElementById("prelim").textContent = `Data: champion from run ${d.run} (held-out score ${d.champion.mean?.toFixed(0)}, generation ${d.champion.generation}). ` +
+    `${Math.round(d.saturation * 100)}% of hidden activations are saturated (|value| > 0.95): many neurons act almost like on/off switches.`;
+  document.getElementById("hinfo").textContent = `Rows sorted by how rhythmic each neuron is. This episode: reward ${d.trace.reward}, ${d.trace.steps} steps.`;
+  rp.seek(0); drawGait(); drawAbl(); drawInp();
+  window.addEventListener("themechange", () => { rp.draw(); drawGait(); drawAbl(); drawInp(); });
+});
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>

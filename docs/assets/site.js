@@ -5,7 +5,7 @@ const LESSONS = [
   { slug: "03-cma-es", title: "Evolution strategies and CMA-ES", sub: "Sample, rank, move, stretch: learning without gradients" },
   { slug: "04-noisy-fitness", title: "Noisy fitness, honest selection", sub: "Why ten terrains lie, and how to pick a champion" },
   { slug: "05-the-training-run", title: "The training run", sub: "Three false starts, and the fitness that finally produced a walker", draft: true },
-  { slug: "06-inside-the-champion", title: "Inside the champion", sub: "What the hidden neurons do while it walks", soon: true },
+  { slug: "06-inside-the-champion", title: "Inside the champion", sub: "What the hidden neurons do while it walks", draft: true },
   { slug: "07-results", title: "Results and comparison", sub: "100 unseen terrains; CMA-ES against NEAT, PPO and TD3", soon: true },
 ];
 

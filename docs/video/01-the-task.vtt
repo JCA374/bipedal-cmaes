@@ -1,0 +1,124 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:01.878
+This is lesson one.
+
+00:00:01.878 --> 00:00:06.347
+Before a network can learn to walk, we need to be exact about the task.
+
+00:00:06.347 --> 00:00:11.230
+What can the walker sense, what can it do, and what counts as doing well?
+
+00:00:11.830 --> 00:00:13.269
+Meet the walker.
+
+00:00:13.269 --> 00:00:18.366
+It's a box-shaped body on two legs, in a small two dimensional physics world.
+
+00:00:18.366 --> 00:00:22.683
+Each leg has a hip and a knee, and every joint has a motor.
+
+00:00:23.283 --> 00:00:25.791
+The ground is a bumpy grass track.
+
+00:00:25.791 --> 00:00:30.747
+It's generated from a random seed, so every episode gets a different track.
+
+00:00:30.747 --> 00:00:35.704
+The goal is to reach the finish, about eighty four units to the right.
+
+00:00:36.304 --> 00:00:39.276
+The world runs at fifty steps per second.
+
+00:00:39.276 --> 00:00:46.859
+An episode ends when the body touches the ground, when the walker reaches the finish, or after sixteen hundred steps.
+
+00:00:46.859 --> 00:00:49.221
+That's thirty two seconds.
+
+00:00:49.821 --> 00:00:53.356
+At every step, the walker gets twenty four numbers.
+
+00:00:53.356 --> 00:00:55.273
+It never sees a picture.
+
+00:00:55.273 --> 00:01:02.163
+Four numbers describe the body: its tilt, how fast it's turning, and how fast it moves forward and up.
+
+00:01:02.763 --> 00:01:04.862
+Ten numbers describe the legs.
+
+00:01:04.862 --> 00:01:11.736
+For each leg, there's the angle and speed of the hip and the knee, and whether the foot is touching the ground.
+
+00:01:12.336 --> 00:01:14.512
+The last ten come from a lidar.
+
+00:01:14.512 --> 00:01:20.816
+It's a fan of rays that measures how far away the ground is, from straight down to almost straight ahead.
+
+00:01:20.816 --> 00:01:24.966
+That's how the walker can notice a bump before it gets there.
+
+00:01:25.566 --> 00:01:31.115
+What it can do is just as simple: four numbers between minus one and one, one per joint.
+
+00:01:31.115 --> 00:01:34.005
+The sign says which way to turn the joint.
+
+00:01:34.005 --> 00:01:36.259
+The size says how hard to push.
+
+00:01:36.259 --> 00:01:38.640
+That's the whole controller.
+
+00:01:39.240 --> 00:01:40.494
+Now the score.
+
+00:01:40.494 --> 00:01:42.547
+Moving forward earns reward.
+
+00:01:42.547 --> 00:01:47.351
+Crossing the whole track is worth about three hundred and sixty points.
+
+00:01:47.951 --> 00:01:52.812
+Every bit of motor effort costs a little, and so does tilting the body.
+
+00:01:52.812 --> 00:01:57.603
+A good walker spends thirty to sixty points on effort over a run.
+
+00:01:58.203 --> 00:02:00.295
+And falling is expensive.
+
+00:02:00.295 --> 00:02:06.679
+If the body hits the ground, the walker loses a hundred points, and the episode is over.
+
+00:02:07.279 --> 00:02:12.458
+So a walker that reaches the finish without falling scores about three hundred.
+
+00:02:12.458 --> 00:02:17.401
+Averaged over a hundred random tracks, three hundred counts as solved.
+
+00:02:18.001 --> 00:02:20.280
+There's a hidden catch: time.
+
+00:02:20.280 --> 00:02:27.601
+Eighty four units in sixteen hundred steps means an average speed of about two point six units per second.
+
+00:02:28.201 --> 00:02:32.506
+My previous walker, evolved with a method called NEAT, rarely fell.
+
+00:02:32.506 --> 00:02:34.113
+But it was too slow.
+
+00:02:34.113 --> 00:02:39.221
+It ran out of time at about seventy four units and scored about one seventy five.
+
+00:02:39.221 --> 00:02:44.227
+To reach three hundred, a walker has to be safe and fast at the same time.
+
+00:02:44.827 --> 00:02:53.610
+So the job is a function from twenty four numbers to four numbers that earns as much reward as possible, on tracks it has never seen.
+
+00:02:53.610 --> 00:02:58.894
+In lesson two, we look at what that function is: a small neural network.
