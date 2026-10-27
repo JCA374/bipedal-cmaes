@@ -16,6 +16,7 @@ RUN=myrun DEADLINE=08:00 nohup ./train_queue.sh > train_queue.log 2>&1 &   # 1 h
 .venv/bin/python evaluate.py --run runs/myrun --episodes 100               # final score
 .venv/bin/python experiments/export_episode.py --run runs/myrun --out docs/data/episodes/champion.json
 .venv/bin/python make_site.py --run runs/myrun             # site data
+.venv/bin/python dashboard.py --run runs/myrun             # live local dashboard: http://localhost:8770
 ```
 Change settings between chunks with `runs/<name>/overrides.json`
 (`k`, `popsize`, `hof_seeds`, `hof_top`, `stall_penalty`, `speed_bonus`, `fall_cost`, `reason`).
