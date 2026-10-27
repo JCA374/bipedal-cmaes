@@ -1,0 +1,97 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:01.501
+Lesson five.
+
+00:00:01.501 --> 00:00:03.747
+The walker never sees our goal.
+
+00:00:03.747 --> 00:00:09.447
+It sees one number per step, and it learns whatever makes the total of those numbers large.
+
+00:00:09.447 --> 00:00:12.510
+So let's read that number, line by line.
+
+00:00:13.110 --> 00:00:17.261
+This is the reward, straight from the environment's source code.
+
+00:00:17.261 --> 00:00:19.810
+It runs fifty times per second.
+
+00:00:20.410 --> 00:00:21.921
+It has four parts.
+
+00:00:21.921 --> 00:00:26.338
+Progress: every unit the body moves forward earns about four points.
+
+00:00:26.338 --> 00:00:29.767
+Effort: every unit of motor command costs a little.
+
+00:00:29.767 --> 00:00:32.964
+Tilt: changing the body's angle costs a little.
+
+00:00:32.964 --> 00:00:37.787
+And a fall replaces everything with minus one hundred and ends the episode.
+
+00:00:37.787 --> 00:00:40.354
+There's no bonus for finishing.
+
+00:00:40.954 --> 00:00:43.688
+Here's where a walker's score comes from.
+
+00:00:43.688 --> 00:00:50.050
+My old NEAT walker earns about two hundred and eighty from moving, and spends only about ninety on effort.
+
+00:00:50.050 --> 00:00:53.140
+But it runs out of time before the finish.
+
+00:00:53.740 --> 00:01:03.388
+The CMA-ES walker at the two hundred milestone earns the full distance, about three hundred and sixty, but spends about a hundred and sixty on effort.
+
+00:01:03.388 --> 00:01:08.823
+Two walkers, two different weaknesses, and the reward turns each into one number.
+
+00:01:08.823 --> 00:01:12.665
+Later in training, CMA-ES cut that effort by half.
+
+00:01:13.265 --> 00:01:16.841
+Just as important is what the reward does not pay for.
+
+00:01:16.841 --> 00:01:21.628
+Not footsteps: a shuffle and a stride over the same distance earn the same.
+
+00:01:21.628 --> 00:01:25.377
+Not style: feet passing each other aren't worth anything.
+
+00:01:25.377 --> 00:01:28.272
+Not staying alive, and not finishing.
+
+00:01:28.872 --> 00:01:34.335
+But every step costs effort, and the clock runs out after sixteen hundred steps.
+
+00:01:34.335 --> 00:01:39.725
+So the reward quietly favours speed, even though time never appears in it.
+
+00:01:40.325 --> 00:01:42.431
+That makes the reward a proxy.
+
+00:01:42.431 --> 00:01:44.704
+We want a walker that walks well.
+
+00:01:44.704 --> 00:01:49.193
+The reward asks it to move right, spend little, and not touch the ground.
+
+00:01:49.193 --> 00:01:53.373
+An optimizer can't tell the difference, and it finds the gaps.
+
+00:01:53.973 --> 00:02:03.024
+In this project it found several: diving forward, falling early to stop paying for effort, standing still, and skipping with one leg as a prop.
+
+00:02:03.024 --> 00:02:07.700
+Each was a good answer to the question the reward actually asked.
+
+00:02:08.300 --> 00:02:11.193
+So the reward decides what gets learned.
+
+00:02:11.193 --> 00:02:17.220
+Next, in lesson six, we see how the training run used it, including three false starts.
