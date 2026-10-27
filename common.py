@@ -37,6 +37,8 @@ OUTPUT_NAMES = ["hip 1", "knee 1", "hip 2", "knee 2"]
 # Early termination (training only): stop if the hull moves less than this over the window.
 STALL_WINDOW = 150
 STALL_MIN_DX = 1.0
+CROSS_HYST = 0.15     # a lower leg must lead by this much (world units) to count as "in front"
+CROSS_MIN_DX = 0.4    # a front-foot change counts as a crossing step only after this much progress
 
 # Seed ranges, never overlapping (tests/test_common.py checks this).
 SEED_RANGES = {
@@ -88,6 +90,70 @@ class MLP:
         return (x, hidden[:-1]) if return_hidden else x
 
 
+class SymClock:
+    """One controller shared by both legs, with a clock: the 'symclock' policy.
+
+    Each leg's controller sees [hull (4), own leg (5), other leg (5), lidar (10),
+    sin φ, cos φ] = 26 inputs and outputs (hip, knee) for its own leg. Leg 2 uses the
+    same weights with own/other swapped and its phase shifted by π, so the legs make the
+    same movement in opposite phase and neither can specialise as a permanent prop.
+    θ = [W1 (H x 26), b1, (more hidden layers), W_out (2 x H), b_out, p] where the clock
+    period is T = 40 · exp(clip(p, -1, 1)) steps (≈15-109), learned like any weight.
+    Stateful: reset() before each episode (run_episode does).
+    """
+    HULL, LEG1, LEG2, LIDAR = slice(0, 4), slice(4, 9), slice(9, 14), slice(14, 24)
+
+    def __init__(self, sizes, theta=None):
+        self.sizes = tuple(int(s) for s in sizes)
+        assert self.sizes[0] == 26 and self.sizes[-1] == 2
+        self.n_params = n_params(self.sizes) + 1
+        self.set_params(np.zeros(self.n_params) if theta is None else theta)
+        self.t = 0
+
+    @property
+    def n_hidden_layers(self):
+        return len(self.sizes) - 2
+
+    @property
+    def period(self):
+        return 40.0 * float(np.exp(np.clip(self.p, -1, 1)))
+
+    def set_params(self, theta):
+        theta = np.asarray(theta, dtype=np.float64)
+        self.layers = unflatten(theta[:-1], self.sizes)
+        self.p = theta[-1]
+
+    def reset(self):
+        self.t = 0
+
+    def inputs(self, x):
+        ph = 2 * np.pi * self.t / self.period
+        x1 = np.concatenate([x[self.HULL], x[self.LEG1], x[self.LEG2], x[self.LIDAR], [np.sin(ph), np.cos(ph)]])
+        x2 = np.concatenate([x[self.HULL], x[self.LEG2], x[self.LEG1], x[self.LIDAR], [np.sin(ph + np.pi), np.cos(ph + np.pi)]])
+        return np.stack([x1, x2])
+
+    def activate(self, x, return_hidden=False):
+        h = self.inputs(x)
+        self.t += 1
+        hidden = []
+        for W, b in self.layers:
+            h = np.tanh(h @ W.T + b)
+            hidden.append(h)
+        a = h.reshape(-1)            # [leg1 hip, leg1 knee, leg2 hip, leg2 knee]
+        return (a, [hh.reshape(-1) for hh in hidden[:-1]]) if return_hidden else a
+
+
+POLICIES = {"mlp": MLP, "symclock": SymClock}
+
+
+def policy_sizes(kind, hidden):
+    return (N_OBS, *hidden, N_ACT) if kind == "mlp" else (26, *hidden, 2)
+
+
+def make_policy(kind, sizes, theta=None):
+    return POLICIES[kind](sizes, theta)
+
+
 def n_params(sizes):
     return sum(o * i + o for i, o in zip(sizes[:-1], sizes[1:]))
 
@@ -130,9 +196,15 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
     on_step(obs_scaled, action, reward, env) after choosing each action (analysis).
     """
     obs, _ = fresh_reset(env, seed)
-    hull = env.unwrapped.hull
+    if hasattr(policy, "reset"):
+        policy.reset()
+    u = env.unwrapped
+    hull = u.hull
     xs, total, steps, fell, saved = [], 0.0, 0, False, 0
     action = None
+    # Gait: which lower leg is in front (with hysteresis), how often that changes, and how
+    # many changes are real steps (hull moved >= CROSS_MIN_DX since the last counted one).
+    front, lead_changes, crossings, front2, last_cross_x = 0, 0, 0, 0, hull.position.x
     while steps < max_steps:
         if on_frame is not None:
             on_frame(env, total)
@@ -144,6 +216,16 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
         obs, reward, terminated, truncated, _ = env.step(np.asarray(action, dtype=np.float32))
         steps += 1
         total += float(reward)
+        d = u.legs[1].position.x - u.legs[3].position.x
+        f = 1 if d > CROSS_HYST else (-1 if d < -CROSS_HYST else front)
+        if f != front:
+            if front != 0:
+                lead_changes += 1
+                if hull.position.x - last_cross_x >= CROSS_MIN_DX:
+                    crossings += 1
+                    last_cross_x = hull.position.x
+            front = f
+        front2 += front == -1
         if terminated:
             fell = bool(reward <= -100)
             break
@@ -157,24 +239,25 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
     if on_frame is not None:
         on_frame(env, total)
     return {"reward": total, "steps": steps, "saved": saved, "fell": fell,
-            "stalled": saved > 0, "x": float(hull.position.x)}
+            "stalled": saved > 0, "x": float(hull.position.x),
+            "crossings": crossings, "lead_changes": lead_changes, "front2_share": front2 / max(1, steps)}
 
 
 # ---------------------------------------------------------------- persistence
-def save_policy(dirpath, theta, sizes, meta=None):
+def save_policy(dirpath, theta, sizes, meta=None, kind="mlp"):
     d = Path(dirpath)
     d.mkdir(parents=True, exist_ok=True)
     tmp = d / "params.tmp.npy"
     np.save(tmp, np.asarray(theta, dtype=np.float64))
     tmp.replace(d / "params.npy")  # atomic: readers never see a half-written file
     with open(d / "meta.json", "w") as f:
-        json.dump({**(meta or {}), "sizes": list(sizes)}, f, indent=2)
+        json.dump({**(meta or {}), "sizes": list(sizes), "policy": kind}, f, indent=2)
 
 
 def load_policy(run_or_dir):
-    """Accept runs/<name>, runs/<name>/best or a milestone dir. Returns (MLP, meta)."""
+    """Accept runs/<name>, runs/<name>/best or a milestone dir. Returns (policy, meta)."""
     p = Path(run_or_dir)
     if (p / "best" / "params.npy").exists():
         p = p / "best"
     meta = json.loads((p / "meta.json").read_text())
-    return MLP(meta["sizes"], np.load(p / "params.npy")), meta
+    return make_policy(meta.get("policy", "mlp"), meta["sizes"], np.load(p / "params.npy")), meta

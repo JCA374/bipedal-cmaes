@@ -73,3 +73,17 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
   Hull-angle variability correlates −0.89 with the score.
 - Lead: the main lever toward 300 is wasted effort on leg 2 (~60 points). Raw reward already
   includes effort; if training plateaus, try a training-only effort weight > 1 (paired comparison).
+
+## Gait diagnosis and the queued "real walking" run (v4-walk)
+- The v3 champion (gen ~220, 271 held-out) steps alternately (85-90% of touchdowns alternate)
+  but **the feet never pass each other**: foot 2 is in front 100% of the time, 0 front-foot changes
+  per episode on 3 tracks; hip 2 stays forward (+0.03..+1.2). A skipping gait with leg 2 as a
+  forward prop. Nothing in the reward asks for crossing steps, and CMA-ES (σ ≈ 0.17 then) won't
+  cross the clumsy in-between gaits on its own.
+- Added (backward compatible, checked by resuming a copy of v3 for one generation):
+  `--policy symclock` (one controller shared by both legs, leg 2 with legs swapped and the clock
+  shifted by π; learned period; 931 params), gait tracking in every episode (crossings,
+  front-foot changes, foot-2-in-front share; `gait.csv` per run), `--cross-bonus` (training
+  only), resume drops stats/gait rows past the checkpoint after a crash.
+- `next_run.sh` waits for v3 + finalize.sh, then trains v4-walk (symclock, cross bonus 0.5) for
+  8 h and compares with v3 on the same 100 tracks, score and gait. Results stay local.

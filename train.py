@@ -38,17 +38,19 @@ STATS_FIELDS = ["generation", "best_fitness", "mean_fitness", "median_fitness", 
                 "hof_best", "best_score", "env_steps_gen", "env_steps_total",
                 "steps_saved_total", "gen_seconds", "wall_seconds", "mem_avail_mb"]
 OVERRIDABLE = {"k": int, "popsize": int, "hof_seeds": int, "hof_top": int,
-               "stall_penalty": float, "speed_bonus": float, "fall_cost": float}
+               "stall_penalty": float, "speed_bonus": float, "fall_cost": float, "cross_bonus": float}
+# Defaults for keys added after a run started, so its settings history doesn't show a fake change.
+PARAM_DEFAULTS = {"policy": "mlp", "cross_bonus": 0.0}
 
 # ---------------------------------------------------------------- workers
 _W = {}
 
 
-def _init_worker(sizes, action_repeat):
+def _init_worker(kind, sizes, action_repeat):
     signal.signal(signal.SIGINT, signal.SIG_IGN)  # parent handles Ctrl-C / SIGTERM
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     _W["env"] = common.make_env()
-    _W["policy"] = common.MLP(sizes)
+    _W["policy"] = common.make_policy(kind, sizes)
     _W["action_repeat"] = action_repeat
 
 
@@ -71,6 +73,7 @@ def train_fitness(eps, args):
         if e["fell"]:
             r += 100.0 - args.fall_cost  # swap the env's -100 for the training fall cost
         r += args.speed_bonus * e["x"] / 88.0
+        r += args.cross_bonus * e["crossings"]
         f.append(r)
     return float(np.mean(f))
 
@@ -128,8 +131,9 @@ def apply_overrides(args, run_dir):
     return ov
 
 
-def effective_params(args, sizes):
-    return {"sizes": list(sizes), "n_params": common.n_params(sizes), "popsize": args.popsize,
+def effective_params(args, sizes, kind="mlp"):
+    return {"policy": kind, "sizes": list(sizes), "n_params": common.make_policy(kind, sizes).n_params,
+            "popsize": args.popsize, "cross_bonus": args.cross_bonus,
             "k": args.k, "sigma0": args.sigma0, "stall_penalty": args.stall_penalty,
             "fall_cost": args.fall_cost, "speed_bonus": args.speed_bonus,
             "action_repeat": args.action_repeat, "hof_seeds": args.hof_seeds,
@@ -154,6 +158,10 @@ def main(argv=None):
                     help="training cost of a fall, replacing the env's -100 (100 = raw). With 0, fitness is "
                          "progress minus torque, so walking further before a fall always scores higher")
     ap.add_argument("--speed-bonus", type=float, default=0.0, help="+bonus * x_final/88")
+    ap.add_argument("--policy", choices=list(common.POLICIES), default="mlp",
+                    help="mlp: 24-H-4; symclock: one shared leg controller + clock (fixed for a run)")
+    ap.add_argument("--cross-bonus", type=float, default=0.0,
+                    help="training bonus per crossing step (front foot changes after >= 0.4 progress)")
     ap.add_argument("--action-repeat", type=int, default=1)
     ap.add_argument("--no-early-stop", action="store_true")
     ap.add_argument("--hof-every", type=int, default=10)
@@ -182,6 +190,9 @@ def main(argv=None):
             raise SystemExit(f"--resume: no checkpoint at {ckpt_path}")
         es, state = load_checkpoint(ckpt_path)
         sizes = tuple(state["sizes"])  # the architecture is fixed for a run
+        kind = state.get("policy", "mlp")
+        if "cross_bonus" not in overrides:  # a run keeps its cross bonus unless overridden
+            args.cross_bonus = state.get("cross_bonus", args.cross_bonus)
         args.action_repeat = state.get("action_repeat", args.action_repeat)
         # A popsize override applies once (IPOP restarts may double λ afterwards).
         want = args.popsize if args.popsize != state.get("popsize_applied") else None
@@ -199,10 +210,11 @@ def main(argv=None):
     else:
         if run_dir.exists() and any(run_dir.iterdir()):
             raise SystemExit(f"{run_dir} exists; use --resume or a new --name")
-        sizes = (common.N_OBS, *args.hidden, common.N_ACT)
+        kind = args.policy
+        sizes = common.policy_sizes(kind, args.hidden)
         args.popsize = args.popsize or 48
-        es = new_es(np.zeros(common.n_params(sizes)), args.sigma0, args.popsize, args.seed)
-        state = {"generation": 0, "sizes": list(sizes), "action_repeat": args.action_repeat,
+        es = new_es(np.zeros(common.make_policy(kind, sizes).n_params), args.sigma0, args.popsize, args.seed)
+        state = {"generation": 0, "sizes": list(sizes), "policy": kind, "action_repeat": args.action_repeat,
                  "env_steps_total": 0, "steps_saved_total": 0, "wall_seconds": 0.0,
                  "best_score": None, "milestones": {}, "hof": [], "seed": args.seed,
                  "restarts": 0, "restart_log": [], "param_history": [], "popsize_applied": args.popsize}
@@ -210,14 +222,35 @@ def main(argv=None):
     assert len(sizes) >= 3, "the policy must have >= 1 hidden layer"
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    params = effective_params(args, sizes)
+    state["cross_bonus"] = args.cross_bonus
+    params = effective_params(args, sizes, kind)
     print("Effective params:", json.dumps(params))
     hist = state["param_history"]
-    if not hist or {k: v for k, v in hist[-1].items() if k not in ("generation", "reason")} != params:
+    prev = {**PARAM_DEFAULTS, **hist[-1]} if hist else None
+    if not hist or any(prev.get(k) != v for k, v in params.items()):
         hist.append({"generation": state["generation"], **params,
                      **({"reason": overrides["reason"]} if overrides.get("reason") else {})})
     with open(run_dir / "run_config.json", "w") as f:
         json.dump({"args": vars(args), "effective": params, "history": hist}, f, indent=2)
+
+    # After a crash, stats/gait rows can run past the checkpoint; those generations are about
+    # to be redone, so drop their rows instead of logging them twice.
+    for log_name in ("stats.csv", "gait.csv"):
+        lp = run_dir / log_name
+        if args.resume and lp.exists():
+            lines = lp.read_text().splitlines(keepends=True)
+            keep = lines[:1] + [ln for ln in lines[1:] if int(ln.split(",", 1)[0]) < state["generation"]]
+            if len(keep) != len(lines):
+                lp.write_text("".join(keep))
+                print(f"{log_name}: dropped {len(lines) - len(keep)} rows past the checkpoint (gen {state['generation']})")
+
+    # Gait per generation goes to its own file (adding columns to an existing stats.csv would
+    # corrupt it): crossings / lead changes per episode and the share of time foot 2 leads.
+    gait_path = run_dir / "gait.csv"
+    gait_new = not gait_path.exists()
+    gait_f = open(gait_path, "a")
+    if gait_new:
+        gait_f.write("generation,crossings,lead_changes,front2_share,crossings_best\n")
 
     stats_path = run_dir / "stats.csv"
     new_stats = not stats_path.exists()
@@ -227,7 +260,7 @@ def main(argv=None):
         stats_w.writeheader()
 
     pool = mp.get_context("fork").Pool(args.workers, initializer=_init_worker,
-                                       initargs=(sizes, args.action_repeat))
+                                       initargs=(kind, sizes, args.action_repeat))
     t_start = time.time()
     wall0 = state["wall_seconds"]
 
@@ -235,7 +268,7 @@ def main(argv=None):
         return wall0 + time.time() - t_start
 
     def save_best(dirpath, theta, meta):
-        common.save_policy(dirpath, theta, sizes, {**meta, "action_repeat": args.action_repeat})
+        common.save_policy(dirpath, theta, sizes, {**meta, "action_repeat": args.action_repeat}, kind=kind)
 
     def hall_of_fame(cands, generation):
         """cands = [(label, theta, train_fitness)]. Full episodes on held-out terrains."""
@@ -312,6 +345,10 @@ def main(argv=None):
                "mem_avail_mb": mem_avail_mb()}
         stats_w.writerow(row)
         stats_f.flush()
+        bi = int(np.argmax(fits))
+        gait_f.write(f"{gen},{np.mean([e['crossings'] for e in all_eps]):.2f},{np.mean([e['lead_changes'] for e in all_eps]):.2f},"
+                     f"{np.mean([e['front2_share'] for e in all_eps]):.3f},{np.mean([e['crossings'] for e in results[bi]]):.2f}\n")
+        gait_f.flush()
         print(f"gen {gen:4d} best {row['best_fitness']:7.1f} mean {row['mean_fitness']:7.1f} "
               f"σ {es.sigma:.3f} falls {row['fall_frac']:.2f} stalls {row['stall_frac']:.2f} "
               f"x {row['mean_x']:5.1f} steps {steps/1e3:5.0f}k {row['gen_seconds']:5.1f}s "
@@ -351,6 +388,7 @@ def main(argv=None):
         checkpoint()
         pool.terminate()
         stats_f.close()
+        gait_f.close()
     print(f"Done at generation {state['generation']}. Champion held-out mean: {state['best_score']}")
     return es, state
 

@@ -86,3 +86,36 @@ def test_episodes_are_reproducible_on_a_reused_env():
     pol = common.MLP(sizes, np.random.default_rng(0).normal(0, 0.5, common.n_params(sizes)))
     rs = [common.run_episode(pol, env, 100, early_stop=False)["reward"] for _ in range(5)]
     assert len(set(rs)) == 1
+
+
+def test_symclock_shape_mirroring_and_clock():
+    sizes = common.policy_sizes("symclock", [32])
+    pol = common.make_policy("symclock", sizes, np.random.default_rng(0).normal(0, .5, 931))
+    assert sizes == (26, 32, 2) and pol.n_params == 931 and pol.n_hidden_layers >= 1
+    x = np.random.default_rng(1).uniform(-1, 1, 24)
+    pol.reset()
+    X = pol.inputs(x)
+    ph = 0.0
+    assert np.allclose(X[0], np.concatenate([x[0:4], x[4:9], x[9:14], x[14:24], [np.sin(ph), np.cos(ph)]]))
+    assert np.allclose(X[1], np.concatenate([x[0:4], x[9:14], x[4:9], x[14:24], [np.sin(ph + np.pi), np.cos(ph + np.pi)]]))
+    # leg 2's command = the shared controller applied to leg 2's view
+    (W1, b1), (W2, b2) = pol.layers
+    a = pol.activate(x)
+    assert np.allclose(a[2:], np.tanh(W2 @ np.tanh(W1 @ X[1] + b1) + b2))
+    # identical legs still get different commands: the clock breaks the symmetry
+    x_sym = x.copy()
+    x_sym[9:14] = x_sym[4:9]
+    pol.reset()
+    a = pol.activate(x_sym)
+    assert not np.allclose(a[:2], a[2:])
+    assert 14 < pol.period < 110
+
+
+def test_run_episode_reports_gait():
+    env = common.make_env()
+    pol = common.make_policy("symclock", (26, 8, 2), np.random.default_rng(2).normal(0, .5, 26 * 8 + 8 + 8 * 2 + 2 + 1))
+    r = common.run_episode(pol, env, 5, early_stop=False)
+    assert {"crossings", "lead_changes", "front2_share"} <= set(r)
+    assert 0 <= r["crossings"] <= r["lead_changes"] and 0 <= r["front2_share"] <= 1
+    r2 = common.run_episode(pol, env, 5, early_stop=False)     # reset() makes it reproducible
+    assert r2["reward"] == r["reward"]

@@ -33,6 +33,10 @@ def main():
            "falls_a": int(sum(ra[s]["fell"] for s in seeds)), "falls_b": int(sum(rb[s]["fell"] for s in seeds)),
            "diff_mean": round(float(d.mean()), 2), "diff_ci95": boot_ci(d),
            "a_better_on": int((d > 0).sum()),
+           # gait (present for evaluations made after common.run_episode tracked it)
+           **({f"gait_{w}": {k: round(float(np.mean([r[s][k] for s in seeds])), 3)
+                             for k in ("crossings", "lead_changes", "front2_share")}
+               for w, r in (("a", ra), ("b", rb))} if "crossings" in ra[seeds[0]] and "crossings" in rb[seeds[0]] else {}),
            "pairs": [[s, round(ra[s]["reward"], 1), round(rb[s]["reward"], 1)] for s in seeds]}
     print(json.dumps({k: v for k, v in res.items() if k != "pairs"}, indent=1))
     if args.out:

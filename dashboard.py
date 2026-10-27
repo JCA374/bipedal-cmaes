@@ -84,10 +84,11 @@ def status():
             m = json.loads((p / "meta.json").read_text())
             ms.append({"name": p.name, "generation": m.get("generation"), "mean": m.get("mean")})
     ov = json.loads((run / "overrides.json").read_text()) if (run / "overrides.json").exists() else {}
+    gait = [{k: float(v) for k, v in r.items()} for r in csv.DictReader(open(run / "gait.csv"))] if (run / "gait.csv").exists() else []
     log = run.parent.parent / f"runs_{run.name}.log"
     return {
         "now": datetime.now().isoformat(timespec="seconds"), "run": run.name, "deadline": deadline(),
-        "stats": stats, "config": cfg.get("effective", {}), "history": cfg.get("history", []),
+        "stats": stats, "gait": gait, "config": cfg.get("effective", {}), "history": cfg.get("history", []),
         "champion": best, "hof": hof[:12], "milestones": ms, "overrides": ov,
         "load": os.getloadavg(), "cpus": os.cpu_count(), "mem": meminfo(), "jobs": jobs(),
         "logs": {"training": [l for l in tail(log, 400) if not l.startswith("gen ")][-8:],

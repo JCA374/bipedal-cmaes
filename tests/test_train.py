@@ -67,3 +67,17 @@ def test_sigterm_saves_checkpoint(tmp_path):
     out, _ = p.communicate(timeout=60)
     assert "Interrupted, saving checkpoint" in out
     assert (tmp_path / "s" / "checkpoints" / "latest.pkl.gz").exists()
+
+
+def test_symclock_train_resume_keeps_policy_and_bonus(tmp_path):
+    a = ["--name", "sc", "--runs-dir", str(tmp_path), "--workers", "1", "--hidden", "4", "--popsize", "4",
+         "--k", "1", "--hof-every", "2", "--hof-seeds", "1", "--hof-top", "1", "--checkpoint-every", "1"]
+    train.main(a + ["--generations", "2", "--policy", "symclock", "--cross-bonus", "0.5"])
+    es, st = train.main(a + ["--generations", "3", "--resume"])          # defaults: mlp, bonus 0
+    run = tmp_path / "sc"
+    cfg = json.loads((run / "run_config.json").read_text())
+    assert cfg["effective"]["policy"] == "symclock" and cfg["effective"]["cross_bonus"] == 0.5
+    assert len(cfg["history"]) == 1                                       # nothing really changed
+    pol, meta = common.load_policy(run)
+    assert type(pol).__name__ == "SymClock" and meta["policy"] == "symclock"
+    assert len((run / "gait.csv").read_text().strip().splitlines()) == 1 + 3

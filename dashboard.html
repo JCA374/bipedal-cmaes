@@ -69,6 +69,12 @@
         <div class="card"><h2>Behaviour in training</h2><p class="sub">% of the 240 episodes that <span style="color:var(--red)">fell</span> / <span style="color:var(--s3)">stalled</span>; <span style="color:var(--blue)">mean distance</span> (% of course).</p><canvas id="c-beh"></canvas><div class="hover" id="h-beh"></div></div>
         <div class="card"><h2>Throughput</h2><p class="sub"><span style="color:var(--accent)">seconds per generation</span> and <span style="color:var(--blue)">k steps per generation</span>.</p><canvas id="c-thr"></canvas><div class="hover" id="h-thr"></div></div>
       </div>
+      <div class="card" id="gait-card" style="display:none">
+        <h2>Gait: do the feet pass each other?</h2>
+        <p class="sub"><span style="color:var(--accent)">crossing steps per episode</span> (front foot changes after ≥ 0.4 units of progress; best candidate dashed) and
+        <span style="color:var(--blue)">% of time foot 2 is in front</span> (~50% = both legs take turns leading; ~100% = leg 2 is a permanent front prop).</p>
+        <canvas id="c-gait"></canvas><div class="hover" id="h-gait"></div>
+      </div>
       <div class="card">
         <h2>Last generations</h2>
         <table class="t" id="t-last"></table>
@@ -190,6 +196,17 @@ function render() {
   chart("c-thr", g, [{ ys: st.map(r => r.gen_seconds), color: "--accent", width: 1.5 }, { ys: st.map(r => r.env_steps_gen / 1e4), color: "--blue", width: 1.5 }],
     { w: 420, h: 200, lo: 0, hi: tmax, ticks: [0, Math.round(tmax / 2), Math.round(tmax)] },
     i => document.getElementById("h-thr").textContent = `gen ${st[i].generation}: ${fmt(st[i].gen_seconds, 1)} s · ${fmt(st[i].env_steps_gen / 1e3)} k steps · ${fmt(st[i].env_steps_gen / st[i].gen_seconds / 1e3, 1)} k steps/s · RAM free ${st[i].mem_avail_mb} MB`);
+
+  // gait (gait.csv, runs started after gait tracking existed)
+  if (S.gait && S.gait.length) {
+    document.getElementById("gait-card").style.display = "";
+    const gs = range === "all" ? S.gait : S.gait.slice(-+range), gg = gs.map(r => r.generation);
+    const cmax = Math.max(10, ...gs.map(r => Math.max(r.crossings, r.crossings_best))) * 1.1;
+    chart("c-gait", gg, [{ ys: gs.map(r => r.crossings), color: "--accent", width: 2 }, { ys: gs.map(r => r.crossings_best), color: "--accent", width: 1, dash: [4, 3] },
+      { ys: gs.map(r => r.front2_share * cmax), color: "--blue", width: 1.5 }], { w: 900, h: 200, lo: 0, hi: cmax, ticks: [0, Math.round(cmax / 2), Math.round(cmax)],
+      hlines: [{ v: cmax / 2, color: "--line" }] },
+      i => document.getElementById("h-gait").textContent = `gen ${gs[i].generation}: ${fmt(gs[i].crossings, 1)} crossing steps per episode (best candidate ${fmt(gs[i].crossings_best, 1)}) · ${fmt(gs[i].lead_changes, 1)} front-foot changes · foot 2 in front ${fmt(100 * gs[i].front2_share)}% of the time`);
+  }
 
   // tables
   const L12 = all.slice(-12).reverse();
