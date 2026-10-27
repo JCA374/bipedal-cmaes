@@ -7,6 +7,7 @@ const LESSONS = [
   { slug: "05-the-training-run", title: "The training run", sub: "Three false starts, and the fitness that finally produced a walker", draft: true },
   { slug: "06-inside-the-champion", title: "Inside the champion", sub: "What the hidden neurons do while it walks", draft: true },
   { slug: "07-results", title: "Results and comparison", sub: "100 unseen terrains; CMA-ES against NEAT, PPO and TD3", draft: true },
+  { slug: "08-two-ways-to-walk", title: "Two ways to walk", sub: "Why the champion skips instead of walking, and a network built to take turns", wip: true },
 ];
 
 function siteRoot() {
@@ -54,7 +55,7 @@ function renderLessonList(id) {
   if (!el) return;
   el.innerHTML = LESSONS.map((l, i) => `
     <a class="lesson-card${l.soon ? " soon" : ""}" href="${siteRoot()}/lessons/${l.slug}/index.html">
-      <div class="n">LESSON ${i + 1}${l.soon ? '<span class="tag">after training</span>' : l.draft ? '<span class="tag">being completed</span>' : ""}</div>
+      <div class="n">LESSON ${i + 1}${l.soon ? '<span class="tag">after training</span>' : l.draft ? '<span class="tag">being completed</span>' : l.wip ? '<span class="tag">experiment running</span>' : ""}</div>
       <h3>${l.title}</h3><p>${l.sub}</p></a>`).join("");
 }
 

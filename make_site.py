@@ -44,6 +44,9 @@ def progress(run_dir):
         "config": cfg["effective"], "history": cfg["history"],
         "curve": downsample(pts), "hof": hof,
         "milestones": sorted(p.name for p in (run_dir / "milestones").iterdir()) if (run_dir / "milestones").exists() else [],
+        "gait": downsample([{"g": int(float(r["generation"])), "crossings": float(r["crossings"]),
+                              "best": float(r["crossings_best"]), "front2": float(r["front2_share"])}
+                             for r in csv.DictReader(open(run_dir / "gait.csv"))]) if (run_dir / "gait.csv").exists() else [],
         "milestone_gens": [[p.name, json.loads((p / "meta.json").read_text()).get("generation")]
                            for p in sorted((run_dir / "milestones").iterdir())] if (run_dir / "milestones").exists() else [],
     }
@@ -53,9 +56,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
     ap.add_argument("--episodes", action="store_true", help="re-export the champion replay JSON")
+    ap.add_argument("--out", default=str(DOCS / "data" / "progress.json"))
     args = ap.parse_args()
     run_dir = Path(args.run)
-    out = DOCS / "data" / "progress.json"
+    out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(progress(run_dir), separators=(",", ":")))
     print(f"-> {out}")

@@ -599,3 +599,168 @@ def explainer():
 
 VIDEOS = {"05-the-training-run": ("lesson-05", lesson5), "06-inside-the-champion": ("lesson-06", lesson6),
           "07-results": ("lesson-07", lesson7), "explainer": ("explainer", explainer)}
+
+
+# =============================================================================
+# Lesson 8: two ways to walk
+# =============================================================================
+
+class LeadPlayer(C.Player):
+    """Player that also records which foot leads (lower-leg x difference) every step."""
+
+    def _restart(self):
+        super()._restart()
+        self.lead = []
+
+    def frame(self, step):
+        step = int(step)
+        if step < self.step:
+            self._restart()
+        fr = self.cur
+        while self.step < step and not self.done and self.step < self.max_steps:
+            fr = super().frame(self.step + 1)          # one simulation step at a time
+            u = self.env.unwrapped
+            self.lead.append(u.legs[1].position.x - u.legs[3].position.x)
+        return fr
+
+
+def lead_chart(d, box, lead, n=1600):
+    x0, y0, x1, y1 = box
+    mid = (y0 + y1) / 2
+    d.rectangle(box, fill=(16, 22, 42))
+    d.line([(x0, mid), (x1, mid)], fill=MUTED, width=1)
+    text(d, (x0 + 8, y0 + 4), "foot 1 ahead", 14, MUTED)
+    text(d, (x0 + 8, y1 - 20), "foot 2 ahead", 14, MUTED)
+    if len(lead) > 1:
+        mx = 3.2
+        pts = [(x0 + (x1 - x0) * i / n, mid - np.clip(v / mx, -1, 1) * (y1 - y0) / 2.2) for i, v in enumerate(lead)]
+        d.line(pts, fill=AMBER, width=3)
+
+
+@LS._cache
+def gait_data():
+    return J("gait.json")
+
+
+def l8_skip():
+    G = {w["run"]: w for w in gait_data()["walkers"]}
+    p = LeadPlayer(common.load_policy(os.path.join(C.REPO_ROOT, "runs", "v3-f20"))[0], 30_000_008)
+
+    def render(t, b):
+        img = blank()
+        fr = p.at_time(t, 1.0, loop_pause=0, length=900)
+        paste_frame(img, fr, (40, 30, 840, 450))
+        d = ImageDraw.Draw(img)
+        lead_chart(d, (40, 500, 1240, 690), p.lead, n=900)
+        k, _, _ = b.local(t)
+        if k >= 1:
+            v3 = G["v3-f20"]
+            label(d, (900, 60), f"foot 2 in front: {round(v3['front2_share'] * 100)}%", 22)
+            label(d, (900, 110), f"lead changes per run: {v3['lead_changes']}", 20)
+            label(d, (900, 160), "touchdowns alternate: a skip", 20)
+        return img
+    return Scene("skip", render, [8] * nbeats("lesson-08", "skip"))
+
+
+def l8_why():
+    def render(t, b):
+        img = blank()
+        d = ImageDraw.Draw(img)
+        heading(d, "A valley between two gaits", t)
+        xs = np.linspace(0, 1, 300)
+        ys = 0.75 * np.exp(-((xs - .25) / .1) ** 2) + 0.95 * np.exp(-((xs - .75) / .1) ** 2) + 0.05
+        pts = [(100 + 1080 * x, 620 - 400 * y) for x, y in zip(xs, ys)]
+        d.line(pts, fill=BLUE, width=4)
+        text(d, (100 + 1080 * .25, 620 - 400 * .82), "skip (where it is)", 22, AMBER, anchor="mm", bold=True)
+        text(d, (100 + 1080 * .75, 620 - 400 * 1.02), "walk (maybe better)", 22, GREEN, anchor="mm", bold=True)
+        text(d, (100 + 1080 * .5, 640), "clumsy in-between gaits", 20, MUTED, anchor="mm")
+        rng = np.random.default_rng(1)
+        for x in .25 + 0.03 * rng.normal(size=14):
+            y = 0.75 * np.exp(-((x - .25) / .1) ** 2) + 0.05
+            d.ellipse([100 + 1080 * x - 6, 620 - 400 * y - 6, 100 + 1080 * x + 6, 620 - 400 * y + 6], fill=AMBER)
+        text(d, (100, 150), "fitness", 18, MUTED)
+        text(d, (100 + 1080 * .25, 660), "CMA-ES samples only nearby (small σ)", 18, AMBER, fade(t, 3), anchor="mm")
+        return img
+    return Scene("why", render, [10])
+
+
+def l8_fix():
+    def render(t, b):
+        img = blank()
+        d = ImageDraw.Draw(img)
+        k, lt, _ = b.local(t)
+        if k == 0:
+            heading(d, "One controller for both legs", t)
+            for i, (lab, col, own, oth) in enumerate([("leg 1", BLUE, "leg 1", "leg 2"), ("leg 2", ORANGE, "leg 2", "leg 1")]):
+                y = 170 + i * 250
+                for j, s in enumerate(["body", f"own: {own}", f"other: {oth}", "lidar", "clock" + (" + π" if i else "")]):
+                    d.rounded_rectangle([60, y + j * 40, 300, y + j * 40 + 32], 8, fill=PANEL)
+                    text(d, (75, y + j * 40 + 16), s, 18, FG, anchor="lm", bg=PANEL)
+                    d.line([(300, y + j * 40 + 16), (520, 395)], fill=C.mix(BG, MUTED, .6), width=2)
+                d.line([(760, 395), (980, y + 80)], fill=col, width=3)
+                text(d, (1000, y + 80), f"{lab}: hip, knee", 24, col, anchor="lm", bold=True)
+            d.rounded_rectangle([520, 330, 760, 460], 16, fill=C.mix(BG, AMBER, .25), outline=AMBER, width=3)
+            text(d, (640, 380), "shared", 26, FG, anchor="mm", bold=True)
+            text(d, (640, 418), "26 → 32 → 2", 20, FG, anchor="mm", mono=True)
+            text(d, (640, 650), "same weights for both legs: neither can become a permanent prop", 22, MUTED, anchor="mm")
+        elif k == 1:
+            heading(d, "A clock, half a cycle apart", t)
+            for i, (shift, title) in enumerate([(0.0, "shift 0: a hop"), (np.pi, "shift π: taking turns")]):
+                cx0 = 330 + i * 620
+                ph = 2 * np.pi * lt * 50 / 40
+                hip = (cx0, 220)
+                for s, col in [(shift, ORANGE), (0.0, BLUE)]:
+                    a = 0.6 * np.sin(ph + s)
+                    d.line([hip, (hip[0] + np.sin(a) * 260, hip[1] + np.cos(a) * 260)], fill=col, width=16)
+                d.rectangle([cx0 - 80, 180, cx0 + 80, 222], fill=AMBER)
+                d.line([(cx0 - 260, 490), (cx0 + 260, 490)], fill=GREEN, width=3)
+                text(d, (cx0, 560), title, 30, GREEN if i else RED, anchor="mm", bold=True)
+        else:
+            heading(d, "Plus a small bonus for real steps", t)
+            paragraph(d, (80, 200), "+0.5 training points each time the front foot changes, if the body moved at least 0.4 units forward since the last counted step.", 60, 30, FG)
+            paragraph(d, (80, 380), "Shuffling in place earns nothing. Reported scores stay the raw reward.", 60, 26, MUTED)
+        return img
+    return Scene("fix", render, [8] * nbeats("lesson-08", "fix"))
+
+
+def l8_results():
+    G = {w["run"]: w for w in gait_data()["walkers"]}
+    P3 = LeadPlayer(common.load_policy(os.path.join(C.REPO_ROOT, "runs", "v3-f20"))[0], 30_000_008)
+    P4 = LeadPlayer(common.load_policy(os.path.join(C.REPO_ROOT, "runs", "v4-walk"))[0], 30_000_008)
+    cmp_ = gait_data().get("compare")
+
+    def render(t, b):
+        img = blank()
+        k, lt, _ = b.local(t)
+        for i, (p, run, col) in enumerate([(P3, "v3-f20", AMBER), (P4, "v4-walk", GREEN)]):
+            x = 40 + i * 620
+            paste_frame(img, p.at_time(t, 1.0, loop_pause=0, length=700), (x, 40, 580, 387))
+            d = ImageDraw.Draw(img)
+            lead_chart(d, (x, 440, x + 580, 560), p.lead, n=700)
+            w = G[run]
+            label(d, (x + 12, 52), w["label"], 18)
+            if k >= 1:
+                text(d, (x, 590), f"score {w['mean']:.0f} ± {w['std']:.0f} · falls {w['falls']}", 22, col, bold=True)
+                text(d, (x, 630), f"lead changes {w['lead_changes']:.0f} per run · foot 2 ahead {round(w['front2_share'] * 100)}%", 20, FG)
+        return img
+    return Scene("results", render, [8] * nbeats("lesson-08", "results"))
+
+
+def l8_outro():
+    def render(t, b):
+        img = blank()
+        d = ImageDraw.Draw(img)
+        text(d, (W // 2, 300), "evolution finds what you reward, the nearest way", 36, FG, fade(t, .2), bold=True, anchor="mm")
+        text(d, (W // 2, 380), "if you care how it's done, build it into the structure", 26, AMBER, fade(t, 1.2), anchor="mm")
+        return img
+    return Scene("outro", render, [6])
+
+
+def lesson8():
+    sc = [title_card("intro", "LESSON 8", "Two ways to walk", "skipping, and a network built to take turns", 6), l8_skip(), l8_why(), l8_fix()]
+    if nbeats("lesson-08", "results"):
+        sc.append(l8_results())
+    return sc + [l8_outro()]
+
+
+VIDEOS["08-two-ways-to-walk"] = ("lesson-08", lesson8)

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 8 · Two ways to walk</title>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+<script src="../../assets/walker.js"></script>
+</head>
+<body data-root="../.." data-lesson="08-two-ways-to-walk">
+<header id="top"></header>
+<main class="wrap narrow">
+
+<div class="lesson-head">
+  <div class="n">Lesson 8 of 8</div>
+  <h1>Two ways to walk</h1>
+  <p class="lede">The champion scores well, but it never puts one foot in front of the other: one leg always leads.
+  This lesson looks at why evolution settled on that gait, and tests a change to the network's <i>structure</i>
+  that should make real, alternating steps the natural thing to learn.</p>
+</div>
+
+<div class="goals"><b>After this lesson you can</b>
+  <ul>
+    <li>measure a gait: touchdown order, which foot leads, and how often the lead changes;</li>
+    <li>explain why a local search keeps a gait that works, even when a better one exists;</li>
+    <li>describe how a shared controller with a phase-shifted clock builds alternation into the network.</li>
+  </ul>
+</div>
+
+<div id="clip-slot"></div>
+
+<section>
+<h2><span class="num">1</span>Watch the feet</h2>
+<p>Below, a walker on a typical track. The chart underneath shows <b>which foot is in front</b>: above the line, foot 1 leads;
+below it, foot 2 leads. A normal walk crosses the line on every step. The strips at the bottom show when each foot is on the ground.</p>
+<div class="demo">
+  <div class="controls" id="w-btns"></div>
+  <canvas id="w-world"></canvas>
+  <div class="controls"><button class="btn primary" id="w-play">▶ Play</button><input type="range" id="w-scrub" min="0" value="0" style="flex:1"></div>
+  <canvas id="w-lead" style="margin-top:8px"></canvas>
+  <p class="readout" id="w-info"></p>
+</div>
+<div class="key" id="diag"><b>What the numbers say</b>Loading…</div>
+</section>
+
+<section>
+<h2><span class="num">2</span>Why evolution kept it</h2>
+<p>Nothing in the reward asks for crossing steps. It pays for distance and charges for effort and falls. The skipping gait,
+with leg 2 always reaching forward and leg 1 pushing from behind, earns about as much as a "real" walk would.</p>
+<p>And CMA-ES searches <i>locally</i>: it samples a cloud around its current best guess. To switch gaits, leg 2 would have to start swinging
+back past leg 1, and the walkers in between are clumsy and score worse. That's a valley in the fitness landscape. Late in training the cloud
+is small (σ ≈ 0.05), so it never samples far enough to see the other side. Evolution keeps the nearest gait that works, not the one we'd pick.</p>
+</section>
+
+<section>
+<h2><span class="num">3</span>The fix: one controller, two legs, a clock</h2>
+<p>Instead of adding a reward and hoping, change what the network <i>can</i> express:</p>
+<ul>
+  <li><b>One controller for both legs.</b> A small network sees the body, <i>its own</i> leg, the <i>other</i> leg and the lidar, and outputs a hip and a knee command.
+  Leg 1 uses it with its own view; leg 2 uses the very same weights with the two legs swapped. Neither leg can become a specialist prop,
+  because there's only one set of weights.</li>
+  <li><b>A clock.</b> The controller also gets sin φ and cos φ of a phase that cycles every T steps. Leg 2's clock runs half a cycle (π) behind.
+  T is learned along with the weights.</li>
+  <li><b>A small training bonus</b> (0.5 points) for each step where the front foot changes <i>and</i> the body has moved forward at least 0.4 units since the last one.
+  Shuffling in place earns nothing, and reported scores stay raw.</li>
+</ul>
+<p>The size barely changes: 26 inputs → 32 hidden → 2 outputs, plus the clock period, is <b>931</b> numbers instead of 932.</p>
+
+<div class="demo">
+  <p class="demo-title">Why the half-cycle shift matters</p>
+  <p class="demo-sub">An illustration (not the physics simulation): two legs driven by the same rule, <code>hip angle = A · sin(φ + shift)</code>.
+  With shift 0 the legs move together, which is a hop. With shift π they take turns, and the feet pass each other on every step.
+  The real controller is a whole network rather than a sine wave, but the clock's half-cycle offset gives it the same push.</p>
+  <canvas id="clock"></canvas>
+  <div class="controls">
+    <label>shift between legs <input type="range" id="shift" min="0" max="3.1416" step="0.01" value="3.1416"> <b id="shiftv"></b></label>
+    <label>period T <input type="range" id="period" min="15" max="100" value="40"> <b id="periodv"></b> steps</label>
+  </div>
+  <p class="readout" id="clockinfo"></p>
+</div>
+<div class="key"><b>Why not just a symmetric controller?</b>Without the clock, two legs that start in the same position get exactly the same inputs,
+so a shared controller gives them the same commands forever: a perfect hop. The simulation is deterministic, so nothing breaks the tie.
+The phase shift is what makes the legs different.</div>
+</section>
+
+<section>
+<h2><span class="num">4</span>The experiment</h2>
+<p id="exp-status" class="intro">Loading…</p>
+<div id="live" class="demo" style="display:none">
+  <p class="demo-title">v4 training, live</p>
+  <p class="demo-sub"><span style="color:var(--accent)">crossing steps per episode</span> in training (best candidate dashed), and
+  <span style="color:var(--blue)">% of the time foot 2 leads</span> (about 50% = the legs take turns). Updated hourly.</p>
+  <canvas id="live-gait"></canvas>
+  <p class="readout" id="live-info"></p>
+</div>
+<div id="results" style="display:none">
+  <table class="t" id="r-table"></table>
+  <p class="readout" id="r-cmp"></p>
+  <div class="demo">
+    <p class="demo-title">Side by side on the same track</p>
+    <div class="cols"><div><canvas id="sA"></canvas><p class="readout" id="sAi"></p></div><div><canvas id="sB"></canvas><p class="readout" id="sBi"></p></div></div>
+    <div class="controls"><button class="btn primary" id="s-play">▶ Play both</button></div>
+  </div>
+  <div class="key" id="verdict"><b>Verdict</b></div>
+</div>
+</section>
+
+<section class="quiz">
+<h2>Check yourself</h2>
+<div class="q" data-answer="1"><p>1. A walker alternates touchdowns 1-2-1-2, but foot 2 is in front 100% of the time. What is it doing?</p>
+  <button>Walking normally</button><button>Skipping: one leg always leads, so the feet never pass</button><button>Hopping</button>
+  <div class="why">Alternating touchdowns isn't enough. In a walk, the leading foot changes on every step.</div></div>
+<div class="q" data-answer="2"><p>2. Why didn't more training turn the skip into a walk?</p>
+  <button>The network is too small</button><button>The reward punishes walking</button><button>The in-between gaits score worse, and the search only looks nearby</button>
+  <div class="why">A fitness valley separates the two gaits; a local search with a small σ doesn't cross it.</div></div>
+<div class="q" data-answer="0"><p>3. What does the half-cycle clock shift do in the shared controller?</p>
+  <button>Gives the two legs different inputs, so the same weights drive them in turn</button><button>Makes the walker faster</button><button>Adds memory</button>
+  <div class="why">Same weights + opposite phase = the same movement, taking turns. Without the shift, identical legs would move identically.</div></div>
+</section>
+
+<div id="pager"></div>
+</main>
+<footer class="wrap narrow">Part of <a href="../../index.html">Bipedal CMA-ES</a>.</footer>
+
+<script>
+const J = u => fetch(u, { cache: "no-store" }).then(r => r.ok ? r.json() : null).catch(() => null);
+const cx = pts => { let s = 0; for (let k = 0; k < pts.length; k += 2) s += pts[k]; return s / (pts.length / 2); };
+// 1. replay + foot lead chart
+const wr = new WalkerReplay(document.getElementById("w-world"));
+const lc = document.getElementById("w-lead"), lctx = setupCanvas(lc, 720, 170);
+let lead = [], c1 = [], c2 = [];
+function drawLead(i) {
+  const W = 720, H = 170, n = lead.length; lctx.clearRect(0, 0, W, H);
+  if (!n) return;
+  const mx = Math.max(1, ...lead.map(Math.abs)), X = k => 30 + (W - 40) * k / (n - 1), Y = v => 70 - v / mx * 60;
+  lctx.strokeStyle = css("--line"); lctx.beginPath(); lctx.moveTo(30, 70); lctx.lineTo(W - 10, 70); lctx.stroke();
+  lctx.fillStyle = css("--muted"); lctx.font = "11px system-ui"; lctx.fillText("foot 1 ahead", 34, 14); lctx.fillText("foot 2 ahead", 34, 134);
+  lctx.strokeStyle = css("--accent"); lctx.lineWidth = 2; lctx.beginPath(); lead.forEach((v, k) => (k ? lctx.lineTo : lctx.moveTo).call(lctx, X(k), Y(v))); lctx.stroke();
+  for (let k = 0; k < n; k++) {
+    if (c1[k]) { lctx.fillStyle = css("--s1"); lctx.fillRect(X(k), 142, Math.ceil((W - 40) / n), 10); }
+    if (c2[k]) { lctx.fillStyle = css("--s2"); lctx.fillRect(X(k), 156, Math.ceil((W - 40) / n), 10); }
+  }
+  if (i != null) { lctx.strokeStyle = css("--text"); lctx.lineWidth = 1; lctx.beginPath(); lctx.moveTo(X(i), 0); lctx.lineTo(X(i), H); lctx.stroke(); }
+}
+wr.onFrame = (f, i) => { drawLead(i); document.getElementById("w-scrub").value = i; };
+async function loadWalker(w) {
+  wr.pause(); document.getElementById("w-play").textContent = "▶ Play";
+  const ep = await wr.load("../../data/" + w.replay);
+  lead = ep.frames.map(f => cx(f.p[2]) - cx(f.p[4])); c1 = ep.frames.map(f => f.o[8] > .5); c2 = ep.frames.map(f => f.o[13] > .5);
+  let changes = 0, side = 0; for (const v of lead) { const s = v > .15 ? 1 : v < -.15 ? -1 : side; if (side && s !== side) changes++; side = s; }
+  document.getElementById("w-scrub").max = ep.frames.length - 1;
+  document.getElementById("w-info").textContent = `${w.label}: this track ${ep.reward}${ep.fell ? " (fell)" : ""}, ${ep.steps} steps; the leading foot changes ${changes} times.`;
+  document.querySelectorAll("#w-btns button").forEach(b => b.classList.toggle("primary", b.dataset.r === w.run));
+  wr.seek(0);
+}
+document.getElementById("w-play").onclick = () => { const b = document.getElementById("w-play"); if (wr.playing) { wr.pause(); b.textContent = "▶ Play"; } else { wr.play(); b.textContent = "❚❚ Pause"; } };
+document.getElementById("w-scrub").oninput = e => { wr.pause(); wr.seek(+e.target.value); };
+
+// 3. clock illustration
+const ck = document.getElementById("clock"), kctx = setupCanvas(ck, 720, 230);
+let t0 = performance.now();
+function drawClock(now) {
+  const shift = +document.getElementById("shift").value, T = +document.getElementById("period").value;
+  document.getElementById("shiftv").textContent = shift > 3.1 ? "π (half a cycle)" : shift < .01 ? "0" : (shift / Math.PI).toFixed(2) + "π";
+  document.getElementById("periodv").textContent = T;
+  const t = (now - t0) / 1000 * 50, ph = 2 * Math.PI * t / T, A = .6, W = 720, H = 230;
+  kctx.clearRect(0, 0, W, H);
+  kctx.strokeStyle = css("--ground-line"); kctx.lineWidth = 2; kctx.beginPath(); kctx.moveTo(0, 200); kctx.lineTo(320, 200); kctx.stroke();
+  const hip = [160, 60], L = 130;
+  [[shift, "--s2"], [0, "--s1"]].forEach(([s, c]) => {
+    const a = A * Math.sin(ph + s), fx = hip[0] + Math.sin(a) * L, fy = hip[1] + Math.cos(a) * L;
+    kctx.strokeStyle = css(c); kctx.lineWidth = 10; kctx.lineCap = "round"; kctx.beginPath(); kctx.moveTo(...hip); kctx.lineTo(fx, fy); kctx.stroke();
+  });
+  kctx.fillStyle = css("--accent"); kctx.fillRect(hip[0] - 40, hip[1] - 22, 80, 22);
+  // phase circle
+  const cxp = 470, cyp = 115, R = 70;
+  kctx.strokeStyle = css("--line"); kctx.lineWidth = 2; kctx.beginPath(); kctx.arc(cxp, cyp, R, 0, 7); kctx.stroke();
+  [[0, "--s1", "leg 1"], [shift, "--s2", "leg 2"]].forEach(([s, c, nm]) => {
+    const x = cxp + R * Math.cos(ph + s), y = cyp - R * Math.sin(ph + s);
+    kctx.fillStyle = css(c); kctx.beginPath(); kctx.arc(x, y, 9, 0, 7); kctx.fill(); kctx.font = "12px system-ui"; kctx.fillText(nm, x + 12, y + 4);
+  });
+  kctx.fillStyle = css("--muted"); kctx.font = "12px system-ui"; kctx.fillText("each leg's clock (sin φ, cos φ)", cxp - 80, 215);
+  const passes = shift > 0.3;
+  document.getElementById("clockinfo").textContent = shift < 0.3 ? "Shift ≈ 0: the legs swing together: a hop. The feet never pass." :
+    shift > 2.8 ? "Shift ≈ π: the legs take turns; the feet pass on every step: a walk." : "In between: the legs overlap in time, an uneven gait.";
+  requestAnimationFrame(drawClock);
+}
+requestAnimationFrame(drawClock);
+
+// 4. experiment
+Promise.all([J("../../data/gait.json"), J("../../data/progress_v4.json")]).then(([G, P]) => {
+  if (!G) return;
+  const ws = G.walkers;
+  document.getElementById("w-btns").innerHTML = ws.map(w => `<button class="btn" data-r="${w.run}">${w.label}</button>`).join("");
+  document.querySelectorAll("#w-btns button").forEach(b => b.onclick = () => loadWalker(ws.find(w => w.run === b.dataset.r)));
+  loadWalker(ws[ws.length - 1]);
+  const v3 = ws.find(w => w.run === "v3-f20");
+  if (v3) document.getElementById("diag").innerHTML = `<b>What the numbers say</b>On 100 tracks, the skipping walker's foot 2 leads <b>${Math.round(v3.front2_share * 100)}%</b> of the time,
+    the leading foot changes ${v3.lead_changes} times per episode on average, and on ${Math.round(v3.zero_change_share * 100)}% of tracks it never changes at all.
+    Its touchdowns still alternate (1-2-1-2), so it isn't hopping: it's skipping, with leg 2 always reaching forward. (Score on these tracks: ${v3.mean} ± ${v3.std}, ${v3.falls} falls.)`;
+  const v4 = ws.find(w => w.run === "v4-walk");
+  const st = document.getElementById("exp-status");
+  if (!v4) {
+    st.textContent = P ? `Run v4-walk is training: generation ${P.generation}, champion ${P.champion.mean != null ? P.champion.mean.toFixed(0) : "–"} on 20 held-out tracks (updated ${P.updated}). Results appear here when it's done.`
+      : "Run v4-walk starts automatically after the main run finishes, and trains for 8 hours. Its live progress and then the results appear here.";
+    if (P && P.gait && P.gait.length) {
+      document.getElementById("live").style.display = "";
+      const gc = document.getElementById("live-gait"), gx = setupCanvas(gc, 720, 200), g = P.gait, cmax = Math.max(10, ...g.map(r => r.best)) * 1.1;
+      const draw = () => drawSeries(gc, gx, [{ ys: g.map(r => r.crossings), color: css("--accent") }, { ys: g.map(r => r.best), color: css("--accent"), width: 1 },
+        { ys: g.map(r => r.front2 * cmax), color: css("--blue"), width: 1.5 }], null, { lo: 0, hi: cmax, ticks: [0, Math.round(cmax / 2), Math.round(cmax)], xlabel: `generation → ${g[g.length - 1].g}` });
+      draw(); window.addEventListener("themechange", draw);
+      const last = g[g.length - 1];
+      document.getElementById("live-info").textContent = `latest: ${last.crossings.toFixed(1)} crossing steps per training episode, foot 2 leads ${Math.round(last.front2 * 100)}% of the time.`;
+    }
+    return;
+  }
+  st.textContent = "Both walkers, the same 100 comparison tracks (seeds 40,000,000+), full episodes, raw reward.";
+  document.getElementById("results").style.display = "";
+  const row = (k, f) => `<tr><td>${k}</td>${ws.map(w => `<td>${f(w)}</td>`).join("")}</tr>`;
+  document.getElementById("r-table").innerHTML = `<tr><th></th>${ws.map(w => `<th>${w.label}</th>`).join("")}</tr>` +
+    row("score", w => `<b>${w.mean}</b> ± ${w.std}`) + row("falls", w => w.falls) + row("finished", w => w.finished) +
+    row("crossing steps per episode", w => w.crossings) + row("leading-foot changes per episode", w => w.lead_changes) +
+    row("foot 2 in front", w => Math.round(w.front2_share * 100) + "%") + row("network", w => w.policy === "symclock" ? "shared leg controller + clock, 931" : "24 → 32 → 4, 932") +
+    row("champion generation", w => w.generation);
+  const C = G.compare;
+  if (C) document.getElementById("r-cmp").textContent = `Paired: v4 − v3 = ${C.diff_mean > 0 ? "+" : ""}${C.diff_mean} (95% CI ${C.diff_ci95[0]} to ${C.diff_ci95[1]}); v4 higher on ${C.a_better_on} of ${C.episodes} tracks.`;
+  const walks = v4.crossings > 10 * Math.max(1, v3.crossings) && v4.front2_share > .2 && v4.front2_share < .8;
+  const better = C && C.diff_ci95[0] > 0, worse = C && C.diff_ci95[1] < 0;
+  document.getElementById("verdict").innerHTML = `<b>Verdict</b>` + (walks ? "The shared controller with a clock <b>walks</b>: the leading foot changes on every step and both legs take turns in front. " :
+    "The shared controller did <b>not</b> clearly learn crossing steps in this run. ") +
+    (better ? "And it scores significantly higher than the skipping walker." : worse ? "It scores lower than the skipping walker: a nicer gait isn't automatically a higher score, at least not within this training budget." :
+      "Its score isn't significantly different from the skipping walker's.");
+  const A = new WalkerReplay(document.getElementById("sA")), B = new WalkerReplay(document.getElementById("sB"));
+  Promise.all([A.load("../../data/" + v3.replay), B.load("../../data/" + v4.replay)]).then(([a, b]) => {
+    document.getElementById("sAi").textContent = `${v3.label}: ${a.reward} on this track`; document.getElementById("sBi").textContent = `${v4.label}: ${b.reward}`;
+  });
+  document.getElementById("s-play").onclick = () => { A.seek(0); B.seek(0); A.play(); B.play(); };
+});
+</script>
+<script src="../../assets/clip.js"></script>
+</body>
+</html>

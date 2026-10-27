@@ -1,0 +1,21 @@
+{
+ "walkers": [
+  {
+   "run": "v3-f20",
+   "label": "skipping walker (v3)",
+   "policy": "mlp",
+   "generation": 289,
+   "held_out": 281.3672015032788,
+   "episodes": 100,
+   "mean": 254.11,
+   "std": 81.77,
+   "falls": 11,
+   "finished": 89,
+   "crossings": 0.08,
+   "lead_changes": 0.08,
+   "front2_share": 0.996,
+   "zero_change_share": 0.92,
+   "replay": "episodes/gait_v3-f20.json"
+  }
+ ]
+}
