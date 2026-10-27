@@ -1,0 +1,130 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:01.483
+Lesson two.
+
+00:00:01.483 --> 00:00:10.968
+The walker's brain is a small neural network, and once you see it up close, it's just nine hundred and thirty two numbers and a little arithmetic.
+
+00:00:11.568 --> 00:00:13.312
+Start with one neuron.
+
+00:00:13.312 --> 00:00:18.252
+It takes the inputs, multiplies each one by its own weight, and adds them up.
+
+00:00:18.252 --> 00:00:21.690
+Then it adds one more number, called the bias.
+
+00:00:22.290 --> 00:00:25.434
+The sum goes through a curve called tanh.
+
+00:00:25.434 --> 00:00:31.402
+Small values pass almost unchanged, and big values get squashed to plus or minus one.
+
+00:00:31.402 --> 00:00:37.349
+Motor commands have to stay between minus one and one, and tanh guarantees that.
+
+00:00:37.949 --> 00:00:41.785
+A positive weight means this input pushes the neuron up.
+
+00:00:41.785 --> 00:00:44.782
+A negative weight means it pushes it down.
+
+00:00:44.782 --> 00:00:50.657
+So a neuron can learn to fire when the body tilts forward and one foot is in the air.
+
+00:00:51.257 --> 00:00:53.843
+The walker's network has three layers.
+
+00:00:53.843 --> 00:00:56.316
+On the left, the twenty four inputs.
+
+00:00:56.316 --> 00:01:01.038
+In the middle, thirty two hidden neurons, and each one looks at every input.
+
+00:01:01.038 --> 00:01:04.148
+On the right, four outputs, one per motor.
+
+00:01:04.748 --> 00:01:09.031
+Here it is running on real observations from a walking episode.
+
+00:01:09.031 --> 00:01:14.519
+Every step, the inputs change, and the signal flows through to four motor commands.
+
+00:01:14.519 --> 00:01:19.886
+The network has no memory, so it decides each step from this snapshot alone.
+
+00:01:20.486 --> 00:01:22.103
+Why the hidden layer?
+
+00:01:22.103 --> 00:01:26.732
+Without it, every motor command would just be a weighted sum of the inputs.
+
+00:01:26.732 --> 00:01:29.632
+That can say, push harder the more you tilt.
+
+00:01:29.632 --> 00:01:34.840
+It can't say, if this foot is down and I'm tilting forward, swing the other leg.
+
+00:01:35.440 --> 00:01:38.635
+Hidden neurons learn combinations like that.
+
+00:01:38.635 --> 00:01:44.465
+In this project, at least one hidden layer is a hard rule, and the code checks it.
+
+00:01:45.065 --> 00:01:46.846
+Let's count the numbers.
+
+00:01:46.846 --> 00:01:52.579
+Twenty four inputs times thirty two hidden neurons gives seven hundred and sixty eight weights.
+
+00:01:52.579 --> 00:01:54.304
+Plus thirty two biases.
+
+00:01:54.304 --> 00:01:59.257
+Then thirty two times four output weights, which is one hundred and twenty eight.
+
+00:01:59.257 --> 00:02:00.927
+Plus four more biases.
+
+00:02:00.927 --> 00:02:04.121
+That's nine hundred and thirty two in total.
+
+00:02:04.721 --> 00:02:08.636
+Write all of them in one long list, always in the same order.
+
+00:02:08.636 --> 00:02:11.813
+That list is called theta, and it is the walker.
+
+00:02:11.813 --> 00:02:15.574
+Save it to a file, and you've saved the whole walker.
+
+00:02:16.174 --> 00:02:20.903
+Add a little random noise to theta, and you get a slightly different walker.
+
+00:02:20.903 --> 00:02:22.704
+The outputs shift a bit.
+
+00:02:22.704 --> 00:02:27.001
+That's exactly how the training algorithm makes new candidates.
+
+00:02:27.601 --> 00:02:31.507
+Now imagine a space with nine hundred and thirty two axes.
+
+00:02:31.507 --> 00:02:34.406
+Every possible walker is one point in it.
+
+00:02:34.406 --> 00:02:38.430
+Give each point a height: its average score on a few tracks.
+
+00:02:38.430 --> 00:02:42.399
+Training means finding a high point in that landscape.
+
+00:02:42.999 --> 00:02:48.832
+The catch is that we can measure the height anywhere, but nobody tells us which way is uphill.
+
+00:02:48.832 --> 00:02:54.093
+The physics can't be differentiated, falls are sudden, and every track is different.
+
+00:02:54.093 --> 00:02:58.110
+In lesson three, we climb a landscape we can only sample.

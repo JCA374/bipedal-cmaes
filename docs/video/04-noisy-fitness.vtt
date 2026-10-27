@@ -1,0 +1,121 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:01.469
+Lesson four.
+
+00:00:01.469 --> 00:00:04.491
+A walker's score depends on the track it gets.
+
+00:00:04.491 --> 00:00:08.184
+So every time we measure fitness, we're also rolling dice.
+
+00:00:08.184 --> 00:00:11.282
+This lesson is about not fooling yourself.
+
+00:00:11.882 --> 00:00:16.406
+Here's one walker, my previous champion, on a hundred different tracks.
+
+00:00:16.406 --> 00:00:18.410
+Same network, same weights.
+
+00:00:18.410 --> 00:00:22.318
+The scores spread out by about sixty points either way.
+
+00:00:22.918 --> 00:00:25.711
+So a measurement is true skill plus luck.
+
+00:00:25.711 --> 00:00:28.676
+Averaging over more tracks shrinks the luck.
+
+00:00:28.676 --> 00:00:34.163
+Five tracks cut it roughly in half, and a hundred tracks cut it by a factor of ten.
+
+00:00:34.763 --> 00:00:36.180
+Now pick a winner.
+
+00:00:36.180 --> 00:00:38.360
+Here are forty eight candidates.
+
+00:00:38.360 --> 00:00:43.239
+Their true skill is in grey, and what we measured on five tracks is in blue.
+
+00:00:43.839 --> 00:00:45.917
+We pick the highest blue dot.
+
+00:00:45.917 --> 00:00:51.027
+It's probably a good candidate, but it's also the one that got the luckiest tracks.
+
+00:00:51.027 --> 00:00:53.517
+Its measured score is too high.
+
+00:00:54.117 --> 00:00:57.208
+Repeat this many times, and the pattern is clear.
+
+00:00:57.208 --> 00:01:01.980
+With five tracks, the winner looks about thirty points better than it really is.
+
+00:01:01.980 --> 00:01:03.986
+With one track, about eighty.
+
+00:01:03.986 --> 00:01:06.564
+This is called the winner's curse.
+
+00:01:07.164 --> 00:01:09.172
+Part of the luck is shared.
+
+00:01:09.172 --> 00:01:11.582
+A hard track is hard for everyone.
+
+00:01:11.582 --> 00:01:15.599
+So every candidate in a generation walks the same five tracks.
+
+00:01:15.599 --> 00:01:21.178
+Then a hard track lowers all the scores together, and it cancels out of the ranking.
+
+00:01:21.778 --> 00:01:24.970
+This trick is called common random numbers.
+
+00:01:24.970 --> 00:01:28.539
+It costs nothing, and the ranking becomes fairer.
+
+00:01:28.539 --> 00:01:32.031
+And remember, CMA-ES only uses the ranking.
+
+00:01:32.631 --> 00:01:39.497
+To pick the champion, every ten generations, we take the mean of the search cloud and the best three candidates.
+
+00:01:39.497 --> 00:01:44.360
+Each is tested on the same twenty held-out tracks, which training never sees.
+
+00:01:44.360 --> 00:01:47.063
+The best one becomes the champion.
+
+00:01:47.663 --> 00:01:50.621
+The mean is often the most robust choice.
+
+00:01:50.621 --> 00:01:57.681
+It's the average of many good candidates, so tricks that only worked on lucky tracks tend to cancel out.
+
+00:01:58.281 --> 00:02:06.576
+The final score comes from a hundred more tracks the walker has never seen, with full episodes and the unmodified reward.
+
+00:02:06.576 --> 00:02:11.956
+Every purpose has its own range of seeds, and the ranges never overlap.
+
+00:02:12.556 --> 00:02:13.745
+This matters.
+
+00:02:13.745 --> 00:02:17.427
+My previous champion scored two hundred during selection.
+
+00:02:17.427 --> 00:02:21.166
+On a hundred new tracks, it scored about one seventy five.
+
+00:02:21.166 --> 00:02:29.339
+When we compare two walkers, both walk the same hundred tracks, and a difference smaller than about twenty points is usually noise.
+
+00:02:29.939 --> 00:02:31.692
+That's the background.
+
+00:02:31.692 --> 00:02:38.886
+Next, the training run itself: how the walker went from falling over to walking, including three false starts.
