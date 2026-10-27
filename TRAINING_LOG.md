@@ -43,3 +43,11 @@ held-out terrains (HOF: 20 terrains, seeds 1e7+) unless stated otherwise.
   -5.8 vs -7.8, champion -78 vs -112), so f40 was stopped at gen 48 and **v3-f20 continues as the main run**.
 - train.py default fall cost is now 20 (resume uses current defaults: it would otherwise
   silently have switched v3-f20 back to 0). Also pinned in runs/v3-f20/overrides.json.
+- **Breakthrough at gen ~60**: best training fitness jumped from ≈0 to +120-135 and mean x
+  from 6 to 16 within a few generations (the first real steps). At gen ~70 the champion,
+  which was the **CMA mean**, scored **170 ±12 on the 20 held-out tracks with 0 falls**,
+  already level with NEAT's final 173 (12 h). Gens now take ~20-30 s (longer episodes).
+- Ops fix: v3-f40 kept running after "stopping" it. Background jobs started from a
+  non-interactive shell have SIGINT ignored, so `kill -INT` did nothing and 8 workers shared
+  the CPU for ~20 min. train.py now turns SIGTERM/SIGINT into a clean checkpointed stop
+  (`test_sigterm_saves_checkpoint`). f40 was killed at gen 115 (stalls 94%, never walked).

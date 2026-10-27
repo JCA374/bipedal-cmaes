@@ -43,3 +43,27 @@ def test_resume_keeps_cma_state(tmp_path):
     es2, _ = train.main(a + ["--resume", "--generations", "2"])  # no new generations
     assert np.allclose(es.mean, es2.mean) and es.sigma == es2.sigma
     assert es2.countiter == es.countiter
+
+
+def test_sigterm_saves_checkpoint(tmp_path):
+    """`kill <pid>` (SIGTERM) must stop training cleanly with a checkpoint, also when the
+    job was started in the background with SIGINT ignored."""
+    import signal
+    import subprocess
+    import sys
+    import time
+    root = __import__("pathlib").Path(__file__).resolve().parent.parent
+    p = subprocess.Popen([sys.executable, "-u", str(root / "train.py"), "--name", "s", "--runs-dir", str(tmp_path),
+                          "--workers", "1", "--hidden", "3", "--popsize", "4", "--k", "1", "--hof-every", "0",
+                          "--checkpoint-every", "1000"],
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                         preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN))
+    stats = tmp_path / "s" / "stats.csv"
+    for _ in range(200):
+        if stats.exists() and len(stats.read_text().splitlines()) >= 3:
+            break
+        time.sleep(0.1)
+    p.send_signal(signal.SIGTERM)
+    out, _ = p.communicate(timeout=60)
+    assert "Interrupted, saving checkpoint" in out
+    assert (tmp_path / "s" / "checkpoints" / "latest.pkl.gz").exists()

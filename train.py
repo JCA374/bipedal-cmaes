@@ -45,7 +45,8 @@ _W = {}
 
 
 def _init_worker(sizes, action_repeat):
-    signal.signal(signal.SIGINT, signal.SIG_IGN)  # parent handles Ctrl-C
+    signal.signal(signal.SIGINT, signal.SIG_IGN)  # parent handles Ctrl-C / SIGTERM
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
     _W["env"] = common.make_env()
     _W["policy"] = common.MLP(sizes)
     _W["action_repeat"] = action_repeat
@@ -164,6 +165,13 @@ def main(argv=None):
     ap.add_argument("--stop-at", type=float, default=None, help="stop once the champion reaches this")
     ap.add_argument("--runs-dir", default=str(common.ROOT / "runs"))
     args = ap.parse_args(argv)
+
+    # Background jobs from a non-interactive shell inherit SIGINT=ignored, and `kill` sends
+    # SIGTERM: make both raise KeyboardInterrupt so a stop always saves a checkpoint.
+    def _stop(signum, frame):
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGINT, _stop)
+    signal.signal(signal.SIGTERM, _stop)
 
     run_dir = Path(args.runs_dir) / args.name
     ckpt_path = run_dir / "checkpoints" / "latest.pkl.gz"

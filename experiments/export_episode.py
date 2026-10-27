@@ -43,11 +43,13 @@ def record(policy, seed, ar, every):
         pass
 
     obs_log = {}
+    actions = []
 
     class Spy:
         """Wrap the policy to keep the latest inputs/outputs for each frame."""
         def activate(self, x):
             y = policy.activate(x)
+            actions.append(np.asarray(y, dtype=np.float64))
             obs_log["x"], obs_log["y"] = x, y
             return y
 
@@ -69,7 +71,7 @@ def record(policy, seed, ar, every):
     res = common.run_episode(Spy(), env, seed, early_stop=False, on_frame=on_frame, action_repeat=ar)
     u = env.unwrapped
     terrain = [r2(u.terrain_x), r2(u.terrain_y)]
-    return res, terrain, frames
+    return res, terrain, frames, np.array(actions)
 
 
 def main():
@@ -84,6 +86,7 @@ def main():
     ap.add_argument("--seed", type=int, default=None, help="use exactly this terrain")
     ap.add_argument("--every", type=int, default=2, help="keep every Nth step")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--actions-out", default=None, help="also save every step's action (.npy) for exact replays")
     args = ap.parse_args()
 
     ar = 1
@@ -103,7 +106,9 @@ def main():
         rs = [common.run_episode(policy, env, s, early_stop=False, action_repeat=ar)["reward"] for s in cands]
         seed = cands[int(np.argsort(rs)[len(rs) // 2])]
         print("terrain rewards:", [round(r) for r in rs], "-> median seed", seed)
-    res, terrain, frames = record(policy, seed, ar, args.every)
+    res, terrain, frames, actions = record(policy, seed, ar, args.every)
+    if args.actions_out:
+        np.save(args.actions_out, actions)
     out = {"label": args.label, "seed": seed, "reward": round(res["reward"], 1), "steps": res["steps"],
            "fell": res["fell"], "every": args.every, "terrain": terrain, "frames": frames,
            "input_names": common.INPUT_NAMES, "output_names": common.OUTPUT_NAMES}
