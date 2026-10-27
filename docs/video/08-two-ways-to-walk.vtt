@@ -1,0 +1,106 @@
+WEBVTT
+
+00:00:00.350 --> 00:00:01.494
+Lesson nine.
+
+00:00:01.494 --> 00:00:06.241
+The champion scores well, but it never puts one foot in front of the other.
+
+00:00:06.241 --> 00:00:10.315
+Let's look at why, and test a network built to take turns.
+
+00:00:10.915 --> 00:00:12.231
+Watch the feet.
+
+00:00:12.231 --> 00:00:15.206
+The line below shows which foot is in front.
+
+00:00:15.206 --> 00:00:17.437
+Above the line, foot one leads.
+
+00:00:17.437 --> 00:00:19.325
+Below it, foot two leads.
+
+00:00:19.325 --> 00:00:22.657
+A normal walk crosses the line on every step.
+
+00:00:23.257 --> 00:00:25.364
+This walker never crosses it.
+
+00:00:25.364 --> 00:00:29.693
+On a hundred tracks, foot two leads one hundred percent of the time.
+
+00:00:29.693 --> 00:00:33.110
+Its touchdowns still alternate, so it isn't hopping.
+
+00:00:33.110 --> 00:00:36.827
+It's skipping, with one leg always reaching forward.
+
+00:00:37.427 --> 00:00:39.801
+Why did evolution keep this gait?
+
+00:00:39.801 --> 00:00:44.261
+The reward pays for distance, not for style, and the skip earns well.
+
+00:00:44.261 --> 00:00:49.936
+To switch, the walker would have to pass through clumsy in between gaits that score worse.
+
+00:00:49.936 --> 00:00:53.479
+CMA-ES searches nearby, so it stays where it is.
+
+00:00:54.079 --> 00:00:57.321
+So instead of asking nicely, change the network.
+
+00:00:57.321 --> 00:00:59.869
+One controller now drives both legs.
+
+00:00:59.869 --> 00:01:04.095
+Each leg sees the body, its own leg, the other leg and the lidar.
+
+00:01:04.095 --> 00:01:07.627
+Leg two uses the same weights, with the legs swapped.
+
+00:01:07.627 --> 00:01:10.706
+Neither leg can become a permanent prop.
+
+00:01:11.306 --> 00:01:15.519
+The controller also gets a clock, a rhythm whose speed it learns.
+
+00:01:15.519 --> 00:01:18.347
+Leg two's clock runs half a cycle behind.
+
+00:01:18.347 --> 00:01:22.329
+With no shift, both legs would move together, which is a hop.
+
+00:01:22.329 --> 00:01:25.111
+With half a cycle, they take turns.
+
+00:01:25.711 --> 00:01:32.633
+On top, a small training bonus for every step where the front foot changes and the body moves forward.
+
+00:01:32.633 --> 00:01:35.702
+Reported scores stay the raw reward.
+
+00:01:36.302 --> 00:01:37.434
+The result.
+
+00:01:37.434 --> 00:01:42.079
+The new walker changes its leading foot only about zero times per run.
+
+00:01:42.079 --> 00:01:45.536
+In this run, it didn't clearly learn to walk.
+
+00:01:46.136 --> 00:01:53.515
+On the same hundred tracks, it scores two hundred and thirty six, against two hundred and seventy for the skipping walker.
+
+00:01:53.515 --> 00:01:56.808
+That's significantly lower, by thirty four points.
+
+00:01:56.808 --> 00:01:59.889
+It falls on eleven tracks, against seven.
+
+00:02:00.489 --> 00:02:04.681
+The lesson: evolution finds what you reward, the nearest way.
+
+00:02:04.681 --> 00:02:08.809
+If you care how it's done, build it into the structure.

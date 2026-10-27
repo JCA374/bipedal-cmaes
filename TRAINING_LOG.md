@@ -90,3 +90,13 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
 
 ## v3-f20 stopped on a plateau (2026-10-27 19:18)
 - v3-f20 gen 538 champion 287.0, +4.5 over 200 gens, sigma 0.01742. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.
+
+## v4-walk stopped on a plateau (2026-10-28 00:44)
+- v4-walk gen 779 champion 260.4, +4.6 over 200 gens, sigma 0.00402. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.
+
+## v4-walk (auto-summary from next_run.sh)
+- symclock policy (one shared leg controller + learned clock, 931 params), cross bonus 0.5, 8 h; champion gen 669.
+- Same 100 comparison tracks: v4-walk 236.2 ± 71.71 (falls 11) vs v3-f20 270.23 ± 63.55 (falls 7);
+  paired diff -34.03 (95% CI [-53.72, -14.47]), v4-walk better on 7/100.
+- Gait: lead changes per episode 0.03 vs 0.02; crossing steps 0.03 vs 0.02;
+  foot 2 in front 0.995 vs 0.997.

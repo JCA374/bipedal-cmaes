@@ -4,18 +4,50 @@
    "run": "v3-f20",
    "label": "skipping walker (v3)",
    "policy": "mlp",
-   "generation": 289,
-   "held_out": 281.3672015032788,
+   "generation": 529,
+   "held_out": 287.00543486212877,
    "episodes": 100,
-   "mean": 254.11,
-   "std": 81.77,
+   "mean": 270.23,
+   "std": 63.55,
+   "falls": 7,
+   "finished": 93,
+   "crossings": 0.02,
+   "lead_changes": 0.02,
+   "front2_share": 0.997,
+   "zero_change_share": 0.98,
+   "replay": "episodes/gait_v3-f20.json"
+  },
+  {
+   "run": "v4-walk",
+   "label": "shared controller + clock (v4)",
+   "policy": "symclock",
+   "generation": 669,
+   "held_out": 260.43635811636597,
+   "episodes": 100,
+   "mean": 236.2,
+   "std": 71.71,
    "falls": 11,
    "finished": 89,
-   "crossings": 0.08,
-   "lead_changes": 0.08,
-   "front2_share": 0.996,
-   "zero_change_share": 0.92,
-   "replay": "episodes/gait_v3-f20.json"
+   "crossings": 0.03,
+   "lead_changes": 0.03,
+   "front2_share": 0.995,
+   "zero_change_share": 0.98,
+   "replay": "episodes/gait_v4-walk.json"
   }
- ]
+ ],
+ "compare": {
+  "mean_a": 236.2,
+  "mean_b": 270.23,
+  "diff_mean": -34.03,
+  "diff_ci95": [
+   -53.72,
+   -14.47
+  ],
+  "a_better_on": 7,
+  "episodes": 100,
+  "falls_a": 11,
+  "falls_b": 7,
+  "a": "v4-walk",
+  "b": "v3-f20"
+ }
 }
