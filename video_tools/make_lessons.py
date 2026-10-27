@@ -11,6 +11,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import final_scenes as F  # noqa: E402
 import lesson_scenes as L  # noqa: E402
 import timeline as T  # noqa: E402
 import vcommon as C  # noqa: E402
@@ -18,14 +19,14 @@ import vcommon as C  # noqa: E402
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("lessons", nargs="*", default=list(L.LESSONS))
+    ap.add_argument("lessons", nargs="*", default=list(L.LESSONS) + list(F.VIDEOS))
     ap.add_argument("--stills", action="store_true", help="write preview stills only")
     ap.add_argument("--crf", type=int, default=28)
     ap.add_argument("--out", default=os.path.join(C.REPO_ROOT, "docs", "video"))
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     for slug in args.lessons:
-        vslug, build = L.LESSONS[slug]
+        vslug, build = {**L.LESSONS, **F.VIDEOS}[slug]
         voice = os.path.join(C.REPO_ROOT, "voice", vslug)
         voice = voice if os.path.exists(os.path.join(voice, "audio", "voiceover", "timings.json")) else None
         scenes = build()

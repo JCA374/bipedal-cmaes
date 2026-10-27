@@ -61,3 +61,15 @@ held-out terrains (HOF: 20 terrains, seeds 1e7+) unless stated otherwise.
   nets ~204, so ≈150 goes to the torque cost (max 179). Raw reward already includes effort, so
   training keeps optimising it; watch whether |action| falls over the coming generations.
 - Fixed: `run_episode` returned a numpy bool for `fell` (JSON dump in evaluate.py failed).
+
+## Score analysis (failure-analysis-report method), champion at gen ~110, 200 analysis tracks
+`experiments/record_episodes.py` + `analyze_falls.py` (3 falls in 200: too few to conclude) +
+new `analyze_score.py` (this walker's real failure is a low score, not falling):
+- finished 122, timed out 75 (ending at x ≈ 87.2, only 1.5 short of the line), fell 3.
+- earns ≈358 from progress, spends ≈154 on effort. **43% of the effort (≈67 points) goes to
+  joints that aren't moving** (|speed| < 5% of max): hip 2 wastes 39 of 43 (held against a limit
+  at full power), knee 2 20 of 34. Leg 2 looks used as a stiff prop.
+- speed separates finishes from time-outs (AUC 0.02), but a time-out only costs ~6 points.
+  Hull-angle variability correlates −0.89 with the score.
+- Lead: the main lever toward 300 is wasted effort on leg 2 (~60 points). Raw reward already
+  includes effort; if training plateaus, try a training-only effort weight > 1 (paired comparison).

@@ -89,7 +89,14 @@ The first real steps. The step size σ stays large through all of this: CMA-ES i
   <canvas id="curve"></canvas>
   <p class="readout" id="cinfo"></p>
 </div>
-<p class="note">This section gets the stage-by-stage clips (generation 0, first positive score, 100, 200, …) and the final numbers once training ends.</p>
+<div class="demo">
+  <p class="demo-title">How it learned: the champion at each stage</p>
+  <p class="demo-sub">The same track every time. Pick a stage: the random start, then each milestone the held-out champion passed.</p>
+  <div class="controls" id="stage-btns"></div>
+  <canvas id="stage"></canvas>
+  <div class="controls"><button class="btn primary" id="splay">▶ Play</button><label>speed <select id="sspeed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></label></div>
+  <p class="readout" id="sinfo"></p>
+</div>
 </section>
 
 <section class="quiz">
@@ -129,6 +136,25 @@ fc.oninput = sc.oninput = table;
 document.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const [f, s] = b.dataset.p.split(","); fc.value = f; sc.value = s; table(); });
 fetch("../../data/archetypes.json").then(r => r.json()).then(d => { A = d; table(); });
 
+const STAGE = { gen0: "generation 0 (random)", first_positive: "first positive score", "100": "over 100", "200": "over 200", "300": "over 300 (solved)" };
+const srp = new WalkerReplay(document.getElementById("stage"));
+const splay = document.getElementById("splay");
+srp.onEnd = () => splay.textContent = "▶ Play";
+splay.onclick = () => { if (srp.playing) { srp.pause(); splay.textContent = "▶ Play"; } else { srp.play(); splay.textContent = "❚❚ Pause"; } };
+document.getElementById("sspeed").onchange = e => srp.speed = +e.target.value; srp.speed = 2;
+async function loadStage(name, meta) {
+  srp.pause(); splay.textContent = "▶ Play";
+  const ep = await srp.load(`../../data/episodes/stage_${name}.json`);
+  document.getElementById("sinfo").textContent = `${STAGE[name] || name}${meta ? `, generation ${meta}` : ""}: this track ${ep.reward}${ep.fell ? " (fell)" : ""} after ${ep.steps} steps`;
+  document.querySelectorAll("#stage-btns button").forEach(b => b.classList.toggle("primary", b.dataset.s === name));
+}
+fetch("../../data/progress.json").then(r => r.json()).then(d => {
+  const names = ["gen0", ...["first_positive", "100", "200", "300"].filter(m => d.milestones.includes(m))];
+  const gens = Object.fromEntries((d.milestone_gens || []).map(x => [x[0], x[1]]));
+  document.getElementById("stage-btns").innerHTML = names.map(n => `<button class="btn" data-s="${n}">${STAGE[n]}</button>`).join("");
+  document.querySelectorAll("#stage-btns button").forEach(b => b.onclick = () => loadStage(b.dataset.s, gens[b.dataset.s]));
+  loadStage(names[names.length - 1], gens[names[names.length - 1]]);
+});
 fetch("../../data/progress.json").then(r => r.json()).then(d => {
   const cv = document.getElementById("curve"), ctx = setupCanvas(cv, 760, 240);
   const draw = () => {

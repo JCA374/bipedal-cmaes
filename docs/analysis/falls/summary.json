@@ -1,0 +1,188 @@
+{
+  "model": "prelim",
+  "episodes": 200,
+  "falls": 3,
+  "mean_reward": 201.8316,
+  "warning_steps": 50,
+  "features": {
+    "obs0": {
+      "label": "hull angle",
+      "median_normal": 0.0275,
+      "median_at_fall": 1.8329,
+      "auc": 0.9999444648073484,
+      "danger": "high",
+      "partial_corr": 0.0,
+      "leaves_normal_at": -80
+    },
+    "obs1": {
+      "label": "hull angular velocity",
+      "median_normal": -0.0017,
+      "median_at_fall": 0.075,
+      "auc": 0.6041251541101597,
+      "danger": "high",
+      "partial_corr": 0.0,
+      "leaves_normal_at": -1
+    },
+    "obs2": {
+      "label": "velocity x",
+      "median_normal": 0.3179,
+      "median_at_fall": -0.1697,
+      "auc": 0.9735807981517888,
+      "danger": "low",
+      "partial_corr": 0.0,
+      "leaves_normal_at": -66
+    },
+    "obs3": {
+      "label": "velocity y",
+      "median_normal": 0.0043,
+      "median_at_fall": -0.2237,
+      "auc": 0.6505148112358802,
+      "danger": "low",
+      "partial_corr": 0.0,
+      "leaves_normal_at": null
+    },
+    "progress_50": {
+      "label": "distance walked in the last 50 steps",
+      "median_normal": 2.718999999999994,
+      "median_at_fall": 0.1669999999999945,
+      "auc": 0.9976208723468062,
+      "danger": "low",
+      "partial_corr": 0.3982599611149484,
+      "leaves_normal_at": null
+    },
+    "since_contact_change": {
+      "label": "steps since a foot touched down or lifted",
+      "median_normal": 3.0,
+      "median_at_fall": 4.0,
+      "auc": 0.779867381959948,
+      "danger": "high",
+      "partial_corr": 0.21147967197297066,
+      "leaves_normal_at": -13
+    },
+    "airborne": {
+      "label": "steps with both feet off the ground",
+      "median_normal": 0.0,
+      "median_at_fall": 5.0,
+      "auc": 0.7790776715204425,
+      "danger": "high",
+      "partial_corr": 0.21588330025070754,
+      "leaves_normal_at": null
+    },
+    "slope_under": {
+      "label": "terrain slope under hull",
+      "median_normal": 0.0003,
+      "median_at_fall": 0.0109,
+      "auc": 0.7040585118789777,
+      "danger": "high",
+      "partial_corr": 0.042814642623255045,
+      "leaves_normal_at": null
+    },
+    "vx_trend": {
+      "label": "speed change over 20 steps",
+      "median_normal": 0.06804999999999994,
+      "median_at_fall": -0.5487,
+      "auc": 0.687409061122033,
+      "danger": "low",
+      "partial_corr": 0.03262567210132585,
+      "leaves_normal_at": null
+    },
+    "hull_height": {
+      "label": "hull height above ground",
+      "median_normal": 1.733,
+      "median_at_fall": 1.0559999999999996,
+      "auc": 0.6752146435195984,
+      "danger": "high",
+      "partial_corr": 0.04830794397967818,
+      "leaves_normal_at": -12
+    },
+    "lidar_min": {
+      "label": "closest lidar reading",
+      "median_normal": 0.3248,
+      "median_at_fall": 0.1974,
+      "auc": 0.6738706918574301,
+      "danger": "high",
+      "partial_corr": 0.20349275245454773,
+      "leaves_normal_at": null
+    },
+    "act_jerk": {
+      "label": "torque change since last step",
+      "median_normal": 0.41840000000000005,
+      "median_at_fall": 1.1781000000000001,
+      "auc": 0.6289571601523886,
+      "danger": "low",
+      "partial_corr": 0.19902428235838407,
+      "leaves_normal_at": null
+    },
+    "pitch_trend": {
+      "label": "hull angle change over 10 steps",
+      "median_normal": 0.0030000000000000027,
+      "median_at_fall": 0.35660000000000003,
+      "auc": 0.6227372185754112,
+      "danger": "high",
+      "partial_corr": 0.11483572028991633,
+      "leaves_normal_at": -10
+    },
+    "knee_min": {
+      "label": "most bent knee (min knee angle)",
+      "median_normal": -0.45495,
+      "median_at_fall": 0.0158,
+      "auc": 0.5976142081236879,
+      "danger": "low",
+      "partial_corr": 0.005547662607807616,
+      "leaves_normal_at": -2
+    },
+    "leg_spread": {
+      "label": "hip 1 - hip 2 angle",
+      "median_normal": -1.1503999999999999,
+      "median_at_fall": -0.3247,
+      "auc": 0.5778536758744016,
+      "danger": "high",
+      "partial_corr": 0.02586662266082022,
+      "leaves_normal_at": null
+    },
+    "act_sat": {
+      "label": "saturated motors (|torque| > 0.98)",
+      "median_normal": 2.0,
+      "median_at_fall": 2.0,
+      "auc": 0.57632534737263,
+      "danger": "low",
+      "partial_corr": 0.13685149266216115,
+      "leaves_normal_at": -10
+    },
+    "slope_ahead": {
+      "label": "terrain slope ahead (0.5-3 m)",
+      "median_normal": 0.0022,
+      "median_at_fall": -0.0115,
+      "auc": 0.5740550686970333,
+      "danger": "high",
+      "partial_corr": 0.1256654197032431,
+      "leaves_normal_at": null
+    }
+  },
+  "fall_forward_share": 0.0,
+  "terrain_before_fall": {
+    "downhill": 0.0,
+    "flat": 0.3333333333333333,
+    "uphill": 0.6666666666666666
+  },
+  "terrain_all": {
+    "downhill": 0.15421137898400783,
+    "flat": 0.6709237604863417,
+    "uphill": 0.17486486052965047
+  },
+  "contacts_before_fall": {
+    "none": 0.7733333333333333,
+    "one": 0.22666666666666666,
+    "both": 0.0
+  },
+  "contacts_all": {
+    "none": 0.44764859950286107,
+    "one": 0.4873429758270357,
+    "both": 0.06500842467010326
+  },
+  "onset_to_fall_steps": {
+    "median": 90.0,
+    "q25": 84.0,
+    "q75": 117.0
+  }
+}

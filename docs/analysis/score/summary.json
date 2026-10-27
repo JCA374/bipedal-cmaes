@@ -1,0 +1,67 @@
+{
+  "model": "prelim",
+  "episodes": 200,
+  "mean_reward": 201.8316,
+  "finished": 122,
+  "timeouts": 75,
+  "falls": 3,
+  "progress_mean": 358.1996744444444,
+  "effort_mean": 154.48929256600002,
+  "wasted_mean": 66.60030246800021,
+  "wasted_share": 0.43109979573210516,
+  "joint_effort": {
+    "hip 1": 36.58,
+    "knee 1": 40.47,
+    "hip 2": 43.11,
+    "knee 2": 34.33
+  },
+  "joint_wasted": {
+    "hip 1": 0.29,
+    "knee 1": 7.37,
+    "hip 2": 39.15,
+    "knee 2": 19.78
+  },
+  "timeout_final_x": 87.18826666666666,
+  "signals": {
+    "mean speed (units/s)": {
+      "auc_timeout": 0.022,
+      "corr_score": 0.62,
+      "median": 2.6494
+    },
+    "mean |action|": {
+      "auc_timeout": 0.525,
+      "corr_score": -0.006,
+      "median": 0.885
+    },
+    "share of effort wasted": {
+      "auc_timeout": 0.258,
+      "corr_score": -0.326,
+      "median": 0.4309
+    },
+    "terrain roughness (std slope)": {
+      "auc_timeout": 0.541,
+      "corr_score": 0.135,
+      "median": 0.0536
+    },
+    "uphill share (slope > 0.05)": {
+      "auc_timeout": 0.531,
+      "corr_score": 0.031,
+      "median": 0.1748
+    },
+    "hull angle variability": {
+      "auc_timeout": 0.501,
+      "corr_score": -0.889,
+      "median": 0.1414
+    },
+    "airborne share (no foot down)": {
+      "auc_timeout": 0.671,
+      "corr_score": -0.529,
+      "median": 0.4504
+    },
+    "double support share": {
+      "auc_timeout": 0.717,
+      "corr_score": 0.072,
+      "median": 0.0649
+    }
+  }
+}

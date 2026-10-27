@@ -44,6 +44,8 @@ def progress(run_dir):
         "config": cfg["effective"], "history": cfg["history"],
         "curve": downsample(pts), "hof": hof,
         "milestones": sorted(p.name for p in (run_dir / "milestones").iterdir()) if (run_dir / "milestones").exists() else [],
+        "milestone_gens": [[p.name, json.loads((p / "meta.json").read_text()).get("generation")]
+                           for p in sorted((run_dir / "milestones").iterdir())] if (run_dir / "milestones").exists() else [],
     }
 
 
