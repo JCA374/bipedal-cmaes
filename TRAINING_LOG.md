@@ -87,3 +87,6 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
   only), resume drops stats/gait rows past the checkpoint after a crash.
 - `next_run.sh` waits for v3 + finalize.sh, then trains v4-walk (symclock, cross bonus 0.5) for
   8 h and compares with v3 on the same 100 tracks, score and gait. Results stay local.
+
+## v3-f20 stopped on a plateau (2026-10-27 19:18)
+- v3-f20 gen 538 champion 287.0, +4.5 over 200 gens, sigma 0.01742. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.
