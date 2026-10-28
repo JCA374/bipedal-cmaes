@@ -20,6 +20,15 @@
   .b-failed { background: color-mix(in srgb, var(--red) 25%, var(--surface)); }
   .goalrow td:last-child { font-weight: 700; }
   .ok { color: var(--green); } .no { color: var(--red); }
+  .spec { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin: 12px 0; }
+  .spec h3 { margin: 0 0 4px; }
+  .spec .formula { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+  .spec table.t td:first-child { white-space: nowrap; font-weight: 600; }
+  .spec .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; font-size: 14px; margin-top: 8px; }
+  .spec .meta b { color: var(--muted); font-weight: 600; display: block; font-size: 12.5px; }
+  .expect { border-left: 4px solid var(--green); padding: 4px 10px; margin: 6px 0; }
+  .risk { border-left: 4px solid var(--red); padding: 4px 10px; margin: 6px 0; }
+  @media (max-width: 760px) { .spec .meta { grid-template-columns: 1fr; } }
   .journal .entry { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; margin: 14px 0; }
   .journal .entry b { display: block; }
   .journal .entry span { color: var(--muted); font-size: 13px; }
@@ -44,6 +53,14 @@
   </section>
 
   <section>
+    <h2>What each stage pays for</h2>
+    <p class="intro">The training reward of every stage, exactly as <code>train.py</code> computes it, scored per episode and averaged over 5 tracks.
+    Reported results everywhere else use the real game reward. Each stage also has an expected outcome and the shortcut it might take instead.
+    (<a href="../lessons/the-reward/index.html">Lesson 5</a> explains the game's own reward.)</p>
+    <div id="specs"></div>
+  </section>
+
+  <section>
     <h2>The stages</h2>
     <p class="intro">Each stage has its own training reward and a pass test on 20 held-out tracks. It starts from the previous stage's champion,
     and moves on when it passes, when training plateaus, or at its time cap. <b>Click a stage</b> to see its champion walk and its training curves.</p>
@@ -65,6 +82,7 @@
       <div class="demo"><p class="demo-title">Gait in training</p><p class="demo-sub"><span style="color:var(--accent)">front-foot changes per episode</span>,
         <span style="color:var(--blue)">% of time foot 2 leads</span> (scaled; middle = 50%)</p><canvas id="d-gait"></canvas></div>
     </div>
+    <div class="cols" id="d-spec"></div>
     <table class="t" id="d-checks"></table>
   </section>
 
@@ -152,8 +170,24 @@ async function showStage(s) {
   const lmax = Math.max(5, ...cv.map(r => r.lead || 0));
   drawSeries(gc, gctx, [{ ys: cv.map(r => r.lead ?? 0), color: css("--accent") }, { ys: cv.map(r => (r.front2 ?? .5) * lmax), color: css("--blue"), width: 1.5 }], null,
     { lo: 0, hi: lmax, ticks: [0, Math.round(lmax / 2), Math.round(lmax)], xlabel: "generation →" });
+  const lastChk = s.checks && s.checks[s.checks.length - 1];
+  document.getElementById("d-spec").innerHTML = s.spec ? `<div class="expect"><b>Expected:</b> ${s.spec.expect}<br><b>Passes when:</b> ${s.spec.pass}</div>
+    <div class="${lastChk && lastChk.passed ? "expect" : "risk"}"><b>Actual (latest check${lastChk ? " " + lastChk.time : ""}):</b> ${lastChk ? `${lastChk.passed ? "passed" : "not passed yet"}: ${lastChk.falls} falls in 20, ${f(lastChk.lead_changes)} front-foot changes, lopsided ${f(lastChk.lopsided, 2)}, |offset| ${f(lastChk.abs_offset, 2)}, tilt ${f(lastChk.angle, 2)}, x ${f(lastChk.x)}` : "no check yet"}</div>` : "";
   document.getElementById("d-checks").innerHTML = s.checks && s.checks.length ? "<tr><th>check at</th><th>passed</th><th>falls</th><th>front-foot changes</th><th>lopsided</th><th>x</th><th>raw reward</th></tr>" +
     s.checks.slice(-8).reverse().map(k => `<tr><td>${k.time}</td><td class="${k.passed ? "ok" : "no"}">${k.passed ? "✓" : "✗"}</td><td>${k.falls}</td><td>${f(k.lead_changes)}</td><td>${f(k.lopsided, 2)}</td><td>${f(k.x)}</td><td>${f(k.reward)}</td></tr>`).join("") : "";
+}
+function specHTML(sp, i) {
+  if (!sp) return "";
+  return `<div class="spec"><h3>${i != null ? (i + 1) + ". " : ""}${sp.name}</h3>
+    <div class="formula">fitness = ${sp.reward}</div>
+    <table class="t">${sp.terms.map(t => `<tr><td>${t[0]}</td><td>${t[1]}</td></tr>`).join("")}</table>
+    <div class="meta"><div><b>episode</b>${sp.episode}</div><div><b>starts from</b>${sp.start}</div><div><b>passes when (20 held-out tracks)</b>${sp.pass}</div></div>
+    <div class="expect"><b>Expected outcome.</b> ${sp.expect}</div><div class="risk"><b>Shortcut to watch for.</b> ${sp.risk}</div></div>`;
+}
+function specs() {
+  const a = D.attempts[D.attempts.length - 1];
+  document.getElementById("specs").innerHTML = `<p class="note">${a.title}${D.attempts.length > 1 ? " (latest attempt; earlier attempts' rewards are in their stage details)" : ""}</p>` +
+    a.stages.map((s, i) => specHTML(s.spec, i)).join("");
 }
 function journal() {
   document.getElementById("journal").innerHTML = D.journal.map(j => `<div class="entry"><span>${j.time}</span><b>${j.title}</b>${j.text}</div>`).join("");
@@ -165,7 +199,7 @@ function status() {
     `Deadline Friday 17:00${left > 0 ? `, ${Math.floor(left)} h ${Math.round((left % 1) * 60)} min left` : " (passed)"}.`;
 }
 fetch("../data/curriculum.json", { cache: "no-store" }).then(r => r.json()).then(d => {
-  D = d; status(); goalTable(); attempts(); journal();
+  D = d; status(); goalTable(); specs(); attempts(); journal();
   const run = D.attempts.flatMap((a, ai) => a.stages.map((s, si) => ({ s, ai, si }))).filter(x => x.s.summary).pop();
   if (run) document.querySelector(`.stagecard[data-a="${run.ai}"][data-s="${run.si}"]`).click();
 });

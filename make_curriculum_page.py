@@ -94,12 +94,13 @@ def main():
            "attempts": [], "extra": [], "journal": json.loads((DATA / "curriculum_journal.json").read_text())[::-1]}
     for a in attempts:
         log = parse_log(ROOT / a["log"])
+        spec = {st["key"]: st for st in a.get("stages", [])}   # each attempt documents its own stage rewards
         stages = []
         for key, name, desc in STAGES:
             run = f"{a['prefix']}{key}"
             s = run_summary(run)
             info = log.get(run, {"outcome": "pending" if s is None else "unknown", "checks": []})
-            stages.append({"key": key, "name": name, "desc": desc, "run": run, "summary": s, **info})
+            stages.append({"key": key, "name": name, "desc": desc, "run": run, "summary": s, "spec": spec.get(key), **info})
         goal = None
         last = next((st for st in reversed(stages) if st["summary"] and st["key"] in ("3-walk", "4-fast")), None)
         if last:
@@ -108,7 +109,7 @@ def main():
             if pm.exists() and (not cache.exists() or cache.stat().st_mtime < pm.stat().st_mtime):
                 cache.write_text(json.dumps(measure(ROOT / "runs" / last["run"])))
             goal = json.loads(cache.read_text()) if cache.exists() else None
-        res["attempts"].append({**a, "stages": stages, "goal": goal})
+        res["attempts"].append({**{k: v for k, v in a.items() if k != "stages"}, "stages": stages, "goal": goal})
     for run in EXTRA_RUNS:
         s = run_summary(run)
         if s:

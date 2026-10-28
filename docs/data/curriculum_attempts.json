@@ -1,4 +1,138 @@
 [
- {"prefix": "c", "log": "curriculum.log", "title": "Attempt 1: balance → step → walk → walk fast",
-  "note": "Stage rewards as first designed (see the stage table)."}
+ {
+  "prefix": "c",
+  "log": "curriculum.log",
+  "title": "Attempt 1: balance \u2192 step \u2192 walk \u2192 walk fast",
+  "note": "Stage rewards as first designed (see the stage table).",
+  "stages": [
+   {
+    "key": "1-balance",
+    "name": "Balance",
+    "reward": "100 \u00d7 (steps survived \u00f7 500) \u2212 100 \u00d7 fell \u2212 50 \u00d7 average |body tilt| \u2212 0.5 \u00d7 effort",
+    "terms": [
+     [
+      "+ up to 100",
+      "for staying up the whole episode"
+     ],
+     [
+      "\u2212 100",
+      "if it falls"
+     ],
+     [
+      "\u2212 50 \u00d7 tilt",
+      "average |hull angle| in radians: keep the body level"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "effort = 0.028 \u00d7 |motor command| per joint per step, summed"
+     ]
+    ],
+    "episode": "500 steps (10 s), no early stop: standing still is allowed",
+    "start": "a random shared-controller network (\u03c30 0.5)",
+    "pass": "0 falls on 20 held-out tracks and average |tilt| < 0.15 rad",
+    "expect": "Stands upright on any track, body level, using little motor effort. Maximum score \u2248 100.",
+    "risk": "Locks into a stiff split stance (one foot forward). Harmless here, since stage 2 has to break it anyway."
+   },
+   {
+    "key": "2-march",
+    "name": "Step",
+    "reward": "100 \u00d7 survival \u2212 100 \u00d7 fell + 3 \u00d7 front-foot changes (max 40) + alternating touchdowns (max 60) \u2212 30 \u00d7 |average foot offset| \u2212 0.5 \u00d7 effort",
+    "terms": [
+     [
+      "+ up to 100",
+      "staying up for 600 steps"
+     ],
+     [
+      "\u2212 100",
+      "falling"
+     ],
+     [
+      "+ 3 per front-foot change",
+      "the foot in front changes (lower legs pass each other by > 0.15), up to 40 changes = 120"
+     ],
+     [
+      "+ 1 per alternating touchdown",
+      "a foot touches down after the OTHER foot did (left, right, left\u2026), up to 60"
+     ],
+     [
+      "\u2212 30 \u00d7 |offset|",
+      "average distance foot 1 is ahead of foot 2: keeps the feet centred, no permanent lead"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "as in stage 1"
+     ]
+    ],
+    "episode": "600 steps (12 s), no early stop: stepping in place is fine, moving forward is neither paid nor punished",
+    "start": "the stage 1 champion (\u03c30 0.2)",
+    "pass": "\u2264 1 fall in 20, \u2265 12 front-foot changes per episode, |average offset| < 0.5",
+    "expect": "Marches in place or creeps forward, legs swinging past each other in turn, left-right-left touchdowns, without falling. Maximum \u2248 100 + 120 + 60 = 280.",
+    "risk": "Shuffles the feet back and forth while sliding them, so the front-foot changes count without real steps. The alternating-touchdown term is there to require lifting."
+   },
+   {
+    "key": "3-walk",
+    "name": "Walk",
+    "reward": "environment reward (fall costs 20 instead of 100) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |average offset|) \u00d7 share of the course covered",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "the environment's progress reward"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the environment's motor cost, per unit per step"
+     ],
+     [
+      "\u2212 20",
+      "for a fall (the real game charges 100; training uses 20 so trying steps isn't too costly)"
+     ],
+     [
+      "\u2212 40 \u00d7 lopsided",
+      "lopsided = |2 \u00d7 (share of leading time foot 2 leads) \u2212 1|: 0 if the feet take turns, 1 if one always leads"
+     ],
+     [
+      "\u2212 20 \u00d7 |offset|",
+      "how far one foot sits ahead on average"
+     ],
+     [
+      "\u00d7 share of course",
+      "the gait tax grows with distance: standing pays nothing, a full-length skip pays \u2248 77"
+     ]
+    ],
+    "episode": "full 1600 steps; early stop if the body moves < 1 unit in 150 steps",
+    "start": "the stage 2 champion (\u03c30 0.2)",
+    "pass": "average x \u2265 60, \u2264 4 falls in 20, lopsided \u2264 0.3",
+    "expect": "Turns the march into forward walking: alternating steps that carry the body most of the way along the course.",
+    "risk": "Drifts back to the skip (one leg as a prop), or stumbles forward and falls, as v5-fresh did."
+   },
+   {
+    "key": "4-fast",
+    "name": "Walk fast",
+    "reward": "the real environment reward (fall \u2212100) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |average offset|) \u00d7 share of the course covered",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "motor cost"
+     ],
+     [
+      "\u2212 100",
+      "a fall, as in the real game"
+     ],
+     [
+      "\u2212 gait tax",
+      "as in stage 3, so the form stays while it speeds up"
+     ]
+    ],
+    "episode": "full 1600 steps, early stop on stall",
+    "start": "the stage 3 champion (\u03c30 0.1)",
+    "pass": "no stage test: runs until it plateaus or 6 h; then the goal check below",
+    "expect": "The same alternating walk, faster and cheaper: reaches the finish with less effort and few falls, raw score \u2265 250.",
+    "risk": "Speed returns the skip (cheaper per unit) if the tax is too small; or more falls as it speeds up."
+   }
+  ]
+ }
 ]
