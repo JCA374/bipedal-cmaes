@@ -114,3 +114,23 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
   but the shared controller still takes fixed roles because each leg sees where the other leg is
   ("if I'm in front, reach; if behind, push"). The step bonus never got a foothold (best candidate ~0
   crossings). Stopped by plateau_watch at gen 780. Lesson 9 corrected accordingly.
+
+## v5-fresh stopped on a plateau (2026-10-28 06:37)
+- v5-fresh gen 491 champion -68.4, +3.5 over 200 gens, sigma 0.05742. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.
+
+## Gait experiments v5 (2026-10-28 morning)
+- Fall penalty check (v5-warm search distribution, 180 episodes): the few less-lopsided candidates ALL fell, at
+  x ≈ 8. A fall's real cost is the lost progress (median ≈ 272 points), not the training fall cost (20).
+- **v5-fresh** (symclock, fixed per-episode gait penalty 40·balance + 20·|offset|, fall cost 20): learned to
+  ALTERNATE (foot 2 leads 50%, ~14 lead changes) but fell in 100% of episodes at x ≈ 14 ("stumble forward").
+  Bug in my balance term: standing with feet apart counted as fully lopsided (penalty 40 + offset), so standing
+  scored worse than stumbling and falling, the same kind of trap as v0-v2. Stopped by plateau rule at gen 491.
+- **v5-warm** (from v3, σ0 0.15, same penalty): kept skipping (foot 2 leads 99%, offset 1.9 -> 1.65 in 124 gens),
+  improved raw score (284) and paid the penalty. Stopped at gen ~125 to give v6 the CPU.
+
+## v6-fresh
+- Gait penalty as a tax on lopsided DISTANCE: (40·balance + 20·|offset|) × share of the course covered
+  (--gait-per-distance 1), balance measured only over steps where one foot leads (--balance-leading 1).
+  Standing pays nothing; ordering on 3 tracks: lunge -18 < stand -11 < few alternating steps then fall +16 <
+  skip full course 210; a full-course alternating walk would be worth ~77 more than the skip.
+- symclock, fall cost 20 (the value that worked for v3), λ 48, K 5.

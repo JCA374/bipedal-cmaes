@@ -39,10 +39,11 @@ STATS_FIELDS = ["generation", "best_fitness", "mean_fitness", "median_fitness", 
                 "steps_saved_total", "gen_seconds", "wall_seconds", "mem_avail_mb"]
 OVERRIDABLE = {"k": int, "popsize": int, "hof_seeds": int, "hof_top": int,
                "stall_penalty": float, "speed_bonus": float, "fall_cost": float, "cross_bonus": float,
-               "gait_weight": float, "offset_weight": float}
+               "gait_weight": float, "offset_weight": float, "balance_leading": int, "gait_per_distance": int}
 # Defaults for keys added after a run started, so its settings history doesn't show a fake change.
-PARAM_DEFAULTS = {"policy": "mlp", "cross_bonus": 0.0, "gait_weight": 0.0, "offset_weight": 0.0, "init_from": None}
-GAIT_KEYS = ("cross_bonus", "gait_weight", "offset_weight")   # kept from the checkpoint on resume
+PARAM_DEFAULTS = {"policy": "mlp", "cross_bonus": 0.0, "gait_weight": 0.0, "offset_weight": 0.0, "init_from": None,
+                  "balance_leading": 0, "gait_per_distance": 0}
+GAIT_KEYS = ("cross_bonus", "gait_weight", "offset_weight", "balance_leading", "gait_per_distance")   # kept from the checkpoint on resume
 
 # ---------------------------------------------------------------- workers
 _W = {}
@@ -65,6 +66,16 @@ def eval_theta(task):
                                action_repeat=_W["action_repeat"]) for s in seeds]
 
 
+def gait_penalty(e, args):
+    """Training-only gait shaping: lopsided lead + average foot offset. With gait_per_distance it is a tax on
+    lopsided DISTANCE (scaled by the share of the course covered), so standing still pays nothing."""
+    share = e["front2_lead_share"] if args.balance_leading else e["front2_share"]
+    p = args.gait_weight * abs(2 * share - 1) + args.offset_weight * abs(e.get("lead_mean", 0.0))
+    if args.gait_per_distance:
+        p *= min(1.0, max(0.0, (e["x"] - 4.67) / 84.0))
+    return p
+
+
 def train_fitness(eps, args):
     """Training-only shaping. Reported scores are always raw rewards of full episodes."""
     f = []
@@ -77,8 +88,7 @@ def train_fitness(eps, args):
         r += args.speed_bonus * e["x"] / 88.0
         r += args.cross_bonus * e["crossings"]
         # graded gait shaping: one foot leading most of the time, and sitting far ahead on average
-        r -= args.gait_weight * abs(2 * e["front2_share"] - 1)
-        r -= args.offset_weight * abs(e.get("lead_mean", 0.0))
+        r -= gait_penalty(e, args)
         f.append(r)
     return float(np.mean(f))
 
@@ -139,7 +149,8 @@ def apply_overrides(args, run_dir):
 def effective_params(args, sizes, kind="mlp"):
     return {"policy": kind, "sizes": list(sizes), "n_params": common.make_policy(kind, sizes).n_params,
             "popsize": args.popsize, "cross_bonus": args.cross_bonus, "gait_weight": args.gait_weight,
-            "offset_weight": args.offset_weight, "init_from": args.init_from,
+            "offset_weight": args.offset_weight, "init_from": args.init_from, "balance_leading": args.balance_leading,
+            "gait_per_distance": args.gait_per_distance,
             "k": args.k, "sigma0": args.sigma0, "stall_penalty": args.stall_penalty,
             "fall_cost": args.fall_cost, "speed_bonus": args.speed_bonus,
             "action_repeat": args.action_repeat, "hof_seeds": args.hof_seeds,
@@ -170,6 +181,10 @@ def main(argv=None):
                     help="training penalty × |2·(share of time foot 2 leads) − 1|: 0 for a walk, 1 for a skip")
     ap.add_argument("--offset-weight", type=float, default=0.0,
                     help="training penalty × |mean(foot 1 x − foot 2 x)|: how far one foot sits ahead on average")
+    ap.add_argument("--balance-leading", type=int, default=0,
+                    help="1: measure lead balance only over steps where a foot leads (standing with feet together isn't lopsided)")
+    ap.add_argument("--gait-per-distance", type=int, default=0,
+                    help="1: scale the gait penalty by the share of the course covered (standing pays nothing)")
     ap.add_argument("--init-from", default=None,
                     help="start CMA's mean at this run's champion (its policy type and sizes are used)")
     ap.add_argument("--cross-bonus", type=float, default=0.0,
@@ -309,7 +324,7 @@ def main(argv=None):
             f2 = float(np.mean([e["front2_share"] for e in eps]))
             lm = float(np.mean([abs(e.get("lead_mean", 0.0)) for e in eps]))
             # Champion selection: raw held-out score, minus the same gait penalty training uses (if any).
-            sel = mean - args.gait_weight * float(np.mean([abs(2 * e["front2_share"] - 1) for e in eps])) - args.offset_weight * lm
+            sel = mean - float(np.mean([gait_penalty(e, args) for e in eps]))
             entry = {"generation": generation, "label": label, "mean": mean, "std": std,
                      "falls": int(sum(e["fell"] for e in eps)),
                      "mean_x": float(np.mean([e["x"] for e in eps])), "train_fitness": tf,

@@ -205,6 +205,7 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
     # Gait: which lower leg is in front (with hysteresis), how often that changes, and how
     # many changes are real steps (hull moved >= CROSS_MIN_DX since the last counted one).
     front, lead_changes, crossings, front2, last_cross_x = 0, 0, 0, 0, hull.position.x
+    leading = 0      # steps where one foot leads by more than CROSS_HYST
     lead_sum = 0.0   # sum of (lower leg 1 x - lower leg 2 x): its mean is how far foot 1 sits ahead on average
     while steps < max_steps:
         if on_frame is not None:
@@ -228,6 +229,7 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
                     last_cross_x = hull.position.x
             front = f
         front2 += front == -1
+        leading += front != 0
         if terminated:
             fell = bool(reward <= -100)
             break
@@ -243,7 +245,9 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
     return {"reward": total, "steps": steps, "saved": saved, "fell": fell,
             "stalled": saved > 0, "x": float(hull.position.x),
             "crossings": crossings, "lead_changes": lead_changes, "front2_share": front2 / max(1, steps),
-            "lead_mean": lead_sum / max(1, steps)}
+            "lead_mean": lead_sum / max(1, steps),
+            # share of the LEADING steps in which foot 2 leads (0.5 when no foot ever leads: feet together isn't lopsided)
+            "front2_lead_share": front2 / leading if leading else 0.5}
 
 
 # ---------------------------------------------------------------- persistence
