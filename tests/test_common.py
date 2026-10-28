@@ -129,3 +129,16 @@ def test_support_keeps_hull_up_and_defaults_to_off():
     assert plain["reward"] == again["reward"]                     # default = the real game, unchanged
     held = common.run_episode(pol, env, 7, early_stop=False, support=4.0)
     assert held["angle_abs_mean"] <= plain["angle_abs_mean"] + 1e-9
+
+
+def test_widen_keeps_the_policy_identical():
+    rng = np.random.default_rng(5)
+    for kind, sizes in (("mlp", (24, 8, 4)), ("symclock", (26, 8, 2))):
+        pol = common.make_policy(kind, sizes)
+        theta = rng.normal(0, 0.5, pol.n_params)
+        new_theta, new_sizes = common.widen(kind, theta, sizes, 20)
+        a, b = common.make_policy(kind, sizes, theta), common.make_policy(kind, new_sizes, new_theta)
+        assert new_sizes[1] == 20 and b.n_params > a.n_params and b.n_hidden_layers >= 1
+        for _ in range(30):
+            x = rng.uniform(-1, 1, 24)
+            assert np.allclose(a.activate(x), b.activate(x))

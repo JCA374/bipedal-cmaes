@@ -146,6 +146,26 @@ class SymClock:
 POLICIES = {"mlp": MLP, "symclock": SymClock}
 
 
+def widen(kind, theta, sizes, hidden, rng=None, scale=0.05):
+    """Net2Net-style widening of a one-hidden-layer policy to `hidden` units WITHOUT changing what it does:
+    new hidden units get small random input weights but ZERO outgoing weights, so the widened network
+    computes exactly the same actions; evolution can then put the extra capacity to use.
+    Returns (new_theta, new_sizes)."""
+    assert len(sizes) == 3 and hidden >= sizes[1], "widen handles one hidden layer, growing only"
+    rng = rng or np.random.default_rng(0)
+    theta = np.asarray(theta, dtype=np.float64)
+    extra = theta[-1:] if kind == "symclock" else theta[:0]        # the clock period parameter
+    core = theta[:-1] if kind == "symclock" else theta
+    (W1, b1), (W2, b2) = unflatten(core, tuple(sizes))
+    n_in, h, n_out = sizes
+    add = hidden - h
+    W1n = np.vstack([W1, scale * rng.normal(size=(add, n_in))])
+    b1n = np.concatenate([b1, np.zeros(add)])
+    W2n = np.hstack([W2, np.zeros((n_out, add))])
+    new_sizes = (n_in, hidden, n_out)
+    return np.concatenate([flatten([(W1n, b1n), (W2n, b2)]), extra]), new_sizes
+
+
 def policy_sizes(kind, hidden):
     return (N_OBS, *hidden, N_ACT) if kind == "mlp" else (26, *hidden, 2)
 

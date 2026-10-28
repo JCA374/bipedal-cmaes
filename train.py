@@ -217,6 +217,8 @@ def main(argv=None):
                     help="training wheels: upright torque on the hull, × common.SUPPORT_K_*; 0 = the real game")
     ap.add_argument("--gait-per-distance", type=int, default=0,
                     help="1: scale the gait penalty by the share of the course covered (standing pays nothing)")
+    ap.add_argument("--widen", type=int, default=0,
+                    help="with --init-from: grow the hidden layer to this many units without changing the policy (Net2Net)")
     ap.add_argument("--init-from", default=None,
                     help="start CMA's mean at this run's champion (its policy type and sizes are used)")
     ap.add_argument("--cross-bonus", type=float, default=0.0,
@@ -281,6 +283,9 @@ def main(argv=None):
             x0 = np.load(Path(args.init_from) / "best" / "params.npy") if (Path(args.init_from) / "best").exists() \
                 else np.load(Path(args.init_from) / "params.npy")
             print(f"Warm start from {args.init_from} ({kind} {list(sizes)}, held-out {src_meta.get('mean')})")
+            if args.widen and args.widen > sizes[1]:
+                x0, sizes = common.widen(kind, x0, sizes, args.widen, np.random.default_rng(args.seed))
+                print(f"  widened to {list(sizes)} (new units have zero outgoing weights: same walk to start with)")
         args.popsize = args.popsize or 48
         es = new_es(np.zeros(common.make_policy(kind, sizes).n_params) if x0 is None else x0, args.sigma0, args.popsize, args.seed)
         state = {"generation": 0, "sizes": list(sizes), "policy": kind, "action_repeat": args.action_repeat,

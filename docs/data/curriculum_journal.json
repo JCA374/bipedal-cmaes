@@ -46,5 +46,11 @@
   "iso": "2026-10-28T16:15",
   "title": "Check-in: both runs progressing, nothing changed",
   "text": "Attempt 4's walk-fast champion holds at 275.8 on the held-out tracks with no falls and the feet sharing the lead (foot 2 in front 54% of the time); it gained 7.4 points over the last 200 generations, just above the plateau threshold of 5, and its step size keeps shrinking (\u03c3 0.012). Attempt 5 (effort counts 1.5 times) started eight minutes ago and is still at generation 8, so it's too early to judge. No changes, no new podcast episode yet."
+ },
+ {
+  "time": "Wed 28 Oct 16:38",
+  "iso": "2026-10-28T16:38",
+  "title": "Model changes allowed: a wider network is queued (attempt 6)",
+  "text": "You gave me freedom to change the model itself. The first change: more capacity. The shared leg controller has only 32 hidden neurons. Attempt 6 widens the current champion to 64 using the Net2Net trick: the new neurons start with zero outgoing weights, so the wider network walks exactly like the original (checked: same 272.79 on the replay track), and evolution then learns how to use the extra neurons. Only the size changes, so it can be compared fairly with attempt 5 (extra effort cost). It starts automatically when attempt 4's walk-fast stage ends. Other model changes I can try next: two hidden layers, a memory (recurrent) layer, or repeating each action for two steps."
  }
 ]
