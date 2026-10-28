@@ -1,0 +1,5 @@
+["Correction: on 100 tracks, last episode's best walker scores about 263 and falls on 14 of them (not 288 with no falls, which came from 20 tracks).",
+ "The walkers got faster (about 880 steps) and cheaper (effort about 73), but traded safety for it: yesterday's slower walker never fell in 100.",
+ "The winner's curse caught the goal check itself: it now uses 50 tracks and allows at most 10% falls. The wider network with cheaper steps still passes: about 272, 4 falls in 50.",
+ "New: a safety run where falls cost double in training, to keep the speed and win back safety.",
+ "Big claims are now checked on 100 tracks before they're announced."]
