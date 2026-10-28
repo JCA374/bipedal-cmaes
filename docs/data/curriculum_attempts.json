@@ -139,7 +139,7 @@
   "prefix": "d",
   "log": "curriculum_d.log",
   "title": "Attempt 2: balance with feet together \u2192 real steps \u2192 walk \u2192 walk fast",
-  "note": "Attempt 1's balance champion stood with its feet 2.9 units apart, foot 2 always in front (the skipper's stance). Its step stage then learned to TAP its feet alternately in that split stance: ~70 alternating touchdowns, 0 front-foot changes, \u03c3 collapsed to 0.013. Attempt 2 balances with the feet together, and only counts a touchdown as a step when the foot coming down is the front foot. Stages 3 and 4 are unchanged.",
+  "note": "Attempt 1's balance champion stood with its feet 2.9 units apart, foot 2 always in front (the skipper's stance). Its step stage then learned to TAP its feet alternately in that split stance: ~70 alternating touchdowns, 0 front-foot changes, \u03c3 collapsed to 0.013. Attempt 2 balances with the feet together, and only counts a touchdown as a step when the foot coming down is the front foot. Stages 3 and 4 are unchanged. Stopped Wed 12:40 in stage 2: stood still with the feet together (\u22481 front-foot change per episode, \u03c3 collapsed).",
   "stages": [
    {
     "key": "1-balance",
@@ -279,7 +279,7 @@
   "prefix": "e",
   "log": "curriculum_e.log",
   "title": "Attempt 3: start stepping from the alternating stumbler \u2192 walk \u2192 walk fast",
-  "note": "Attempt 1's step stage stayed a split-stance tapper for 200+ generations (0 front-foot changes, \u03c3 collapsed) and was stopped. Attempt 3 skips balance: it starts the real-steps stage from v5-fresh, the one walker that already swaps its feet, so it only has to learn balance while stepping. Stage rewards are the same as attempt 2.",
+  "note": "Attempt 1's step stage stayed a split-stance tapper for 200+ generations (0 front-foot changes, \u03c3 collapsed) and was stopped. Attempt 3 skips balance: it starts the real-steps stage from v5-fresh, the one walker that already swaps its feet, so it only has to learn balance while stepping. Stage rewards are the same as attempt 2. Stopped Wed 12:40: the step and walk stages both plateaued with the stumble intact (falls on 20 of 20 tracks at x \u2248 17).",
   "stages": [
    {
     "key": "1-balance",
@@ -396,6 +396,207 @@
     "pass": "no stage test: runs until it plateaus or 6 h; then the goal check below",
     "expect": "The same alternating walk, faster and cheaper: reaches the finish with less effort and few falls, raw score \u2265 250.",
     "risk": "Speed returns the skip (cheaper per unit) if the tax is too small; or more falls as it speeds up."
+   }
+  ]
+ },
+ {
+  "prefix": "f",
+  "log": "curriculum_f.log",
+  "title": "Attempt 4: training wheels. Walk with an upright support that fades out (2 \u2192 1 \u2192 0.5 \u2192 0), then walk fast",
+  "note": "Attempts 2 and 3 got stuck on opposite sides of the same gap: attempt 2's step stage chose to stand still with the feet together (falling while stepping costs too much), attempt 3 kept the alternating stumble and fell on all 20 tracks through the step and walk stages. Attempt 4 lets the stumbler learn to walk while an upright torque keeps it from tipping over, then fades that support out in stages, so balance is learned gradually. At support 2 the stumbler never falls and steps in place.",
+  "stages": [
+   {
+    "key": "1-walk-s2",
+    "name": "Walk, support 2",
+    "short": "walk with support 2",
+    "reward": "game reward (fall \u221220) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course, with support torque 2",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "the game's progress reward"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 20",
+      "a fall (training value; the real game charges 100)"
+     ],
+     [
+      "\u2212 40 \u00d7 lopsided",
+      "|2 \u00d7 (share of leading time foot 2 leads) \u2212 1|: 0 if the feet take turns"
+     ],
+     [
+      "\u2212 20 \u00d7 |offset|",
+      "how far one foot sits ahead on average"
+     ],
+     [
+      "\u00d7 share of course",
+      "the gait tax grows with distance covered"
+     ],
+     [
+      "support torque",
+      "training wheels: a torque on the body of \u2212support \u00d7 (200 \u00d7 tilt + 30 \u00d7 tilt speed) every step keeps it upright; it is not part of the score"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall; support 2 (cap 3 h)",
+    "start": "e2-march's champion: steps in place with alternating feet when held up (support 2: 0 falls, \u2248167 front-foot changes, drifts backwards) (\u03c30 0.2)",
+    "pass": "under support 2: average x \u2265 60, \u2264 4 falls in 20, lopsided \u2264 0.3",
+    "expect": "Walks forward with the feet taking turns, most of the way along the course, while the support keeps the body from tipping over.",
+    "risk": "Leans on the support (lets it do the balancing), then falls when the support is reduced; or keeps stepping in place."
+   },
+   {
+    "key": "2-walk-s1",
+    "name": "Walk, support 1",
+    "short": "walk with support 1",
+    "reward": "game reward (fall \u221220) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course, with support torque 1",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "the game's progress reward"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 20",
+      "a fall (training value; the real game charges 100)"
+     ],
+     [
+      "\u2212 40 \u00d7 lopsided",
+      "|2 \u00d7 (share of leading time foot 2 leads) \u2212 1|: 0 if the feet take turns"
+     ],
+     [
+      "\u2212 20 \u00d7 |offset|",
+      "how far one foot sits ahead on average"
+     ],
+     [
+      "\u00d7 share of course",
+      "the gait tax grows with distance covered"
+     ],
+     [
+      "support torque",
+      "training wheels: a torque on the body of \u2212support \u00d7 (200 \u00d7 tilt + 30 \u00d7 tilt speed) every step keeps it upright; it is not part of the score"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall; support 1 (cap 3 h)",
+    "start": "the support-2 champion (\u03c30 0.15)",
+    "pass": "under support 1: average x \u2265 60, \u2264 4 falls in 20, lopsided \u2264 0.3",
+    "expect": "Walks forward with the feet taking turns, most of the way along the course, while the support keeps the body from tipping over.",
+    "risk": "Leans on the support (lets it do the balancing), then falls when the support is reduced; or keeps stepping in place."
+   },
+   {
+    "key": "3-walk-s05",
+    "name": "Walk, support 0.5",
+    "short": "walk with support 0.5",
+    "reward": "game reward (fall \u221220) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course, with support torque 0.5",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "the game's progress reward"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 20",
+      "a fall (training value; the real game charges 100)"
+     ],
+     [
+      "\u2212 40 \u00d7 lopsided",
+      "|2 \u00d7 (share of leading time foot 2 leads) \u2212 1|: 0 if the feet take turns"
+     ],
+     [
+      "\u2212 20 \u00d7 |offset|",
+      "how far one foot sits ahead on average"
+     ],
+     [
+      "\u00d7 share of course",
+      "the gait tax grows with distance covered"
+     ],
+     [
+      "support torque",
+      "training wheels: a torque on the body of \u2212support \u00d7 (200 \u00d7 tilt + 30 \u00d7 tilt speed) every step keeps it upright; it is not part of the score"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall; support 0.5 (cap 3 h)",
+    "start": "the support-1 champion (\u03c30 0.15)",
+    "pass": "under support 0.5: average x \u2265 60, \u2264 4 falls in 20, lopsided \u2264 0.3",
+    "expect": "Walks forward with the feet taking turns, most of the way along the course, while the support keeps the body from tipping over.",
+    "risk": "Leans on the support (lets it do the balancing), then falls when the support is reduced; or keeps stepping in place."
+   },
+   {
+    "key": "4-walk",
+    "name": "Walk, no support",
+    "short": "walk with support 0",
+    "reward": "game reward (fall \u221220) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course, with support torque 0",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "the game's progress reward"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 20",
+      "a fall (training value; the real game charges 100)"
+     ],
+     [
+      "\u2212 40 \u00d7 lopsided",
+      "|2 \u00d7 (share of leading time foot 2 leads) \u2212 1|: 0 if the feet take turns"
+     ],
+     [
+      "\u2212 20 \u00d7 |offset|",
+      "how far one foot sits ahead on average"
+     ],
+     [
+      "\u00d7 share of course",
+      "the gait tax grows with distance covered"
+     ],
+     [
+      "support torque",
+      "training wheels: a torque on the body of \u2212support \u00d7 (200 \u00d7 tilt + 30 \u00d7 tilt speed) every step keeps it upright; it is not part of the score"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall; support 0 (cap 4 h)",
+    "start": "the support-0.5 champion (\u03c30 0.15)",
+    "pass": "under support 0: average x \u2265 60, \u2264 4 falls in 20, lopsided \u2264 0.3",
+    "expect": "Walks the course with alternating feet in the real game, without any support.",
+    "risk": "Falls once the last support is gone, or slides back into the skip."
+   },
+   {
+    "key": "5-fast",
+    "name": "Walk fast",
+    "short": "the real reward + gait tax",
+    "reward": "the real game reward (fall \u2212100) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "motor cost"
+     ],
+     [
+      "\u2212 100",
+      "a fall, as in the real game"
+     ],
+     [
+      "\u2212 gait tax",
+      "as in the walk stages, so the form stays"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall, no support (cap 6 h)",
+    "start": "the no-support walk champion (\u03c30 0.1)",
+    "pass": "no stage test: runs until it plateaus; then the goal check",
+    "expect": "The same alternating walk, faster and cheaper: raw score \u2265 250 with few falls.",
+    "risk": "Speed brings back the skip, or more falls."
    }
   ]
  }

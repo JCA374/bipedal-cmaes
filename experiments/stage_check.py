@@ -16,13 +16,14 @@ STEPS = {"balance": 500, "march": 600, "walk": 1600, "balance_c": 500, "step": 6
 
 def main():
     stage, run = sys.argv[1], sys.argv[2]
+    support = float(sys.argv[3]) if len(sys.argv) > 3 else 0.0     # test under the stage's training wheels
     pol, meta = common.load_policy(run)
     env = common.make_env()
-    eps = [common.run_episode(pol, env, s, early_stop=False, max_steps=STEPS[stage]) for s in common.seeds("record", 20, offset=500)]
+    eps = [common.run_episode(pol, env, s, early_stop=False, max_steps=STEPS[stage], support=support) for s in common.seeds("record", 20, offset=500)]
     m = lambda k: float(np.mean([e[k] for e in eps]))
     falls = int(sum(e["fell"] for e in eps))
     lop = float(np.mean([abs(2 * e["front2_lead_share"] - 1) for e in eps]))
-    res = {"stage": stage, "run": run, "champion_gen": meta.get("generation"), "falls": falls, "reward": m("reward"),
+    res = {"stage": stage, "run": run, "support": support, "champion_gen": meta.get("generation"), "falls": falls, "reward": m("reward"),
            "x": m("x"), "lead_changes": m("lead_changes"), "alt_touchdowns": m("alt_touchdowns"),
            "lopsided": lop, "step_touchdowns": m("step_touchdowns"), "abs_offset": float(np.mean([abs(e["lead_mean"]) for e in eps])), "angle": m("angle_abs_mean")}
     ok = {"balance": falls == 0 and res["angle"] < 0.15,

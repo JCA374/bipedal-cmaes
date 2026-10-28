@@ -96,7 +96,8 @@ def main():
         log = parse_log(ROOT / a["log"])
         spec = {st["key"]: st for st in a.get("stages", [])}   # each attempt documents its own stage rewards
         stages = []
-        for key, name, desc in STAGES:
+        keys = [(st["key"], st["name"], st.get("short", "")) for st in a.get("stages", [])] or STAGES
+        for key, name, desc in keys:
             run = f"{a['prefix']}{key}"
             s = run_summary(run)
             info = log.get(run, {"outcome": "pending" if s is None else "unknown", "checks": []})

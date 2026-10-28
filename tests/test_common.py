@@ -119,3 +119,13 @@ def test_run_episode_reports_gait():
     assert 0 <= r["crossings"] <= r["lead_changes"] and 0 <= r["front2_share"] <= 1
     r2 = common.run_episode(pol, env, 5, early_stop=False)     # reset() makes it reproducible
     assert r2["reward"] == r["reward"]
+
+
+def test_support_keeps_hull_up_and_defaults_to_off():
+    env = common.make_env()
+    pol = common.MLP((24, 8, 4), np.random.default_rng(3).normal(0, 0.5, 24 * 8 + 8 + 8 * 4 + 4))
+    plain = common.run_episode(pol, env, 7, early_stop=False)
+    again = common.run_episode(pol, env, 7, early_stop=False, support=0.0)
+    assert plain["reward"] == again["reward"]                     # default = the real game, unchanged
+    held = common.run_episode(pol, env, 7, early_stop=False, support=4.0)
+    assert held["angle_abs_mean"] <= plain["angle_abs_mean"] + 1e-9

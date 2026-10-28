@@ -40,23 +40,24 @@ STATS_FIELDS = ["generation", "best_fitness", "mean_fitness", "median_fitness", 
 OVERRIDABLE = {"k": int, "popsize": int, "hof_seeds": int, "hof_top": int,
                "stall_penalty": float, "speed_bonus": float, "fall_cost": float, "cross_bonus": float,
                "gait_weight": float, "offset_weight": float, "balance_leading": int, "gait_per_distance": int,
-               "objective": str, "train_steps": int}
+               "objective": str, "train_steps": int, "support": float}
 # Defaults for keys added after a run started, so its settings history doesn't show a fake change.
 PARAM_DEFAULTS = {"policy": "mlp", "cross_bonus": 0.0, "gait_weight": 0.0, "offset_weight": 0.0, "init_from": None,
-                  "balance_leading": 0, "gait_per_distance": 0, "objective": "walk", "train_steps": 1600}
-GAIT_KEYS = ("cross_bonus", "gait_weight", "offset_weight", "balance_leading", "gait_per_distance", "objective", "train_steps")   # kept from the checkpoint on resume
+                  "balance_leading": 0, "gait_per_distance": 0, "objective": "walk", "train_steps": 1600, "support": 0.0}
+GAIT_KEYS = ("cross_bonus", "gait_weight", "offset_weight", "balance_leading", "gait_per_distance", "objective", "train_steps", "support")   # kept from the checkpoint on resume
 
 # ---------------------------------------------------------------- workers
 _W = {}
 
 
-def _init_worker(kind, sizes, action_repeat, max_steps=1600):
+def _init_worker(kind, sizes, action_repeat, max_steps=1600, support=0.0):
     signal.signal(signal.SIGINT, signal.SIG_IGN)  # parent handles Ctrl-C / SIGTERM
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     _W["env"] = common.make_env()
     _W["policy"] = common.make_policy(kind, sizes)
     _W["action_repeat"] = action_repeat
     _W["max_steps"] = max_steps
+    _W["support"] = support
 
 
 def eval_theta(task):
@@ -65,7 +66,7 @@ def eval_theta(task):
     pol = _W["policy"]
     pol.set_params(theta)
     return [common.run_episode(pol, _W["env"], s, early_stop=early_stop, max_steps=_W["max_steps"],
-                               action_repeat=_W["action_repeat"]) for s in seeds]
+                               action_repeat=_W["action_repeat"], support=_W["support"]) for s in seeds]
 
 
 def gait_penalty(e, args):
@@ -172,7 +173,7 @@ def effective_params(args, sizes, kind="mlp"):
     return {"policy": kind, "sizes": list(sizes), "n_params": common.make_policy(kind, sizes).n_params,
             "popsize": args.popsize, "cross_bonus": args.cross_bonus, "gait_weight": args.gait_weight,
             "offset_weight": args.offset_weight, "init_from": args.init_from, "balance_leading": args.balance_leading,
-            "gait_per_distance": args.gait_per_distance, "objective": args.objective, "train_steps": args.train_steps,
+            "gait_per_distance": args.gait_per_distance, "objective": args.objective, "train_steps": args.train_steps, "support": args.support,
             "k": args.k, "sigma0": args.sigma0, "stall_penalty": args.stall_penalty,
             "fall_cost": args.fall_cost, "speed_bonus": args.speed_bonus,
             "action_repeat": args.action_repeat, "hof_seeds": args.hof_seeds,
@@ -208,6 +209,8 @@ def main(argv=None):
     ap.add_argument("--objective", choices=["walk", "balance", "march", "balance_c", "step"], default="walk",
                     help="curriculum stage: walk = the normal (shaped) reward; balance / march = stage_score()")
     ap.add_argument("--train-steps", type=int, default=1600, help="episode length in training and HOF")
+    ap.add_argument("--support", type=float, default=0.0,
+                    help="training wheels: upright torque on the hull, × common.SUPPORT_K_*; 0 = the real game")
     ap.add_argument("--gait-per-distance", type=int, default=0,
                     help="1: scale the gait penalty by the share of the course covered (standing pays nothing)")
     ap.add_argument("--init-from", default=None,
@@ -326,7 +329,7 @@ def main(argv=None):
         stats_w.writeheader()
 
     pool = mp.get_context("fork").Pool(args.workers, initializer=_init_worker,
-                                       initargs=(kind, sizes, args.action_repeat, args.train_steps))
+                                       initargs=(kind, sizes, args.action_repeat, args.train_steps, args.support))
     t_start = time.time()
     wall0 = state["wall_seconds"]
 

@@ -170,3 +170,15 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
   + 3·lead changes (≤40) + 2·front-foot touchdowns (≤40; a touchdown counts only if that foot is in front and
   it alternates legs) − 30·|offset| − 0.5·effort. Under the new step reward the c2 tapper scores 47 (was 105),
   the split stander −17, a non-falling stepper up to ~300. Stages 3-4 unchanged. Attempt 1 keeps running.
+
+- curriculum d1-balance: time cap (2026-10-28 10:57)
+
+## e2-march stopped on a plateau (2026-10-28 11:31)
+- e2-march gen 517 champion 8.4, +4.8 over 200 gens, sigma 0.00504. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.
+
+- curriculum e2-march: plateau (2026-10-28 11:31)
+
+## e3-walk stopped on a plateau (2026-10-28 12:17)
+- e3-walk gen 411 champion -63.4, +2.4 over 200 gens, sigma 0.00985. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.
+
+- curriculum e3-walk: plateau (2026-10-28 12:17)

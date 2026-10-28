@@ -187,8 +187,11 @@ def fresh_reset(env, seed):
     return env.reset(seed=int(seed))
 
 
+SUPPORT_K_ANGLE, SUPPORT_K_VEL = 200.0, 30.0   # "training wheels": upright torque = support × (k_a·angle + k_v·ang. velocity)
+
+
 def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=None,
-                action_repeat=1, on_step=None):
+                action_repeat=1, on_step=None, support=0.0):
     """Roll out one episode. Returns dict(reward, steps, saved, fell, x).
 
     saved = steps cut off by early termination. x = hull x at the end (the course
@@ -217,6 +220,8 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
             action = policy.activate(o)
             if on_step is not None:
                 on_step(o, action, total, env)
+        if support:   # assistive torque that keeps the hull upright (curriculum only; reported results use 0)
+            hull.ApplyTorque(-support * (SUPPORT_K_ANGLE * hull.angle + SUPPORT_K_VEL * hull.angularVelocity), True)
         obs, reward, terminated, truncated, _ = env.step(np.asarray(action, dtype=np.float32))
         steps += 1
         total += float(reward)
