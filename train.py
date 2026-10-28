@@ -84,6 +84,12 @@ def stage_score(e, args):
     T = args.train_steps
     if args.objective == "balance":
         return 100 * e["steps"] / T - 100 * e["fell"] - 50 * e["angle_abs_mean"] - 0.5 * e["effort"]
+    if args.objective == "balance_c":     # balance with the feet together (attempt 2)
+        return (100 * e["steps"] / T - 100 * e["fell"] - 50 * e["angle_abs_mean"] - 0.5 * e["effort"]
+                - 30 * abs(e.get("lead_mean", 0.0)))
+    if args.objective == "step":          # only real steps count: the FRONT foot touches down, legs alternating (attempt 2)
+        return (100 * e["steps"] / T - 100 * e["fell"] + 3 * min(e["lead_changes"], 40) + 2 * min(e["step_touchdowns"], 40)
+                - 30 * abs(e.get("lead_mean", 0.0)) - 0.5 * e["effort"])
     if args.objective == "march":
         return (100 * e["steps"] / T - 100 * e["fell"] + 3 * min(e["lead_changes"], 40) + min(e["alt_touchdowns"], 60)
                 - 30 * abs(e.get("lead_mean", 0.0)) - 0.5 * e["effort"])
@@ -199,7 +205,7 @@ def main(argv=None):
                     help="training penalty × |mean(foot 1 x − foot 2 x)|: how far one foot sits ahead on average")
     ap.add_argument("--balance-leading", type=int, default=0,
                     help="1: measure lead balance only over steps where a foot leads (standing with feet together isn't lopsided)")
-    ap.add_argument("--objective", choices=["walk", "balance", "march"], default="walk",
+    ap.add_argument("--objective", choices=["walk", "balance", "march", "balance_c", "step"], default="walk",
                     help="curriculum stage: walk = the normal (shaped) reward; balance / march = stage_score()")
     ap.add_argument("--train-steps", type=int, default=1600, help="episode length in training and HOF")
     ap.add_argument("--gait-per-distance", type=int, default=0,

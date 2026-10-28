@@ -159,3 +159,14 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
   4. walk fast: raw reward (fall 100) + gait tax per distance; runs until plateau / 6 h.
 - Each stage advances on pass, plateau or time cap (1 / 3 / 6 / 6 h). v6b-fresh stopped to free the CPU;
   v7-alt keeps running for comparison.
+
+- curriculum c1-balance: passed (2026-10-28 08:35)
+
+## Curriculum attempt 1 found the "tap" shortcut; attempt 2 (prefix d) launched ~10:05
+- c1-balance passed; its champion stands with the feet 2.93 units apart (foot 2 always in front).
+- c2-march (gen ~372): narrowed the stance to |offset| 0.93 and taps the feet alternately (~70 alternating
+  touchdowns, above the 60 cap) with 0 front-foot changes, lopsided 1.0; σ 0.013 (collapsed).
+- Attempt 2: stage 1 balance_c = balance − 30·|offset| (pass: |offset| < 0.4); stage 2 step = survival − fall
+  + 3·lead changes (≤40) + 2·front-foot touchdowns (≤40; a touchdown counts only if that foot is in front and
+  it alternates legs) − 30·|offset| − 0.5·effort. Under the new step reward the c2 tapper scores 47 (was 105),
+  the split stander −17, a non-falling stepper up to ~300. Stages 3-4 unchanged. Attempt 1 keeps running.

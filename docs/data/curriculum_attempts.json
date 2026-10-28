@@ -134,5 +134,145 @@
     "risk": "Speed returns the skip (cheaper per unit) if the tax is too small; or more falls as it speeds up."
    }
   ]
+ },
+ {
+  "prefix": "d",
+  "log": "curriculum_d.log",
+  "title": "Attempt 2: balance with feet together \u2192 real steps \u2192 walk \u2192 walk fast",
+  "note": "Attempt 1's balance champion stood with its feet 2.9 units apart, foot 2 always in front (the skipper's stance). Its step stage then learned to TAP its feet alternately in that split stance: ~70 alternating touchdowns, 0 front-foot changes, \u03c3 collapsed to 0.013. Attempt 2 balances with the feet together, and only counts a touchdown as a step when the foot coming down is the front foot. Stages 3 and 4 are unchanged.",
+  "stages": [
+   {
+    "key": "1-balance",
+    "name": "Balance (feet together)",
+    "reward": "100 \u00d7 (steps survived \u00f7 500) \u2212 100 \u00d7 fell \u2212 50 \u00d7 average |body tilt| \u2212 0.5 \u00d7 effort \u2212 30 \u00d7 |average foot offset|",
+    "terms": [
+     [
+      "+ up to 100",
+      "for staying up the whole episode"
+     ],
+     [
+      "\u2212 100",
+      "if it falls"
+     ],
+     [
+      "\u2212 50 \u00d7 tilt",
+      "average |hull angle| in radians: keep the body level"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "effort = 0.028 \u00d7 |motor command| per joint per step, summed"
+     ],
+     [
+      "\u2212 30 \u00d7 |offset|",
+      "how far one foot stands ahead of the other on average: a centred stance, not the skipper's split stance"
+     ]
+    ],
+    "episode": "500 steps (10 s), no early stop: standing still is allowed",
+    "start": "a random shared-controller network (\u03c30 0.5)",
+    "pass": "0 falls on 20 held-out tracks, average |tilt| < 0.15 rad, |average offset| < 0.4",
+    "expect": "Stands upright and level with the feet close together, so either leg can take the first step. Maximum \u2248 100.",
+    "risk": "Can't find a stable narrow stance (the base is short), or keeps a small split anyway; the offset term and the pass test guard against that."
+   },
+   {
+    "key": "2-march",
+    "name": "Step (real steps only)",
+    "reward": "100 \u00d7 survival \u2212 100 \u00d7 fell + 3 \u00d7 front-foot changes (max 40) + 2 \u00d7 front-foot touchdowns (max 40) \u2212 30 \u00d7 |average foot offset| \u2212 0.5 \u00d7 effort",
+    "terms": [
+     [
+      "+ up to 100",
+      "staying up for 600 steps"
+     ],
+     [
+      "\u2212 100",
+      "falling"
+     ],
+     [
+      "+ 3 per front-foot change",
+      "the lower legs pass each other (by > 0.15), up to 40 = 120"
+     ],
+     [
+      "+ 2 per front-foot touchdown",
+      "a foot touches down while it is the FRONT foot, and it's the other leg from the last counted one: a real step. Tapping in a split stance only ever counts one leg. Up to 40 = 80"
+     ],
+     [
+      "\u2212 30 \u00d7 |offset|",
+      "keeps the feet centred"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "as in stage 1"
+     ]
+    ],
+    "episode": "600 steps (12 s), no early stop: stepping in place is fine, moving forward is neither paid nor punished",
+    "start": "the stage 1 champion (\u03c30 0.2)",
+    "pass": "\u2264 1 fall in 20, \u2265 12 front-foot changes and \u2265 10 front-foot touchdowns per episode, |offset| < 0.5, lopsided \u2264 0.4",
+    "expect": "Steps in place or creeps forward with real steps: the swinging foot lands in front, legs taking turns. Maximum \u2248 100 + 120 + 80 = 300; the attempt-1 tapper scores 47 here.",
+    "risk": "Some other way to swap feet without lifting them (sliding), or stepping so hard that it falls."
+   },
+   {
+    "key": "3-walk",
+    "name": "Walk",
+    "reward": "environment reward (fall costs 20 instead of 100) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |average offset|) \u00d7 share of the course covered",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "the environment's progress reward"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the environment's motor cost, per unit per step"
+     ],
+     [
+      "\u2212 20",
+      "for a fall (the real game charges 100; training uses 20 so trying steps isn't too costly)"
+     ],
+     [
+      "\u2212 40 \u00d7 lopsided",
+      "lopsided = |2 \u00d7 (share of leading time foot 2 leads) \u2212 1|: 0 if the feet take turns, 1 if one always leads"
+     ],
+     [
+      "\u2212 20 \u00d7 |offset|",
+      "how far one foot sits ahead on average"
+     ],
+     [
+      "\u00d7 share of course",
+      "the gait tax grows with distance: standing pays nothing, a full-length skip pays \u2248 77"
+     ]
+    ],
+    "episode": "full 1600 steps; early stop if the body moves < 1 unit in 150 steps",
+    "start": "the stage 2 champion (\u03c30 0.2)",
+    "pass": "average x \u2265 60, \u2264 4 falls in 20, lopsided \u2264 0.3",
+    "expect": "Turns the march into forward walking: alternating steps that carry the body most of the way along the course.",
+    "risk": "Drifts back to the skip (one leg as a prop), or stumbles forward and falls, as v5-fresh did."
+   },
+   {
+    "key": "4-fast",
+    "name": "Walk fast",
+    "reward": "the real environment reward (fall \u2212100) \u2212 (40 \u00d7 lopsided + 20 \u00d7 |average offset|) \u00d7 share of the course covered",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "motor cost"
+     ],
+     [
+      "\u2212 100",
+      "a fall, as in the real game"
+     ],
+     [
+      "\u2212 gait tax",
+      "as in stage 3, so the form stays while it speeds up"
+     ]
+    ],
+    "episode": "full 1600 steps, early stop on stall",
+    "start": "the stage 3 champion (\u03c30 0.1)",
+    "pass": "no stage test: runs until it plateaus or 6 h; then the goal check below",
+    "expect": "The same alternating walk, faster and cheaper: reaches the finish with less effort and few falls, raw score \u2265 250.",
+    "risk": "Speed returns the skip (cheaper per unit) if the tax is too small; or more falls as it speeds up."
+   }
+  ]
  }
 ]

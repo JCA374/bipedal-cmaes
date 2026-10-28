@@ -73,9 +73,11 @@ def deadline():
 
 def active_run():
     """--run auto: the stage the curriculum is training now (latest '=== stage X' in the newest curriculum log)."""
-    if ARGS.run_arg != "auto":
+    if not ARGS.run_arg.startswith("auto"):
         return ARGS.run
-    logs = sorted(ROOT.glob("curriculum*.log"), key=lambda p: p.stat().st_mtime)
+    # "auto" = newest curriculum log; "auto:<log>" = follow that attempt's log
+    logs = [ROOT / ARGS.run_arg.split(":", 1)[1]] if ":" in ARGS.run_arg else \
+        sorted(ROOT.glob("curriculum*.log"), key=lambda p: p.stat().st_mtime)
     for lp in reversed(logs):
         m = re.findall(r"=== stage (\S+)", lp.read_text())
         if m:
@@ -111,7 +113,7 @@ def status():
         "champion": best, "hof": hof[:12], "milestones": ms, "overrides": ov,
         "load": os.getloadavg(), "cpus": os.cpu_count(), "mem": meminfo(), "jobs": jobs(),
         "logs": {"training": [l for l in tail(log, 400) if not l.startswith("gen ")][-8:],
-                 "queue": tail(ROOT / ("curriculum.log" if ARGS.run_arg == "auto" else "train_queue.log"), 6),
+                 "queue": tail(ROOT / (ARGS.run_arg.split(":", 1)[1] if ":" in ARGS.run_arg else "curriculum.log" if ARGS.run_arg == "auto" else "train_queue.log"), 6),
                  "finalize": tail(ROOT / "finalize.log", 8)},
         "champion_mtime": (run / "best" / "params.npy").stat().st_mtime if (run / "best" / "params.npy").exists() else None,
     }
@@ -175,7 +177,7 @@ def main():
     ap.add_argument("--deadline", default="09:00")
     ARGS = ap.parse_args()
     ARGS.run_arg = ARGS.run
-    if ARGS.run != "auto":
+    if not ARGS.run.startswith("auto"):
         ARGS.run = str((ROOT / ARGS.run).resolve()) if not os.path.isabs(ARGS.run) else ARGS.run
     else:
         ARGS.run = active_run()
