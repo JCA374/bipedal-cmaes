@@ -52,11 +52,11 @@
 <main class="wrap">
   <div class="hero" style="padding-bottom:0">
     <h1>Curriculum: teaching it to <em>walk properly</em></h1>
-    <p class="lede">A log of the attempt to teach the walker real steps, one foot in front of the other, and fast. Oldest first;
-    every entry with a result has the walker <b>as it was at that moment</b>. New entries appear at the bottom as it learns
+    <p class="lede">A log of the attempt to teach the walker real steps, one foot in front of the other, and fast. <b>Newest first</b>;
+    every entry with a result has the walker <b>as it was at that moment</b>. New entries appear at the top of the log as it learns
     (the site updates every 15 minutes, this page checks every 3).</p>
     <p class="note" id="status"></p>
-    <p><a href="#latest" class="btn" style="text-decoration:none">↓ Jump to the latest</a></p>
+    <p><a href="#log" class="btn" style="text-decoration:none">↓ Jump to the log</a> <a href="#latest" class="btn" style="text-decoration:none">↓ Jump to the beginning</a></p>
   </div>
 
   <section style="padding-top:14px">
@@ -76,7 +76,7 @@
     <h2>Training log</h2>
     <p class="intro">Notes are my commentary; stage starts and ends, pass checks every 20 minutes, goal checks and new champions are logged automatically.
     Click a walker to play it. <span class="tag">snapshot then</span> = recorded at that moment; <span class="tag">snapshot later</span> = this entry was added
-    after the fact, so it shows that stage's champion as it ended up.</p>
+    after the fact, so it shows that stage's champion as it ended up. "Same walker as below" = the next older entry already shows it.</p>
     <div id="log"></div>
     <div id="latest"></div>
   </section>
@@ -256,11 +256,10 @@ function evHTML(e) {
       <h3>${e.type === "check" ? (e.passed ? "✓ " : "✗ ") : "▶ "}${e.title}</h3>${e.type === "check" ? metricsChips(e) : ""}</div>`;
   }
   const ri = e.replay_info;
-  const same = ri && lastShot && lastShot === `${ri.run}|${ri.gen}|${ri.support}`;
-  if (ri) lastShot = `${ri.run}|${ri.gen}|${ri.support}`;
+  const same = ri && lastShot === `${ri.run}|${ri.gen}|${ri.support}`;
   return head + `<div class="ev t-${e.type}" id="ev-${e.id}"><div class="when">${time} · ${{ note: "note", stage_end: "stage ended", goal: "goal check", champion: "new champion" }[e.type] || e.type}${e.attempt ? " · attempt " + ("cdefghijk".indexOf(e.attempt) + 1) : ""}</div>
     <div class="card"><h3>${e.title}</h3>${e.text ? `<div>${e.text}</div>` : ""}${metricsChips(e)}
-    ${e.replay && same ? `<div class="readout">(same walker as the snapshot above: ${ri.run}, generation ${ri.gen})</div>` : ""}
+    ${e.replay && same ? `<div class="readout">(same walker as the snapshot below: ${ri.run}, generation ${ri.gen})</div>` : ""}
     ${e.replay && !same ? `<canvas data-replay="${e.replay}" data-id="${e.id}"></canvas>
       <div class="readout">${ri.run}, generation ${ri.gen}${ri.support ? `, with training wheels (support ${ri.support})` : ""}: ${ri.reward} on this track, ${ri.steps} steps${ri.fell ? ", fell" : ""}
       <span class="tag">snapshot ${e.replay_when === "now" ? "then" : "later"}</span> · click to play</div>` : ""}</div></div>`;
@@ -277,11 +276,23 @@ function renderLog(append) {
   const el = document.getElementById("log");
   const fresh = L.events.filter(e => !shown.has(e.id));
   if (!fresh.length) return;
-  const nearBottom = window.innerHeight + window.scrollY > document.body.scrollHeight - 400;
-  el.insertAdjacentHTML("beforeend", fresh.map(evHTML).join(""));
+  // "same walker as below": decide in chronological order, then render newest first
+  lastShot = null;
+  const flags = {};
+  for (const e of L.events) { const ri = e.replay_info; if (!ri) continue; const k = `${ri.run}|${ri.gen}|${ri.support}`; flags[e.id] = k === lastShot; lastShot = k; }
+  const desc = fresh.slice().sort((p, q) => q.iso.localeCompare(p.iso));
+  lastDay = append ? null : null;
+  let html = "";
+  for (const e of desc) { lastShot = flags[e.id] ? (e.replay_info && `${e.replay_info.run}|${e.replay_info.gen}|${e.replay_info.support}`) : "__none__"; html += evHTML(e); }
+  if (append && el.firstElementChild) {
+    // merge into today's group if the newest existing day header is the same day
+    const tmp = document.createElement("div"); tmp.innerHTML = html;
+    const firstHead = el.querySelector(".dayhead"), newHead = tmp.querySelector(".dayhead");
+    if (firstHead && newHead && firstHead.textContent === newHead.textContent) { newHead.remove(); firstHead.after(...tmp.childNodes); }
+    else el.prepend(...tmp.childNodes);
+  } else el.insertAdjacentHTML("beforeend", html);
   fresh.forEach(e => shown.add(e.id));
   el.querySelectorAll("canvas[data-replay]").forEach(cv => { if (!cv._obs) { cv._obs = 1; io.observe(cv); } });
-  if (append && nearBottom) document.getElementById("latest").scrollIntoView({ behavior: "smooth" });
 }
 const nowRp = new WalkerReplay(document.getElementById("now-world"));
 async function renderNow() {

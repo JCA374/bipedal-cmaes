@@ -34,5 +34,11 @@
   "title": "GOAL MET: training wheels taught it to walk with alternating feet",
   "text": "Attempt 4 worked. The support stages passed one after another, each in about an hour: support 2 after 68 generations, support 1 after 62, support 0.5 after 58. Then the real test, no support at all, passed at 14:15: on twenty held-out tracks, no falls, it reached the finish every time, 128 front-foot changes per run, and foot 2 led only a little over half the time. The goal check, on twenty different tracks, passes on every requirement for both the walk champion (257.5) and the walk-fast champion (264.1). On a hundred unseen tracks the walk-fast champion scores 263.9 with a spread of only \u00b11.1, no falls, and finishes all hundred in about 22 seconds each. Compared with the old skipping walker on the same hundred tracks: about 124 front-foot changes per run against almost none, 2 falls against 7, but about 10 points lower (260 vs 270), because alternating steps cost more motor effort. The walk-fast stage keeps training to make it faster and cheaper.",
   "iso": "2026-10-28T14:34"
+ },
+ {
+  "time": "Wed 28 Oct 16:06",
+  "iso": "2026-10-28T16:06",
+  "title": "Still improving: attempt 5 polishes the walker",
+  "text": "The walk-fast stage of attempt 4 keeps improving, but slowly: its held-out champion went from 267 to 276 over about an hour, with no falls and the feet sharing the lead about fifty-fifty, while its search is narrowing (\u03c3 0.015). The plateau rule will probably end it soon. Its main weakness is effort: about 99 points of motor effort per run, against 75 for the old skipper, which is why the skipper still scores about ten points more. Attempt 5 starts from this champion and makes effort count one and a half times in training, with the real fall cost and the same gait tax, a smaller step size and a larger population for fine-tuning. Both run side by side."
  }
 ]
