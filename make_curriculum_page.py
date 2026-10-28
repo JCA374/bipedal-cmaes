@@ -44,6 +44,8 @@ def run_summary(run):
     if not (d / "stats.csv").exists():
         return None
     st = list(csv.DictReader(open(d / "stats.csv")))
+    if not st:                       # a run that has just started: no generations logged yet
+        return None
     gt = list(csv.DictReader(open(d / "gait.csv"))) if (d / "gait.csv").exists() else []
     gmap = {r["generation"]: r for r in gt}
     curve = [{"g": int(r["generation"]), "best": num(r["best_fitness"]), "mean": num(r["mean_fitness"]),
