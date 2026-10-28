@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curriculum Training</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/site.js"></script>
+<script src="../assets/walker.js"></script>
+<style>
+  .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0; }
+  .stagecard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+  .stagecard.sel { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .stagecard h3 { margin: 2px 0 2px; font-size: 16px; }
+  .stagecard p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 1px 9px; background: var(--surface-2); }
+  .b-passed { background: color-mix(in srgb, var(--green) 25%, var(--surface)); }
+  .b-running { background: color-mix(in srgb, var(--blue) 25%, var(--surface)); }
+  .b-plateau, .b-timecap { background: color-mix(in srgb, var(--accent) 30%, var(--surface)); }
+  .b-failed { background: color-mix(in srgb, var(--red) 25%, var(--surface)); }
+  .goalrow td:last-child { font-weight: 700; }
+  .ok { color: var(--green); } .no { color: var(--red); }
+  .journal .entry { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; margin: 14px 0; }
+  .journal .entry b { display: block; }
+  .journal .entry span { color: var(--muted); font-size: 13px; }
+  @media (max-width: 760px) { .pipeline { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body data-root="..">
+<header id="top"></header>
+<main class="wrap">
+  <div class="hero" style="padding-bottom:0">
+    <h1>Curriculum: teaching it to <em>walk properly</em></h1>
+    <p class="lede">Every walker so far skips, with one leg always in front. This page follows the attempt to get a fast walker that
+    puts one foot in front of the other, by teaching it in stages: balance, then stepping, then walking, then walking fast.
+    It updates itself about every 30 minutes; the journal at the bottom is my running commentary.</p>
+    <p class="note" id="status"></p>
+  </div>
+
+  <section style="padding-top:14px">
+    <h2>The goal</h2>
+    <p class="intro">Measured on 20 tracks the walker never trained on, full episodes, raw reward. All four must hold.</p>
+    <table class="t" id="goal"></table>
+  </section>
+
+  <section>
+    <h2>The stages</h2>
+    <p class="intro">Each stage has its own training reward and a pass test on 20 held-out tracks. It starts from the previous stage's champion,
+    and moves on when it passes, when training plateaus, or at its time cap. <b>Click a stage</b> to see its champion walk and its training curves.</p>
+    <div id="attempts"></div>
+  </section>
+
+  <section id="detail" style="display:none">
+    <h2 id="d-title"></h2>
+    <p class="intro" id="d-sub"></p>
+    <div class="demo">
+      <canvas id="d-world"></canvas>
+      <div class="controls"><button class="btn primary" id="d-play">▶ Play</button><input type="range" id="d-scrub" min="0" value="0" style="flex:1"></div>
+      <canvas id="d-lead" style="margin-top:8px"></canvas>
+      <p class="readout" id="d-info"></p>
+    </div>
+    <div class="cols">
+      <div class="demo"><p class="demo-title">Training</p><p class="demo-sub"><span style="color:var(--accent)">best candidate</span>, <span style="color:var(--muted)">mean</span>,
+        <span style="color:var(--blue)">champion (held-out, stage score)</span></p><canvas id="d-curve"></canvas></div>
+      <div class="demo"><p class="demo-title">Gait in training</p><p class="demo-sub"><span style="color:var(--accent)">front-foot changes per episode</span>,
+        <span style="color:var(--blue)">% of time foot 2 leads</span> (scaled; middle = 50%)</p><canvas id="d-gait"></canvas></div>
+    </div>
+    <table class="t" id="d-checks"></table>
+  </section>
+
+  <section>
+    <h2>Journal</h2>
+    <div class="journal" id="journal"></div>
+  </section>
+</main>
+<footer class="wrap">Part of <a href="../index.html">Bipedal CMA-ES</a>. Code: <code>curriculum.sh</code>, <code>experiments/stage_check.py</code>, <code>experiments/goal_check.py</code>.</footer>
+
+<script>
+let D = null, sel = null;
+const cx = pts => { let s = 0; for (let k = 0; k < pts.length; k += 2) s += pts[k]; return s / (pts.length / 2); };
+const f = (v, d = 1) => v == null ? "–" : (+v).toFixed(d);
+const badge = o => { const k = (o || "pending").replace(/\s/g, ""); return `<span class="badge b-${k}">${o || "pending"}</span>`; };
+const wr = new WalkerReplay(document.getElementById("d-world"));
+const lc = document.getElementById("d-lead"), lctx = setupCanvas(lc, 900, 130);
+let lead = [];
+wr.onFrame = (fr, i) => { drawLead(i); document.getElementById("d-scrub").value = i; };
+function drawLead(i) {
+  const W = 900, H = 130, n = lead.length; lctx.clearRect(0, 0, W, H); if (!n) return;
+  const mx = Math.max(1, ...lead.map(Math.abs)), X = k => 30 + (W - 40) * k / Math.max(1, n - 1), Y = v => 65 - v / mx * 55;
+  lctx.strokeStyle = css("--line"); lctx.beginPath(); lctx.moveTo(30, 65); lctx.lineTo(W - 10, 65); lctx.stroke();
+  lctx.fillStyle = css("--muted"); lctx.font = "11px system-ui"; lctx.fillText("foot 1 ahead", 34, 12); lctx.fillText("foot 2 ahead", 34, 126);
+  lctx.strokeStyle = css("--accent"); lctx.lineWidth = 2; lctx.beginPath(); lead.forEach((v, k) => (k ? lctx.lineTo : lctx.moveTo).call(lctx, X(k), Y(v))); lctx.stroke();
+  if (i != null) { lctx.strokeStyle = css("--text"); lctx.lineWidth = 1; lctx.beginPath(); lctx.moveTo(X(i), 0); lctx.lineTo(X(i), H); lctx.stroke(); }
+}
+document.getElementById("d-play").onclick = () => { const b = document.getElementById("d-play"); if (wr.playing) { wr.pause(); b.textContent = "▶ Play"; } else { wr.play(); b.textContent = "❚❚ Pause"; } };
+document.getElementById("d-scrub").oninput = e => { wr.pause(); wr.seek(+e.target.value); };
+
+function goalTable() {
+  const G = D.goal, last = [...D.attempts].reverse().find(a => a.goal), m = last && last.goal;
+  const row = (name, target, val, ok) => `<tr class="goalrow"><td>${name}</td><td>${target}</td><td>${val}</td><td class="${ok == null ? "" : ok ? "ok" : "no"}">${ok == null ? "–" : ok ? "✓" : "✗"}</td></tr>`;
+  document.getElementById("goal").innerHTML = `<tr><th>requirement</th><th>target</th><th>${m ? `best so far (${m.run.split("/").pop()}, gen ${m.champion_gen})` : "best so far"}</th><th></th></tr>` +
+    row("one foot in front of the other", `lopsidedness ≤ ${G.lopsided_max}, ≥ ${G.lead_changes_min} front-foot changes per run`, m ? `${f(m.lopsided, 2)}, ${f(m.lead_changes)} changes` : "not measured yet", m ? m.checks.alternates : null) +
+    row("walks the course", `reaches x ≥ ${G.x_min} on average (finish ≈ 88.7)`, m ? `x = ${f(m.x)}` : "–", m ? m.checks.far : null) +
+    row("safe", `≤ ${G.falls_max} falls in 20`, m ? `${m.falls} falls` : "–", m ? m.checks.safe : null) +
+    row("fast", `raw score ≥ ${G.score_min}`, m ? f(m.score) : "–", m ? m.checks.fast : null);
+}
+function attempts() {
+  document.getElementById("attempts").innerHTML = D.attempts.map((a, ai) => `
+    <h3>${a.title}</h3><p class="note" style="margin-top:0">${a.note || ""}</p>
+    <div class="pipeline">${a.stages.map((s, si) => {
+      const sm = s.summary, ch = sm && sm.champion, last = s.checks && s.checks[s.checks.length - 1];
+      return `<div class="stagecard" data-a="${ai}" data-s="${si}"><div>${badge(s.outcome)}</div><h3>${si + 1}. ${s.name}</h3><p>${s.desc}</p>
+        <p style="margin-top:6px">${sm ? `${sm.generations} gens · ${f(sm.hours)} h · champion ${f(ch.selection ?? ch.mean)}` : "not started"}</p>
+        ${last ? `<p>last check ${last.time}: ${last.passed ? "passed" : "not yet"} (falls ${last.falls}, changes ${f(last.lead_changes)}, x ${f(last.x)})</p>` : ""}</div>`;
+    }).join("")}</div>`).join("") +
+    (D.extra.length ? `<h3>Comparison runs</h3><div class="pipeline">${D.extra.map((e, ei) => `<div class="stagecard" data-x="${ei}"><div>${badge("running")}</div><h3>${e.run}</h3>
+      <p>${e.config.init_from ? "warm start from " + e.config.init_from.split("/").pop() : "from scratch"} · ${e.generations} gens · champion ${f(e.champion.selection ?? e.champion.mean)}</p></div>`).join("")}</div>` : "");
+  document.querySelectorAll(".stagecard").forEach(c => c.onclick = () => {
+    const s = c.dataset.x != null ? { name: D.extra[+c.dataset.x].run, run: D.extra[+c.dataset.x].run, summary: D.extra[+c.dataset.x], checks: [], outcome: "comparison" }
+      : D.attempts[+c.dataset.a].stages[+c.dataset.s];
+    document.querySelectorAll(".stagecard").forEach(x => x.classList.toggle("sel", x === c));
+    showStage(s);
+  });
+}
+async function showStage(s) {
+  sel = s.run;
+  const sm = s.summary, det = document.getElementById("detail");
+  det.style.display = "";
+  document.getElementById("d-title").textContent = `${s.name}: ${s.run}`;
+  if (!sm) { document.getElementById("d-sub").textContent = "Not started yet."; return; }
+  const ch = sm.champion, c = sm.config;
+  document.getElementById("d-sub").textContent = `${sm.generations} generations, ${f(sm.hours)} h, σ ${f(sm.sigma, 3)}. Objective ${c.objective || "walk"}` +
+    `${c.gait_weight ? `, gait tax ${c.gait_weight}/${c.offset_weight}${c.gait_per_distance ? " per distance" : ""}` : ""}, fall cost ${c.fall_cost}. ` +
+    `Champion: generation ${ch.generation}, held-out raw ${f(ch.mean)} (stage score ${f(ch.selection)}), ${ch.falls ?? "–"} falls in 20, foot 2 in front ${ch.front2_share != null ? Math.round(ch.front2_share * 100) + "%" : "–"}.`;
+  if (sm.replay) {
+    wr.pause(); document.getElementById("d-play").textContent = "▶ Play";
+    const ep = await wr.load("../data/" + sm.replay + "?t=" + D.updated);
+    lead = ep.frames.map(fr => cx(fr.p[2]) - cx(fr.p[4]));
+    let changes = 0, side = 0; for (const v of lead) { const sd = v > .15 ? 1 : v < -.15 ? -1 : side; if (side && sd !== side) changes++; side = sd; }
+    document.getElementById("d-scrub").max = ep.frames.length - 1;
+    document.getElementById("d-info").textContent = `champion on a typical track: reward ${ep.reward}${ep.fell ? " (fell)" : ""}, ${ep.steps} steps, front foot changed ${changes} times.`;
+    wr.seek(0);
+  }
+  const cv = sm.curve, g = cv.map(r => r.g);
+  const cc = document.getElementById("d-curve"), cctx = cc._c || (cc._c = setupCanvas(cc, 440, 220));
+  let champ = [], last = null; for (const r of cv) { if (r.champ != null) last = r.champ; champ.push(last); }
+  const vals = [...cv.map(r => r.best), ...cv.map(r => r.mean), ...champ].filter(v => v != null);
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  drawSeries(cc, cctx, [{ ys: cv.map(r => r.mean), color: css("--muted"), width: 1 }, { ys: cv.map(r => r.best), color: css("--accent") },
+    { ys: champ.map(v => v ?? lo), color: css("--blue"), width: 2.5 }], null, { lo, hi: hi + 1e-6, xlabel: `generation → ${g[g.length - 1]}` });
+  const gc = document.getElementById("d-gait"), gctx = gc._c || (gc._c = setupCanvas(gc, 440, 220));
+  const lmax = Math.max(5, ...cv.map(r => r.lead || 0));
+  drawSeries(gc, gctx, [{ ys: cv.map(r => r.lead ?? 0), color: css("--accent") }, { ys: cv.map(r => (r.front2 ?? .5) * lmax), color: css("--blue"), width: 1.5 }], null,
+    { lo: 0, hi: lmax, ticks: [0, Math.round(lmax / 2), Math.round(lmax)], xlabel: "generation →" });
+  document.getElementById("d-checks").innerHTML = s.checks && s.checks.length ? "<tr><th>check at</th><th>passed</th><th>falls</th><th>front-foot changes</th><th>lopsided</th><th>x</th><th>raw reward</th></tr>" +
+    s.checks.slice(-8).reverse().map(k => `<tr><td>${k.time}</td><td class="${k.passed ? "ok" : "no"}">${k.passed ? "✓" : "✗"}</td><td>${k.falls}</td><td>${f(k.lead_changes)}</td><td>${f(k.lopsided, 2)}</td><td>${f(k.x)}</td><td>${f(k.reward)}</td></tr>`).join("") : "";
+}
+function journal() {
+  document.getElementById("journal").innerHTML = D.journal.map(j => `<div class="entry"><span>${j.time}</span><b>${j.title}</b>${j.text}</div>`).join("");
+}
+function status() {
+  const left = (new Date(D.deadline) - new Date()) / 3600e3;
+  const running = D.attempts.flatMap(a => a.stages).find(s => s.outcome === "running");
+  document.getElementById("status").textContent = `Updated ${D.updated}. ${running ? `Now training: ${running.name} (${running.run}). ` : ""}` +
+    `Deadline Friday 17:00${left > 0 ? `, ${Math.floor(left)} h ${Math.round((left % 1) * 60)} min left` : " (passed)"}.`;
+}
+fetch("../data/curriculum.json", { cache: "no-store" }).then(r => r.json()).then(d => {
+  D = d; status(); goalTable(); attempts(); journal();
+  const run = D.attempts.flatMap((a, ai) => a.stages.map((s, si) => ({ s, ai, si }))).filter(x => x.s.summary).pop();
+  if (run) document.querySelector(`.stagecard[data-a="${run.ai}"][data-s="${run.si}"]`).click();
+});
+</script>
+</body>
+</html>

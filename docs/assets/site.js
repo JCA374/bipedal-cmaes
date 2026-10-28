@@ -27,6 +27,7 @@ function renderHeader() {
   el.innerHTML = `<a class="brand" href="${r}/index.html">Bipedal <span>CMA-ES</span></a>
     <nav><a href="${r}/index.html#video">Video</a><a href="${r}/index.html#lessons">Lessons</a>
     <a href="${r}/index.html#training">Training</a>
+    <a href="${r}/curriculum/index.html">Curriculum</a>
     <a href="https://github.com/JCA374/bipedal-cmaes">Code</a>
     <button class="theme-btn" id="theme-btn" aria-label="Toggle colour theme">◐</button></nav>`;
   document.getElementById("theme-btn").onclick = () => {
