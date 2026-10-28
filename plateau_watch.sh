@@ -41,6 +41,6 @@ PY
       *) log "$verdict" ;;
     esac
   done
-  pgrep -f "[n]ext_run.sh" >/dev/null || pgrep -f "[t]rain_queue.sh" >/dev/null || { log "nothing left to watch"; break; }
+  pgrep -f "[n]ext_run.sh" >/dev/null || pgrep -f "[t]rain_queue.sh" >/dev/null || pgrep -f "[c]urriculum" >/dev/null || { log "nothing left to watch"; break; }
   sleep 300
 done

@@ -13,5 +13,10 @@
   "time": "Wed 28 Oct 09:57",
   "title": "Attempt 1 found a shortcut: tapping in a split stance. Attempt 2 started.",
   "text": "Stage 1 of attempt 1 passed, but its champion balances with its feet 2.9 units apart, foot 2 always in front: the skipper's stance. Stage 2 then learned to tap its feet alternately in that stance: about 70 alternating touchdowns per episode and zero front-foot changes, so the feet never pass each other, and the search has stopped exploring (\u03c3 0.013). Attempt 2 fixes both: stage 1 now also pays for keeping the feet together, and stage 2 only counts a touchdown as a step when the foot coming down is the front foot and the legs alternate. Under the new step reward the tapper drops from 105 to 47 points while a real stepper can earn about 300. Attempt 1 keeps running as the baseline."
+ },
+ {
+  "time": "Wed 28 Oct 10:36",
+  "title": "Attempt 1 stopped; attempt 3 starts stepping from the stumbler",
+  "text": "Attempt 1's stepping stage never stopped tapping: for over 200 generations it made zero front-foot changes, with its feet split almost one unit apart, and its search had stopped exploring, so I stopped it at generation 454. I also found that the plateau watcher had quit at 08:29 because it didn't know about the curriculum scripts; it's fixed and running again. Attempt 2 is still in its balance stage: no falls, body level, but the feet are 0.53 units apart and the pass test wants under 0.4. With the freed cores, attempt 3 skips balance and starts the real-steps stage from v5-fresh, the one walker that already swaps its feet about 17 times per episode. It only has to learn not to fall while stepping."
  }
 ]
