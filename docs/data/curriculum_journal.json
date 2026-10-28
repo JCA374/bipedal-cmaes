@@ -40,5 +40,11 @@
   "iso": "2026-10-28T16:06",
   "title": "Still improving: attempt 5 polishes the walker",
   "text": "The walk-fast stage of attempt 4 keeps improving, but slowly: its held-out champion went from 267 to 276 over about an hour, with no falls and the feet sharing the lead about fifty-fifty, while its search is narrowing (\u03c3 0.015). The plateau rule will probably end it soon. Its main weakness is effort: about 99 points of motor effort per run, against 75 for the old skipper, which is why the skipper still scores about ten points more. Attempt 5 starts from this champion and makes effort count one and a half times in training, with the real fall cost and the same gait tax, a smaller step size and a larger population for fine-tuning. Both run side by side."
+ },
+ {
+  "time": "Wed 28 Oct 16:15",
+  "iso": "2026-10-28T16:15",
+  "title": "Check-in: both runs progressing, nothing changed",
+  "text": "Attempt 4's walk-fast champion holds at 275.8 on the held-out tracks with no falls and the feet sharing the lead (foot 2 in front 54% of the time); it gained 7.4 points over the last 200 generations, just above the plateau threshold of 5, and its step size keeps shrinking (\u03c3 0.012). Attempt 5 (effort counts 1.5 times) started eight minutes ago and is still at generation 8, so it's too early to judge. No changes, no new podcast episode yet."
  }
 ]
