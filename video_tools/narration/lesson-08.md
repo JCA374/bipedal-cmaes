@@ -1,8 +1,8 @@
-# Lesson 8: Two ways to walk
+# Lesson 9: Two ways to walk
 
 ## intro
 
-Lesson eight. The champion scores well, but it never puts one foot in front of the other. Let's look at why, and test a network built to take turns.
+Lesson nine. The champion scores well, but it never puts one foot in front of the other. Let's look at why, and test a network built to take turns.
 
 ## skip
 
@@ -18,7 +18,7 @@ Why did evolution keep this gait? The reward pays for distance, not for style, a
 
 ## fix
 
-So instead of asking nicely, change the network. One controller now drives both legs. Each leg sees the body, its own leg, the other leg and the lidar. Leg two uses the same weights, with the legs swapped. Neither leg can become a permanent prop.
+So instead of asking nicely, change the network. One controller now drives both legs. Each leg sees the body, its own leg, the other leg and the lidar. Leg two uses the same weights, with the legs swapped. The hope: with only one set of weights, neither leg can become a permanent prop.
 
 ## fix.2
 
@@ -28,6 +28,18 @@ The controller also gets a clock, a rhythm whose speed it learns. Leg two's cloc
 
 On top, a small training bonus for every step where the front foot changes and the body moves forward. Reported scores stay the raw reward.
 
+## results
+
+The result. The new walker never changes its leading foot either. Foot two leads one hundred percent of the time. It still skips.
+
+## results.2
+
+On the same hundred tracks, it scores two hundred and thirty six, against two hundred and seventy for the skipping walker. That's significantly lower, by thirty four points. It falls on eleven tracks, against seven.
+
+## results.3
+
+Why? Same weights doesn't mean same movement. Each leg's controller also sees where the other leg is, so one set of weights can say: if I'm in front, reach. If I'm behind, push. The legs settle into fixed roles. The clock still matters: freeze it, and this walker can't move at all. It just doesn't force the legs to swap.
+
 ## outro
 
-The new walker is still training. Its results appear on this page when it's done.
+The lesson: evolution finds what you reward, the nearest way, even through a structure built to prevent it. If you care how it's done, you have to close every loophole.

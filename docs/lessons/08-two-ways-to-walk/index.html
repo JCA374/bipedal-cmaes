@@ -58,8 +58,8 @@ is small (σ ≈ 0.05), so it never samples far enough to see the other side. Ev
 <p>Instead of adding a reward and hoping, change what the network <i>can</i> express:</p>
 <ul>
   <li><b>One controller for both legs.</b> A small network sees the body, <i>its own</i> leg, the <i>other</i> leg and the lidar, and outputs a hip and a knee command.
-  Leg 1 uses it with its own view; leg 2 uses the very same weights with the two legs swapped. Neither leg can become a specialist prop,
-  because there's only one set of weights.</li>
+  Leg 1 uses it with its own view; leg 2 uses the very same weights with the two legs swapped. The hope: with only one set of weights,
+  neither leg can become a specialist prop. (Section 4 shows whether that held.)</li>
   <li><b>A clock.</b> The controller also gets sin φ and cos φ of a phase that cycles every T steps. Leg 2's clock runs half a cycle (π) behind.
   T is learned along with the weights.</li>
   <li><b>A small training bonus</b> (0.5 points) for each step where the front foot changes <i>and</i> the body has moved forward at least 0.4 units since the last one.
@@ -103,6 +103,13 @@ The phase shift is what makes the legs different.</div>
     <div class="controls"><button class="btn primary" id="s-play">▶ Play both</button></div>
   </div>
   <div class="key" id="verdict"><b>Verdict</b></div>
+  <div class="key" id="whyskip" style="display:none"><b>Why the shared controller still skipped</b>Same weights doesn't mean same movement.
+  Each leg's controller also sees <i>where the other leg is</i>, so one set of weights can say "if I'm the front leg, reach forward;
+  if I'm the back leg, push". The two legs settle into fixed roles, and the half-cycle clock only decides which leg gets which role
+  (here: leg 2 in front, from about generation 200 on). The clock itself is essential: freeze it, and this walker can't move at all
+  (−129 instead of 257). It learned a 29-step rhythm. And the step bonus never got started: the best candidate almost never made a crossing
+  step, so there was nothing for it to reward. Next ideas: hide which leg is in front from the controller (feed each leg only the
+  <i>difference</i> to the other), or pay the bonus from generation 0 with a larger value, or start from a policy that already alternates.</div>
 </div>
 </section>
 
@@ -226,6 +233,7 @@ Promise.all([J("../../data/gait.json"), J("../../data/progress_v4.json")]).then(
   const C = G.compare;
   if (C) document.getElementById("r-cmp").textContent = `Paired: v4 − v3 = ${C.diff_mean > 0 ? "+" : ""}${C.diff_mean} (95% CI ${C.diff_ci95[0]} to ${C.diff_ci95[1]}); v4 higher on ${C.a_better_on} of ${C.episodes} tracks.`;
   const walks = v4.crossings > 10 * Math.max(1, v3.crossings) && v4.front2_share > .2 && v4.front2_share < .8;
+  if (!walks) document.getElementById("whyskip").style.display = "";
   const better = C && C.diff_ci95[0] > 0, worse = C && C.diff_ci95[1] < 0;
   document.getElementById("verdict").innerHTML = `<b>Verdict</b>` + (walks ? "The shared controller with a clock <b>walks</b>: the leading foot changes on every step and both legs take turns in front. " :
     "The shared controller did <b>not</b> clearly learn crossing steps in this run. ") +

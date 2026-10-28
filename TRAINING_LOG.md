@@ -100,3 +100,17 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
   paired diff -34.03 (95% CI [-53.72, -14.47]), v4-walk better on 7/100.
 - Gait: lead changes per episode 0.03 vs 0.02; crossing steps 0.03 vs 0.02;
   foot 2 in front 0.995 vs 0.997.
+
+## Final results and diagnosis (2026-10-28)
+- **v3-f20 (main) on 100 unseen tracks: 264.4 ± 66.7**, 11 falls, 89 finished, 0 timeouts, 0 runs ≥ 300 (not solved).
+  Paired vs NEAT on 100 comparison tracks: 270.2 vs 179.5, +90.7 (95% CI 73.0 to 107.8), better on 93/100.
+- Ceiling: the best fall-free episode scores 291.1 (median 286.9). Progress ≈ 364 minus effort ≈ 75
+  leaves < 300 even without falls, so reaching 300 needs effort below ~60 AND fewer falls.
+  Effort fell 159 -> 75 during training (wasted share 43% -> 16%).
+- Falls (fall analysis, 23 of 300): 65% happen on uphill terrain (vs 17% of the time spent uphill);
+  forward speed starts dropping ~55 steps (~1 s) before the fall, then the hull tips.
+- **v4-walk did not learn to walk**: foot 2 leads ~99-100% from gen ~200 on; 236.2 vs 270.2 on the same
+  tracks (significantly lower). The clock is essential (frozen clock: -129 vs 257; learned period 29 steps),
+  but the shared controller still takes fixed roles because each leg sees where the other leg is
+  ("if I'm in front, reach; if behind, push"). The step bonus never got a foothold (best candidate ~0
+  crossings). Stopped by plateau_watch at gen 780. Lesson 9 corrected accordingly.

@@ -48,59 +48,83 @@ To switch, the walker would have to pass through clumsy in between gaits that sc
 00:00:49.936 --> 00:00:53.479
 CMA-ES searches nearby, so it stays where it is.
 
-00:00:54.079 --> 00:00:57.321
+00:00:54.079 --> 00:00:57.277
 So instead of asking nicely, change the network.
 
-00:00:57.321 --> 00:00:59.869
+00:00:57.277 --> 00:00:59.790
 One controller now drives both legs.
 
-00:00:59.869 --> 00:01:04.095
+00:00:59.790 --> 00:01:03.959
 Each leg sees the body, its own leg, the other leg and the lidar.
 
-00:01:04.095 --> 00:01:07.627
+00:01:03.959 --> 00:01:07.443
 Leg two uses the same weights, with the legs swapped.
 
-00:01:07.627 --> 00:01:10.706
-Neither leg can become a permanent prop.
+00:01:07.443 --> 00:01:12.769
+The hope: with only one set of weights, neither leg can become a permanent prop.
 
-00:01:11.306 --> 00:01:15.519
+00:01:13.369 --> 00:01:17.582
 The controller also gets a clock, a rhythm whose speed it learns.
 
-00:01:15.519 --> 00:01:18.347
+00:01:17.582 --> 00:01:20.410
 Leg two's clock runs half a cycle behind.
 
-00:01:18.347 --> 00:01:22.329
+00:01:20.410 --> 00:01:24.392
 With no shift, both legs would move together, which is a hop.
 
-00:01:22.329 --> 00:01:25.111
+00:01:24.392 --> 00:01:27.174
 With half a cycle, they take turns.
 
-00:01:25.711 --> 00:01:32.633
+00:01:27.774 --> 00:01:34.696
 On top, a small training bonus for every step where the front foot changes and the body moves forward.
 
-00:01:32.633 --> 00:01:35.702
+00:01:34.696 --> 00:01:37.765
 Reported scores stay the raw reward.
 
-00:01:36.302 --> 00:01:37.434
+00:01:38.365 --> 00:01:39.424
 The result.
 
-00:01:37.434 --> 00:01:42.079
-The new walker changes its leading foot only about zero times per run.
+00:01:39.424 --> 00:01:42.822
+The new walker never changes its leading foot either.
 
-00:01:42.079 --> 00:01:45.536
-In this run, it didn't clearly learn to walk.
+00:01:42.822 --> 00:01:45.887
+Foot two leads one hundred percent of the time.
 
-00:01:46.136 --> 00:01:53.515
+00:01:45.887 --> 00:01:47.468
+It still skips.
+
+00:01:48.068 --> 00:01:55.447
 On the same hundred tracks, it scores two hundred and thirty six, against two hundred and seventy for the skipping walker.
 
-00:01:53.515 --> 00:01:56.808
+00:01:55.447 --> 00:01:58.740
 That's significantly lower, by thirty four points.
 
-00:01:56.808 --> 00:01:59.889
+00:01:58.740 --> 00:02:01.821
 It falls on eleven tracks, against seven.
 
-00:02:00.489 --> 00:02:04.681
-The lesson: evolution finds what you reward, the nearest way.
+00:02:02.421 --> 00:02:03.069
+Why?
 
-00:02:04.681 --> 00:02:08.809
-If you care how it's done, build it into the structure.
+00:02:03.069 --> 00:02:05.661
+Same weights doesn't mean same movement.
+
+00:02:05.661 --> 00:02:12.033
+Each leg's controller also sees where the other leg is, so one set of weights can say: if I'm in front, reach.
+
+00:02:12.033 --> 00:02:13.545
+If I'm behind, push.
+
+00:02:13.545 --> 00:02:15.759
+The legs settle into fixed roles.
+
+00:02:15.759 --> 00:02:19.971
+The clock still matters: freeze it, and this walker can't move at all.
+
+00:02:19.971 --> 00:02:22.809
+It just doesn't force the legs to swap.
+
+00:02:23.409 --> 00:02:30.369
+The lesson: evolution finds what you reward, the nearest way, even through a structure built to prevent it.
+
+00:02:30.369 --> 00:02:34.785
+If you care how it's done, you have to close every loophole.

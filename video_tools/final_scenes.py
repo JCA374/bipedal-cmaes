@@ -739,6 +739,8 @@ def l8_results():
             lead_chart(d, (x, 440, x + 580, 560), p.lead, n=700)
             w = G[run]
             label(d, (x + 12, 52), w["label"], 18)
+            if k == 2:
+                label(d, (x + 12, 400 - 30), "same weights, fixed roles: front leg reaches, back leg pushes" if run == "v4-walk" else "separate weights: leg 2 is the prop", 16)
             if k >= 1:
                 text(d, (x, 590), f"score {w['mean']:.0f} ± {w['std']:.0f} · falls {w['falls']}", 22, col, bold=True)
                 text(d, (x, 630), f"lead changes {w['lead_changes']:.0f} per run · foot 2 ahead {round(w['front2_share'] * 100)}%", 20, FG)
@@ -751,7 +753,7 @@ def l8_outro():
         img = blank()
         d = ImageDraw.Draw(img)
         text(d, (W // 2, 300), "evolution finds what you reward, the nearest way", 36, FG, fade(t, .2), bold=True, anchor="mm")
-        text(d, (W // 2, 380), "if you care how it's done, build it into the structure", 26, AMBER, fade(t, 1.2), anchor="mm")
+        text(d, (W // 2, 380), "even through a structure built to prevent it", 26, AMBER, fade(t, 1.2), anchor="mm")
         return img
     return Scene("outro", render, [6])
 
