@@ -1,0 +1,5 @@
+["What we're doing: a 932-number network, evolved with CMA-ES, that should walk with one foot in front of the other, and fast.",
+ "What worked: the main walker scores 264 on 100 unseen tracks, about 90 more than my NEAT walker, after three false starts taught us to make falls cost 20 in training.",
+ "What failed: every walker skips with one leg always in front. A shared leg controller with a clock, gait penalties from the skipper and from scratch, a per-distance tax, and a warm start from an alternating stumbler all failed, each in its own way.",
+ "The curriculum (balance, step, walk, walk fast): attempt 1 balanced in a split stance and learned to tap its feet instead of stepping. Attempt 2 balances with the feet together and only counts real steps.",
+ "What's next: the walking and walking-fast stages, the goal check, and check-ins every two hours until Friday 17:00."]

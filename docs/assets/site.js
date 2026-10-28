@@ -28,6 +28,7 @@ function renderHeader() {
     <nav><a href="${r}/index.html#video">Video</a><a href="${r}/index.html#lessons">Lessons</a>
     <a href="${r}/index.html#training">Training</a>
     <a href="${r}/curriculum/index.html">Curriculum</a>
+    <a href="${r}/podcast/index.html">Podcast</a>
     <a href="https://github.com/JCA374/bipedal-cmaes">Code</a>
     <button class="theme-btn" id="theme-btn" aria-label="Toggle colour theme">◐</button></nav>`;
   document.getElementById("theme-btn").onclick = () => {
