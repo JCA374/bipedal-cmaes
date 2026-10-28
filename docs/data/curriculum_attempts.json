@@ -651,7 +651,7 @@
   "log": "curriculum_h.log",
   "start_date": "2026-10-28",
   "title": "Attempt 6: a wider network (64 hidden units), widened without forgetting",
-  "note": "The shared leg controller has 32 hidden neurons. More capacity may allow a smoother, cheaper gait. The champion of attempt 4 is widened to 64 hidden neurons Net2Net-style: the new neurons start with zero outgoing weights, so the widened network walks exactly like the original (same 272.79 on the replay track, 1,859 parameters instead of 931), and CMA-ES then learns to use the extra capacity. Only the size changes (no extra effort weight), so it can be compared cleanly with attempt 5. Queued to start when attempt 4's last stage ends.",
+  "note": "The shared leg controller has 32 hidden neurons. More capacity may allow a smoother, cheaper gait. The champion of attempt 4 is widened to 64 hidden neurons Net2Net-style: the new neurons start with zero outgoing weights, so the widened network walks exactly like the original (same 272.79 on the replay track, 1,859 parameters instead of 931), and CMA-ES then learns to use the extra capacity. Only the size changes (no extra effort weight), so it can be compared cleanly with attempt 5. Queued to start when attempt 4's last stage ends. Stopped Wed 22:30 after converging (\u03c3 0.007); its latest champion scored 250.0 with 3 falls on the goal check.",
   "stages": [
    {
     "key": "1-fast",
@@ -723,6 +723,48 @@
     "pass": "no stage test: runs until it plateaus; goal check on the page",
     "expect": "Keeps attempt 5's cheaper steps and uses the extra neurons to improve further: a higher real score than 279 on the goal check, with no falls.",
     "risk": "The wider search is slower; and the effort cost has nudged attempt 5 toward one foot leading more (61%), which the gait tax has to hold in check."
+   }
+  ]
+ },
+ {
+  "prefix": "j",
+  "log": "curriculum_j.log",
+  "start_date": "2026-10-28",
+  "title": "Attempt 8: precision. More tracks per candidate and for choosing the champion",
+  "note": "The goal check exposed the winner's curse: attempt 5's newer champion looked better on its 20 selection tracks but scored 270.6 with 2 falls on the goal tracks (its earlier one had 279.4 and no falls), and attempt 6's latest champion fell 3 times (250.0, failing the safe requirement). At this level falls are rare events, and 5 training tracks plus 20 selection tracks pick lucky walkers. Attempt 8 continues from the best walker, attempt 7's champion (284.4 on the goal check, no falls), with 10 tracks per candidate and 40 selection tracks, a small step size, the 64-neuron network, the 1.5\u00d7 effort cost and the gait tax. Attempt 6 was stopped (converged).",
+  "stages": [
+   {
+    "key": "1-fast",
+    "name": "Walk fast, precise selection",
+    "short": "10 tracks per candidate, 40 selection tracks",
+    "reward": "real game reward (fall \u2212100) \u2212 0.5 \u00d7 effort \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "extra, training only: effort counts 1.5 times, to push toward cheaper steps"
+     ],
+     [
+      "\u2212 100",
+      "a fall, as in the real game"
+     ],
+     [
+      "\u2212 gait tax",
+      "(40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course: keeps the feet taking turns"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall, no support; each candidate is scored on 10 tracks (was 5) and champions on 40 held-out tracks (was 20) (cap 10 h)",
+    "start": "attempt 7's champion at launch (64 neurons, 285 held-out raw, 284.4 on the goal check), \u03c30 0.02, population 64",
+    "pass": "no stage test: runs until it plateaus; goal check on the page",
+    "expect": "Fewer lucky picks: champions that hold up on new tracks, with fewer falls, and a small further gain in score.",
+    "risk": "Twice the simulation per generation, so fewer generations in the time left."
    }
   ]
  }

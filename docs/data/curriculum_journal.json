@@ -64,5 +64,11 @@
   "iso": "2026-10-28T20:30",
   "title": "Attempt 7 combines the wider network with cheaper steps",
   "text": "Attempt 5, where effort counts one and a half times in training, has stopped improving: plus 4.6 points over 200 generations and a step size of 0.011. Its champion is the best walker so far, 284 on the held-out tracks and 279.4 on the goal check, with no falls, although foot 2 now leads a bit more often, about 61% of the time. Rather than wait two hours for the plateau rule, I stopped it and started attempt 7 from that champion: widened to 64 neurons the same way as attempt 6, keeping the 1.5 times effort cost. Attempt 6 (64 neurons from attempt 4's walker) keeps running alongside at 277 held-out."
+ },
+ {
+  "time": "Wed 28 Oct 22:31",
+  "iso": "2026-10-28T22:31",
+  "title": "The winner's curse, again: attempt 8 selects more carefully",
+  "text": "The goal check, on twenty tracks no champion was chosen on, exposed a familiar problem. Attempt 5's newer champion looked better during selection but scored 270.6 with two falls on the goal tracks, while its earlier champion had 279.4 with none. Attempt 6's latest champion fell three times and scored 250.0, failing the safe requirement. At this level falls are rare, and scoring each candidate on five tracks and each champion on twenty picks lucky walkers. The best walker now is attempt 7's: the wider network with the extra effort cost, 284.4 on the goal check, no falls, 112 front-foot changes per run, finishing in about 941 steps. Attempt 6 had converged, so I stopped it and started attempt 8 from attempt 7's champion, with ten tracks per candidate and forty selection tracks, to make the choices more reliable."
  }
 ]
