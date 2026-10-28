@@ -81,3 +81,18 @@ def test_symclock_train_resume_keeps_policy_and_bonus(tmp_path):
     pol, meta = common.load_policy(run)
     assert type(pol).__name__ == "SymClock" and meta["policy"] == "symclock"
     assert len((run / "gait.csv").read_text().strip().splitlines()) == 1 + 3
+
+
+def test_warm_start_and_gait_weights_persist(tmp_path):
+    a = ["--runs-dir", str(tmp_path), "--workers", "1", "--popsize", "4", "--k", "1", "--hof-every", "2",
+         "--hof-seeds", "1", "--hof-top", "1", "--checkpoint-every", "1"]
+    train.main(a + ["--name", "src", "--hidden", "4", "--generations", "2"])
+    src_theta = np.load(tmp_path / "src" / "best" / "params.npy")
+    es, _ = train.main(a + ["--name", "ws", "--generations", "1", "--init-from", str(tmp_path / "src"),
+                            "--sigma0", "0.1", "--gait-weight", "40", "--offset-weight", "20"])
+    assert len(es.mean) == len(src_theta)                                      # sizes come from the source
+    es2, st = train.main(a + ["--name", "ws", "--resume", "--generations", "2"])  # defaults 0 on the CLI
+    cfg = json.loads((tmp_path / "ws" / "run_config.json").read_text())
+    assert cfg["effective"]["gait_weight"] == 40 and cfg["effective"]["offset_weight"] == 20
+    assert cfg["effective"]["init_from"] == str(tmp_path / "src") and len(cfg["history"]) == 1
+    assert (tmp_path / "ws" / "gait.csv").read_text().splitlines()[0].endswith("lead_mean")
