@@ -35,7 +35,7 @@ def r2(a):
     return [round(float(v), 2) for v in a]
 
 
-def record(policy, seed, ar, every):
+def record(policy, seed, ar, every, support=0.0):
     env = common.make_env()
     frames = []
 
@@ -47,6 +47,10 @@ def record(policy, seed, ar, every):
 
     class Spy:
         """Wrap the policy to keep the latest inputs/outputs for each frame."""
+        def reset(self):   # stateful policies (the symclock's clock) must start each episode fresh
+            if hasattr(policy, "reset"):
+                policy.reset()
+
         def activate(self, x):
             y = policy.activate(x)
             actions.append(np.asarray(y, dtype=np.float64))
@@ -68,7 +72,7 @@ def record(policy, seed, ar, every):
         frames.append({"p": polys, "o": r2(obs_log["x"]), "a": r2(obs_log["y"]), "r": round(total, 1),
                        "x": round(u.hull.position.x, 2)})
 
-    res = common.run_episode(Spy(), env, seed, early_stop=False, on_frame=on_frame, action_repeat=ar)
+    res = common.run_episode(Spy(), env, seed, early_stop=False, on_frame=on_frame, action_repeat=ar, support=support)
     u = env.unwrapped
     terrain = [r2(u.terrain_x), r2(u.terrain_y)]
     return res, terrain, frames, np.array(actions)
@@ -86,6 +90,7 @@ def main():
     ap.add_argument("--seed", type=int, default=None, help="use exactly this terrain")
     ap.add_argument("--every", type=int, default=2, help="keep every Nth step")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--support", type=float, default=0.0, help="training-wheels torque during the replay (curriculum stages)")
     ap.add_argument("--actions-out", default=None, help="also save every step's action (.npy) for exact replays")
     args = ap.parse_args()
 
@@ -106,10 +111,10 @@ def main():
         rs = [common.run_episode(policy, env, s, early_stop=False, action_repeat=ar)["reward"] for s in cands]
         seed = cands[int(np.argsort(rs)[len(rs) // 2])]
         print("terrain rewards:", [round(r) for r in rs], "-> median seed", seed)
-    res, terrain, frames, actions = record(policy, seed, ar, args.every)
+    res, terrain, frames, actions = record(policy, seed, ar, args.every, args.support)
     if args.actions_out:
         np.save(args.actions_out, actions)
-    out = {"label": args.label, "seed": seed, "reward": round(res["reward"], 1), "steps": res["steps"],
+    out = {"label": args.label, "seed": seed, "support": args.support, "reward": round(res["reward"], 1), "steps": res["steps"],
            "fell": res["fell"], "every": args.every, "terrain": terrain, "frames": frames,
            "input_names": common.INPUT_NAMES, "output_names": common.OUTPUT_NAMES}
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)

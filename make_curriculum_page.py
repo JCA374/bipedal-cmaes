@@ -103,7 +103,8 @@ def main():
             info = log.get(run, {"outcome": "pending" if s is None else "unknown", "checks": []})
             stages.append({"key": key, "name": name, "desc": desc, "run": run, "summary": s, "spec": spec.get(key), **info})
         goal = None
-        last = next((st for st in reversed(stages) if st["summary"] and st["key"] in ("3-walk", "4-fast")), None)
+        # the goal is measured without training wheels: the last no-support walk/fast stage that has a champion
+        last = next((st for st in reversed(stages) if st["summary"] and re.search(r"-(walk|fast)$", st["key"])), None)
         if last:
             cache = DATA / f"goal_{last['run']}.json"
             pm = ROOT / "runs" / last["run"] / "best" / "params.npy"
@@ -116,6 +117,7 @@ def main():
         if s:
             res["extra"].append(s)
     (DATA / "curriculum.json").write_text(json.dumps(res, separators=(",", ":")))
+    subprocess.run([sys.executable, str(ROOT / "make_curriculum_log.py")])   # the training log (oldest to newest)
     print(f"-> {DATA / 'curriculum.json'} ({len(res['attempts'])} attempts, {len(res['journal'])} journal entries)")
 
 
