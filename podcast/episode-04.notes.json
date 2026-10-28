@@ -1,0 +1,5 @@
+["Making effort count one and a half times in training cut it from about 99 to 84: about 279 on the test tracks, no falls.",
+ "A bigger brain: the controller widened from 32 to 64 neurons without forgetting anything (it walks identically at first). On its own: about 250 with 3 falls.",
+ "Both together: the best walker so far, about 288 on 20 test tracks, no falls, effort 75 (the skipper's level), about 110 front-foot changes per run, finishing in about 900 steps.",
+ "The winner's curse again: champions picked on few tracks can be lucky. The newest experiment scores each candidate on 10 tracks and each champion on 40.",
+ "Episodes now come as soon as something big happens, made with a packaged podcast-and-deploy skill."]
