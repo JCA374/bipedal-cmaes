@@ -1,6 +1,29 @@
 {
  "episodes": [
   {
+   "n": 3,
+   "title": "Episode 3: It walks",
+   "date": "Wed 28 Oct 2026, 14:39",
+   "minutes": 2.5,
+   "mp3": "../podcast/episode-03.mp3",
+   "notes": [
+    "The training wheels worked: support 2, 1 and 0.5 stages passed after 68, 62 and 58 generations, then the no-support walk stage passed.",
+    "Goal check on 20 unseen tracks: all four requirements met (alternating feet, reaches the finish, no falls, score above 250).",
+    "On 100 new tracks: 264 \u00b1 1, no falls, all 100 finished in about 22 seconds each.",
+    "Against the skipping walker on the same tracks: about 10 points lower, because real steps cost more effort, but 2 falls vs 7 and about 124 front-foot changes per run vs almost none.",
+    "Next: the walk-fast stage keeps training, aiming for faster and cheaper steps."
+   ],
+   "transcript": [
+    "This is episode three, and it's a short one, because the news is simple. It walks.",
+    "Two hours ago I told you about the training wheels: a small invisible push that keeps the body upright while the walker learns, faded out in stages. Here's how that went. With full support, the walker learned to step forward with its feet taking turns, and passed its test after sixty eight generations. With half as much support, it passed again after sixty two generations. With a quarter, after fifty eight. And then came the real test, with no support at all. It passed that too, at a quarter past two this afternoon.",
+    "Then I ran the goal check, on twenty tracks it had never seen. All four requirements hold. The feet take turns leading, with more than a hundred and twenty front-foot changes per run. It reaches the finish every time. It doesn't fall. And it scores above two hundred and fifty.",
+    "Twenty tracks can flatter a walker, so I also tested it on a hundred new tracks. It scored two hundred and sixty four on average, with a spread of only about one point. It didn't fall once, and it finished all one hundred tracks, in about twenty two seconds each.",
+    "How does it compare with the old skipping walker? On the same hundred tracks, the skipper still scores about ten points more. That's the cost of real steps: swinging each leg past the other takes more motor effort than pushing with one leg and propping with the other. But the new walker falls less, two times against seven, and it's far more consistent. And it actually walks. It changes its leading foot more than a hundred and twenty times per run. The skipper almost never does.",
+    "What made the difference? Every earlier attempt asked evolution to discover balance and alternating steps at the same time, and every time it found a shortcut: skipping, tapping, stumbling, or standing still. The training wheels split the problem. First learn the rhythm while you can't fall. Then learn balance, a little at a time.",
+    "The last stage, walking fast, is training now with the real game reward and the same gait tax, so it should get quicker and cheaper without losing its form. Between now and Friday I'll keep pushing on speed and efficiency, and I'll tell you what I find. Thanks for listening."
+   ]
+  },
+  {
    "n": 2,
    "title": "Episode 2: Stuck between standing and stumbling, and a set of training wheels",
    "date": "Wed 28 Oct 2026, 12:42",

@@ -1,0 +1,5 @@
+["The training wheels worked: support 2, 1 and 0.5 stages passed after 68, 62 and 58 generations, then the no-support walk stage passed.",
+ "Goal check on 20 unseen tracks: all four requirements met (alternating feet, reaches the finish, no falls, score above 250).",
+ "On 100 new tracks: 264 ± 1, no falls, all 100 finished in about 22 seconds each.",
+ "Against the skipping walker on the same tracks: about 10 points lower, because real steps cost more effort, but 2 falls vs 7 and about 124 front-foot changes per run vs almost none.",
+ "Next: the walk-fast stage keeps training, aiming for faster and cheaper steps."]
