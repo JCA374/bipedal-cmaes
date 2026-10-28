@@ -52,5 +52,11 @@
   "iso": "2026-10-28T16:38",
   "title": "Model changes allowed: a wider network is queued (attempt 6)",
   "text": "You gave me freedom to change the model itself. The first change: more capacity. The shared leg controller has only 32 hidden neurons. Attempt 6 widens the current champion to 64 using the Net2Net trick: the new neurons start with zero outgoing weights, so the wider network walks exactly like the original (checked: same 272.79 on the replay track), and evolution then learns how to use the extra neurons. Only the size changes, so it can be compared fairly with attempt 5 (extra effort cost). It starts automatically when attempt 4's walk-fast stage ends. Other model changes I can try next: two hidden layers, a memory (recurrent) layer, or repeating each action for two steps."
+ },
+ {
+  "time": "Wed 28 Oct 18:30",
+  "iso": "2026-10-28T18:30",
+  "title": "Cheaper steps are winning: 279 with no falls",
+  "text": "Attempt 4's walk-fast stage stopped on a plateau at 17:28, and attempt 6 (the widened network) started automatically. On the goal check's twenty independent tracks, the current champions compare like this. Attempt 5, where effort counts one and a half times in training: 279.4 points, no falls, 117 front-foot changes per run, effort 84, finishing in about 991 steps. Attempt 4's final walker: 260.8 with 2 falls; it finishes faster, in 954 steps, but takes more risks. Attempt 6, 64 neurons, still early at generation 59: 260.3 with 2 falls. All three meet the goal, and all of them have cut effort from about 99 to about 84. The extra effort cost looks like the most useful change so far. Both runs keep training; if attempt 5 keeps its lead, the next experiment will combine it with the wider network."
  }
 ]
