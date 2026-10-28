@@ -134,3 +134,28 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
   Standing pays nothing; ordering on 3 tracks: lunge -18 < stand -11 < few alternating steps then fall +16 <
   skip full course 210; a full-course alternating walk would be worth ~77 more than the skip.
 - symclock, fall cost 20 (the value that worked for v3), λ 48, K 5.
+
+## v6-fresh stopped on a plateau (2026-10-28 07:27)
+- v6-fresh gen 458 champion -100.0, +0.0 over 200 gens, sigma 0.00763. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.
+- **v6-fresh stuck standing** (x ≈ 5.6, 0 falls from gen ~100, σ 0.5 -> 0.008); plateau stop at gen 459. The
+  NEAT trap: from a stable stance every perturbation that starts a step risks a fall. v3 escaped this at gen ~55;
+  v1/v2 never did, so escaping is partly chance.
+
+## v7-alt and v6b-fresh (2026-10-28 08:15)
+- v7-alt: warm start from the v5-fresh champion, which already alternates (16.8 lead changes, foot-2 lead share
+  0.59, offset -0.08) but falls at x ≈ 17; v6 reward (gait tax per distance, fall cost 20), σ0 0.2. Every extra
+  unit walked while alternating pays ~+4.3, so learning balance is the path.
+- v6b-fresh: same as v6 with seed 1, to test whether "stuck standing" was bad luck.
+
+## Curriculum (user's idea, 2026-10-28 ~08:40): balance -> step -> walk -> walk fast
+- Every gait run so far had to find balance, alternation and progress at once, and each settled for a
+  shortcut (skip, stumble, stand). The curriculum gives each skill its own training reward and warm-starts
+  the next stage from the previous champion (symclock policy throughout):
+  1. balance (500-step episodes, no early stop): 100·survival − 100·fell − 50·mean|hull angle| − 0.5·effort.
+     Pass: 0 falls on 20 held-out tracks, mean |angle| < 0.15.
+  2. march (600 steps): survival − fall + 3·front-foot changes (≤ 40) + alternating touchdowns (≤ 60)
+     − 30·|mean foot offset| − 0.5·effort. Pass: ≥ 12 lead changes, ≤ 1 fall, |offset| < 0.5.
+  3. walk: the v6 reward (fall cost 20, gait tax per distance). Pass: x ≥ 60, ≤ 4 falls, lopsidedness ≤ 0.3.
+  4. walk fast: raw reward (fall 100) + gait tax per distance; runs until plateau / 6 h.
+- Each stage advances on pass, plateau or time cap (1 / 3 / 6 / 6 h). v6b-fresh stopped to free the CPU;
+  v7-alt keeps running for comparison.

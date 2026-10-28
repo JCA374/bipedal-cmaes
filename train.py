@@ -39,22 +39,24 @@ STATS_FIELDS = ["generation", "best_fitness", "mean_fitness", "median_fitness", 
                 "steps_saved_total", "gen_seconds", "wall_seconds", "mem_avail_mb"]
 OVERRIDABLE = {"k": int, "popsize": int, "hof_seeds": int, "hof_top": int,
                "stall_penalty": float, "speed_bonus": float, "fall_cost": float, "cross_bonus": float,
-               "gait_weight": float, "offset_weight": float, "balance_leading": int, "gait_per_distance": int}
+               "gait_weight": float, "offset_weight": float, "balance_leading": int, "gait_per_distance": int,
+               "objective": str, "train_steps": int}
 # Defaults for keys added after a run started, so its settings history doesn't show a fake change.
 PARAM_DEFAULTS = {"policy": "mlp", "cross_bonus": 0.0, "gait_weight": 0.0, "offset_weight": 0.0, "init_from": None,
-                  "balance_leading": 0, "gait_per_distance": 0}
-GAIT_KEYS = ("cross_bonus", "gait_weight", "offset_weight", "balance_leading", "gait_per_distance")   # kept from the checkpoint on resume
+                  "balance_leading": 0, "gait_per_distance": 0, "objective": "walk", "train_steps": 1600}
+GAIT_KEYS = ("cross_bonus", "gait_weight", "offset_weight", "balance_leading", "gait_per_distance", "objective", "train_steps")   # kept from the checkpoint on resume
 
 # ---------------------------------------------------------------- workers
 _W = {}
 
 
-def _init_worker(kind, sizes, action_repeat):
+def _init_worker(kind, sizes, action_repeat, max_steps=1600):
     signal.signal(signal.SIGINT, signal.SIG_IGN)  # parent handles Ctrl-C / SIGTERM
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     _W["env"] = common.make_env()
     _W["policy"] = common.make_policy(kind, sizes)
     _W["action_repeat"] = action_repeat
+    _W["max_steps"] = max_steps
 
 
 def eval_theta(task):
@@ -62,7 +64,7 @@ def eval_theta(task):
     theta, seeds, early_stop = task
     pol = _W["policy"]
     pol.set_params(theta)
-    return [common.run_episode(pol, _W["env"], s, early_stop=early_stop,
+    return [common.run_episode(pol, _W["env"], s, early_stop=early_stop, max_steps=_W["max_steps"],
                                action_repeat=_W["action_repeat"]) for s in seeds]
 
 
@@ -76,7 +78,21 @@ def gait_penalty(e, args):
     return p
 
 
+def stage_score(e, args):
+    """Curriculum stages (--objective). balance: stay up and level; march: step, alternating feet, in place
+    or moving, feet kept centred. Both use short episodes (--train-steps) and no early stop."""
+    T = args.train_steps
+    if args.objective == "balance":
+        return 100 * e["steps"] / T - 100 * e["fell"] - 50 * e["angle_abs_mean"] - 0.5 * e["effort"]
+    if args.objective == "march":
+        return (100 * e["steps"] / T - 100 * e["fell"] + 3 * min(e["lead_changes"], 40) + min(e["alt_touchdowns"], 60)
+                - 30 * abs(e.get("lead_mean", 0.0)) - 0.5 * e["effort"])
+    raise ValueError(args.objective)
+
+
 def train_fitness(eps, args):
+    if args.objective != "walk":
+        return float(np.mean([stage_score(e, args) for e in eps]))
     """Training-only shaping. Reported scores are always raw rewards of full episodes."""
     f = []
     for e in eps:
@@ -150,7 +166,7 @@ def effective_params(args, sizes, kind="mlp"):
     return {"policy": kind, "sizes": list(sizes), "n_params": common.make_policy(kind, sizes).n_params,
             "popsize": args.popsize, "cross_bonus": args.cross_bonus, "gait_weight": args.gait_weight,
             "offset_weight": args.offset_weight, "init_from": args.init_from, "balance_leading": args.balance_leading,
-            "gait_per_distance": args.gait_per_distance,
+            "gait_per_distance": args.gait_per_distance, "objective": args.objective, "train_steps": args.train_steps,
             "k": args.k, "sigma0": args.sigma0, "stall_penalty": args.stall_penalty,
             "fall_cost": args.fall_cost, "speed_bonus": args.speed_bonus,
             "action_repeat": args.action_repeat, "hof_seeds": args.hof_seeds,
@@ -183,6 +199,9 @@ def main(argv=None):
                     help="training penalty × |mean(foot 1 x − foot 2 x)|: how far one foot sits ahead on average")
     ap.add_argument("--balance-leading", type=int, default=0,
                     help="1: measure lead balance only over steps where a foot leads (standing with feet together isn't lopsided)")
+    ap.add_argument("--objective", choices=["walk", "balance", "march"], default="walk",
+                    help="curriculum stage: walk = the normal (shaped) reward; balance / march = stage_score()")
+    ap.add_argument("--train-steps", type=int, default=1600, help="episode length in training and HOF")
     ap.add_argument("--gait-per-distance", type=int, default=0,
                     help="1: scale the gait penalty by the share of the course covered (standing pays nothing)")
     ap.add_argument("--init-from", default=None,
@@ -301,7 +320,7 @@ def main(argv=None):
         stats_w.writeheader()
 
     pool = mp.get_context("fork").Pool(args.workers, initializer=_init_worker,
-                                       initargs=(kind, sizes, args.action_repeat))
+                                       initargs=(kind, sizes, args.action_repeat, args.train_steps))
     t_start = time.time()
     wall0 = state["wall_seconds"]
 
@@ -324,7 +343,8 @@ def main(argv=None):
             f2 = float(np.mean([e["front2_share"] for e in eps]))
             lm = float(np.mean([abs(e.get("lead_mean", 0.0)) for e in eps]))
             # Champion selection: raw held-out score, minus the same gait penalty training uses (if any).
-            sel = mean - float(np.mean([gait_penalty(e, args) for e in eps]))
+            sel = (mean - float(np.mean([gait_penalty(e, args) for e in eps]))) if args.objective == "walk" \
+                else float(np.mean([stage_score(e, args) for e in eps]))
             entry = {"generation": generation, "label": label, "mean": mean, "std": std,
                      "falls": int(sum(e["fell"] for e in eps)),
                      "mean_x": float(np.mean([e["x"] for e in eps])), "train_fitness": tf,
@@ -355,7 +375,7 @@ def main(argv=None):
         t0 = time.time()
         sols = es.ask()
         seeds = gen_seeds(state["seed"], gen, args.k)
-        results = pool.map(eval_theta, [(th, seeds, not args.no_early_stop) for th in sols], chunksize=1)
+        results = pool.map(eval_theta, [(th, seeds, not args.no_early_stop and args.objective == "walk") for th in sols], chunksize=1)
         fits = np.array([train_fitness(eps, args) for eps in results])
         es.tell(sols, (-fits).tolist())  # CMA minimises
         all_eps = [e for eps in results for e in eps]

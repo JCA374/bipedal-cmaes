@@ -206,6 +206,7 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
     # many changes are real steps (hull moved >= CROSS_MIN_DX since the last counted one).
     front, lead_changes, crossings, front2, last_cross_x = 0, 0, 0, 0, hull.position.x
     leading = 0      # steps where one foot leads by more than CROSS_HYST
+    angle_sum, effort, alt_td, last_td, contact = 0.0, 0.0, 0, 0, (False, False)
     lead_sum = 0.0   # sum of (lower leg 1 x - lower leg 2 x): its mean is how far foot 1 sits ahead on average
     while steps < max_steps:
         if on_frame is not None:
@@ -230,6 +231,15 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
             front = f
         front2 += front == -1
         leading += front != 0
+        angle_sum += abs(hull.angle)
+        effort += 0.00035 * 80 * float(np.sum(np.minimum(np.abs(action), 1)))
+        c = (obs[8] > 0.5, obs[13] > 0.5)          # touchdowns, and whether they alternate legs
+        for leg in (0, 1):
+            if c[leg] and not contact[leg]:
+                if last_td and last_td != leg + 1:
+                    alt_td += 1
+                last_td = leg + 1
+        contact = c
         if terminated:
             fell = bool(reward <= -100)
             break
@@ -247,7 +257,8 @@ def run_episode(policy, env, seed, early_stop=True, max_steps=1600, on_frame=Non
             "crossings": crossings, "lead_changes": lead_changes, "front2_share": front2 / max(1, steps),
             "lead_mean": lead_sum / max(1, steps),
             # share of the LEADING steps in which foot 2 leads (0.5 when no foot ever leads: feet together isn't lopsided)
-            "front2_lead_share": front2 / leading if leading else 0.5}
+            "front2_lead_share": front2 / leading if leading else 0.5,
+            "angle_abs_mean": angle_sum / max(1, steps), "effort": effort, "alt_touchdowns": alt_td}
 
 
 # ---------------------------------------------------------------- persistence
