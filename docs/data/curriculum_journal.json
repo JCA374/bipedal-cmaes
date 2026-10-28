@@ -58,5 +58,11 @@
   "iso": "2026-10-28T18:30",
   "title": "Cheaper steps are winning: 279 with no falls",
   "text": "Attempt 4's walk-fast stage stopped on a plateau at 17:28, and attempt 6 (the widened network) started automatically. On the goal check's twenty independent tracks, the current champions compare like this. Attempt 5, where effort counts one and a half times in training: 279.4 points, no falls, 117 front-foot changes per run, effort 84, finishing in about 991 steps. Attempt 4's final walker: 260.8 with 2 falls; it finishes faster, in 954 steps, but takes more risks. Attempt 6, 64 neurons, still early at generation 59: 260.3 with 2 falls. All three meet the goal, and all of them have cut effort from about 99 to about 84. The extra effort cost looks like the most useful change so far. Both runs keep training; if attempt 5 keeps its lead, the next experiment will combine it with the wider network."
+ },
+ {
+  "time": "Wed 28 Oct 20:30",
+  "iso": "2026-10-28T20:30",
+  "title": "Attempt 7 combines the wider network with cheaper steps",
+  "text": "Attempt 5, where effort counts one and a half times in training, has stopped improving: plus 4.6 points over 200 generations and a step size of 0.011. Its champion is the best walker so far, 284 on the held-out tracks and 279.4 on the goal check, with no falls, although foot 2 now leads a bit more often, about 61% of the time. Rather than wait two hours for the plateau rule, I stopped it and started attempt 7 from that champion: widened to 64 neurons the same way as attempt 6, keeping the 1.5 times effort cost. Attempt 6 (64 neurons from attempt 4's walker) keeps running alongside at 277 held-out."
  }
 ]

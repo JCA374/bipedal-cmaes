@@ -190,3 +190,8 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
 - curriculum f3-walk-s05: passed (2026-10-28 13:35)
 
 - curriculum f4-walk: passed (2026-10-28 14:15)
+
+- curriculum f5-fast: plateau (2026-10-28 17:28)
+
+## f5-fast stopped on a plateau (2026-10-28 17:28)
+- f5-fast gen 410 champion 276.1, +3.9 over 200 gens, sigma 0.00692. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.

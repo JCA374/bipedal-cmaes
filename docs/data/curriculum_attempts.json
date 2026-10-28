@@ -609,7 +609,7 @@
   "log": "curriculum_g.log",
   "start_date": "2026-10-28",
   "title": "Attempt 5: polish the alternating walker (cheaper steps)",
-  "note": "Attempt 4's walk-fast champion meets the goal (about 276 on the held-out tracks, no falls, feet sharing the lead), but it spends about 99 points on motor effort per run against the skipper's 75, and its search is converging (\u03c3 0.015). Attempt 5 continues from it with effort counting 1.5 times in training, the real fall cost and the same gait tax, a small \u03c30 (0.05) and a larger population (64) for fine-tuning. The champion is still chosen by the real score plus the gait tax.",
+  "note": "Attempt 4's walk-fast champion meets the goal (about 276 on the held-out tracks, no falls, feet sharing the lead), but it spends about 99 points on motor effort per run against the skipper's 75, and its search is converging (\u03c3 0.015). Attempt 5 continues from it with effort counting 1.5 times in training, the real fall cost and the same gait tax, a small \u03c30 (0.05) and a larger population (64) for fine-tuning. The champion is still chosen by the real score plus the gait tax. Stopped Wed 20:30 after converging; its champion (284 held-out raw, 279.4 on the goal check, no falls) seeds attempt 7.",
   "stages": [
    {
     "key": "1-fast",
@@ -681,6 +681,48 @@
     "pass": "no stage test: runs until it plateaus; goal check on the page",
     "expect": "Uses the extra neurons for a smoother, cheaper gait: a higher real score than the 32-neuron walker.",
     "risk": "Twice the parameters make the search slower; it may not beat the narrow network within the time left."
+   }
+  ]
+ },
+ {
+  "prefix": "i",
+  "log": "curriculum_i.log",
+  "start_date": "2026-10-28",
+  "title": "Attempt 7: combine the two ideas: wider network + cheaper steps",
+  "note": "Attempt 5 (effort \u00d71.5) gave the best walker so far: 279.4 on the goal check with no falls, effort down from 99 to 84. It had converged (\u03c3 0.011, +4.6 over 200 generations), so it was stopped at generation ~291 with its champion kept. Attempt 6 (64 neurons, no extra effort cost) is still improving slowly. Attempt 7 combines both: attempt 5's champion widened to 64 neurons, with the 1.5\u00d7 effort cost.",
+  "stages": [
+   {
+    "key": "1-fast",
+    "name": "Walk fast, wider + cheaper",
+    "short": "64 hidden units, effort \u00d71.5",
+    "reward": "real game reward (fall \u2212100) \u2212 0.5 \u00d7 effort \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "extra, training only: effort counts 1.5 times, to push toward cheaper steps"
+     ],
+     [
+      "\u2212 100",
+      "a fall, as in the real game"
+     ],
+     [
+      "\u2212 gait tax",
+      "(40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course: keeps the feet taking turns"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall, no support (cap 10 h)",
+    "start": "attempt 5's champion (284 held-out raw), widened from 32 to 64 hidden neurons without changing its walk (\u03c30 0.05, population 64)",
+    "pass": "no stage test: runs until it plateaus; goal check on the page",
+    "expect": "Keeps attempt 5's cheaper steps and uses the extra neurons to improve further: a higher real score than 279 on the goal check, with no falls.",
+    "risk": "The wider search is slower; and the effort cost has nudged attempt 5 toward one foot leading more (61%), which the gait tax has to hold in check."
    }
   ]
  }
