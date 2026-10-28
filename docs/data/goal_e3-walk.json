@@ -1,0 +1,1 @@
+{"run": "/home/jonas/code/games/bi-pedal/bipedal-CMA-ES/runs/e3-walk", "champion_gen": 119, "score": -66.08925056483322, "x": 16.966227722167968, "falls": 20, "lead_changes": 16.45, "lopsided": 0.18487623471937686, "effort": 15.44119570024047, "steps": 143.7, "checks": {"alternates": false, "far": false, "safe": false, "fast": false}, "met": false}
