@@ -182,3 +182,11 @@ new `analyze_score.py` (this walker's real failure is a low score, not falling):
 - e3-walk gen 411 champion -63.4, +2.4 over 200 gens, sigma 0.00985. Rule: after 400 gens, < 5 points of held-out gain over 200 gens (plateau_watch.sh). The queue moves on.
 
 - curriculum e3-walk: plateau (2026-10-28 12:17)
+
+- curriculum f1-walk-s2: passed (2026-10-28 12:55)
+
+- curriculum f2-walk-s1: passed (2026-10-28 13:15)
+
+- curriculum f3-walk-s05: passed (2026-10-28 13:35)
+
+- curriculum f4-walk: passed (2026-10-28 14:15)

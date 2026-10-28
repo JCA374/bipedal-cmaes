@@ -23,5 +23,10 @@
   "time": "Wed 28 Oct 12:36",
   "title": "Attempts 2 and 3 stuck on opposite sides; attempt 4 adds training wheels",
   "text": "Attempt 2's stepping stage chose to stand still with its feet together: about one front-foot change per episode, because a step that falls costs more than standing earns. Attempt 3 did the opposite: it kept the alternating stumble, with about seventeen front-foot changes, but fell on all twenty test tracks at x \u2248 17, through both the step and the walk stage. Both were stopped. Attempt 4 uses training wheels: an upright torque on the body that keeps it from tipping, faded out over four stages (support 2, 1, 0.5, then none), followed by walking fast in the real game. With support 2 the stumbler never falls. Eighteen generations in, the best candidate already makes about eighty real crossing steps in an episode, foot 2 leads about 59% of the time, and it walks forward. The real test is whether the gait survives as the support is removed."
+ },
+ {
+  "time": "Wed 28 Oct 14:34",
+  "title": "GOAL MET: training wheels taught it to walk with alternating feet",
+  "text": "Attempt 4 worked. The support stages passed one after another, each in about an hour: support 2 after 68 generations, support 1 after 62, support 0.5 after 58. Then the real test, no support at all, passed at 14:15: on twenty held-out tracks, no falls, it reached the finish every time, 128 front-foot changes per run, and foot 2 led only a little over half the time. The goal check, on twenty different tracks, passes on every requirement for both the walk champion (257.5) and the walk-fast champion (264.1). On a hundred unseen tracks the walk-fast champion scores 263.9 with a spread of only \u00b11.1, no falls, and finishes all hundred in about 22 seconds each. Compared with the old skipping walker on the same hundred tracks: about 124 front-foot changes per run against almost none, 2 falls against 7, but about 10 points lower (260 vs 270), because alternating steps cost more motor effort. The walk-fast stage keeps training to make it faster and cheaper."
  }
 ]
