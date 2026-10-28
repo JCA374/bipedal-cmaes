@@ -61,7 +61,8 @@
 
   <section style="padding-top:14px">
     <h2>The goal</h2>
-    <p class="intro">Measured on 20 tracks the walker never trained on, full episodes, raw reward. All four must hold.</p>
+    <p class="intro">Measured on 50 tracks the walker never trained on, full episodes, raw reward. All four must hold.
+    (Until Thursday 00:40 this used 20 tracks; that proved too few to measure falls reliably, see the log.)</p>
     <table class="t" id="goal"></table>
   </section>
 
@@ -147,7 +148,7 @@ function goalTable() {
   document.getElementById("goal").innerHTML = `<tr><th>requirement</th><th>target</th><th>${m ? `best so far (${m.run.split("/").pop()}, gen ${m.champion_gen})` : "best so far"}</th><th></th></tr>` +
     row("one foot in front of the other", `lopsidedness ≤ ${G.lopsided_max}, ≥ ${G.lead_changes_min} front-foot changes per run`, m ? `${f(m.lopsided, 2)}, ${f(m.lead_changes)} changes` : "not measured yet", m ? m.checks.alternates : null) +
     row("walks the course", `reaches x ≥ ${G.x_min} on average (finish ≈ 88.7)`, m ? `x = ${f(m.x)}` : "–", m ? m.checks.far : null) +
-    row("safe", `≤ ${G.falls_max} falls in 20`, m ? `${m.falls} falls` : "–", m ? m.checks.safe : null) +
+    row("safe", `≤ ${G.falls_max} falls in ${G.tracks || 20} (≤ 10%)`, m ? `${m.falls} falls` : "–", m ? m.checks.safe : null) +
     row("fast", `raw score ≥ ${G.score_min}`, m ? f(m.score) : "–", m ? m.checks.fast : null);
 }
 function attempts() {

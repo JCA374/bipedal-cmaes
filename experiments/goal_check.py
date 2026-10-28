@@ -1,5 +1,7 @@
 """The curriculum's definition of done: a FAST walker that puts one foot in front of the other.
-On 20 held-out tracks (record range, offset 700), full 1600-step episodes, raw reward.
+On 50 held-out tracks (record range, offset 700), full 1600-step episodes, raw reward.
+(Was 20 tracks / ≤ 2 falls until Thu 00:40: 20 tracks proved too few; champions with 0 falls in 20 fell
+on 12-14 of 100 comparison tracks. Same standard, measured more reliably: ≤ 10% falls.)
   python experiments/goal_check.py runs/c4-fast        # prints JSON; exit 0 = goal met
 """
 import json
@@ -12,10 +14,10 @@ import numpy as np  # noqa: E402
 
 import common  # noqa: E402
 
-GOAL = {"lopsided_max": 0.3, "lead_changes_min": 20, "x_min": 80, "falls_max": 2, "score_min": 250}
+GOAL = {"lopsided_max": 0.3, "lead_changes_min": 20, "x_min": 80, "falls_max": 5, "score_min": 250, "tracks": 50}
 
 
-def measure(run, n=20):
+def measure(run, n=50):
     pol, meta = common.load_policy(run)
     env = common.make_env()
     eps = [common.run_episode(pol, env, s, early_stop=False) for s in common.seeds("record", n, offset=700)]

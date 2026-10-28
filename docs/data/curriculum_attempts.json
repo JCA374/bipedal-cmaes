@@ -689,7 +689,7 @@
   "log": "curriculum_i.log",
   "start_date": "2026-10-28",
   "title": "Attempt 7: combine the two ideas: wider network + cheaper steps",
-  "note": "Attempt 5 (effort \u00d71.5) gave the best walker so far: 279.4 on the goal check with no falls, effort down from 99 to 84. It had converged (\u03c3 0.011, +4.6 over 200 generations), so it was stopped at generation ~291 with its champion kept. Attempt 6 (64 neurons, no extra effort cost) is still improving slowly. Attempt 7 combines both: attempt 5's champion widened to 64 neurons, with the 1.5\u00d7 effort cost.",
+  "note": "Attempt 5 (effort \u00d71.5) gave the best walker so far: 279.4 on the goal check with no falls, effort down from 99 to 84. It had converged (\u03c3 0.011, +4.6 over 200 generations), so it was stopped at generation ~291 with its champion kept. Attempt 6 (64 neurons, no extra effort cost) is still improving slowly. Attempt 7 combines both: attempt 5's champion widened to 64 neurons, with the 1.5\u00d7 effort cost. Stopped Thu 00:40. Its champion looked like 288 with no falls on 20 goal tracks, but scored 262.9 \u00b1 62.9 with 14 falls on 100 comparison tracks.",
   "stages": [
    {
     "key": "1-fast",
@@ -765,6 +765,48 @@
     "pass": "no stage test: runs until it plateaus; goal check on the page",
     "expect": "Fewer lucky picks: champions that hold up on new tracks, with fewer falls, and a small further gain in score.",
     "risk": "Twice the simulation per generation, so fewer generations in the time left."
+   }
+  ]
+ },
+ {
+  "prefix": "k",
+  "log": "curriculum_k.log",
+  "start_date": "2026-10-29",
+  "title": "Attempt 9: safety. Falls cost double in training",
+  "note": "A 100-track paired check overturned the 20-track goal checks: attempt 7's champion (288 with 0 falls on 20 goal tracks) scored 262.9 \u00b1 62.9 with 14 falls on 100 comparison tracks, attempt 8's 267.0 \u00b1 60.2 with 12 falls; the difference between them is noise. They are faster (about 880 steps) and cheaper (effort 73) than yesterday's 263.9 \u00b1 1.1, 0-fall walker, but trade safety for it. The goal check now uses 50 tracks (\u2264 10% falls). Attempt 9 continues from attempt 7's champion with a fall costing 200 in training, 10 tracks per candidate and 40 selection tracks. Attempt 7 was stopped; attempt 8 continues.",
+  "stages": [
+   {
+    "key": "1-fast",
+    "name": "Walk fast, safely",
+    "short": "fall cost 200 in training",
+    "reward": "game reward with a fall costing 200 instead of 100 \u2212 0.5 \u00d7 effort \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "extra, training only (effort counts 1.5 times)"
+     ],
+     [
+      "\u2212 200",
+      "a fall: double the real game's 100, training only, to make the walker value safety more"
+     ],
+     [
+      "\u2212 gait tax",
+      "(40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course: keeps the feet taking turns"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall, no support; each candidate is scored on 10 tracks (was 5) and champions on 40 held-out tracks (was 20) (cap 10 h)",
+    "start": "attempt 7's champion (64 neurons; on 100 tracks 262.9 \u00b1 62.9 with 14 falls, finishing in about 880 steps), \u03c30 0.03, population 64",
+    "pass": "no stage test: runs until it plateaus; goal check on the page",
+    "expect": "Keeps most of the speed and the cheap, alternating steps but falls far less: under 10% falls on 50 goal-check tracks, so the average score rises.",
+    "risk": "Slows down to stay safe (like yesterday's 1,100-step walker), giving up the speed it gained."
    }
   ]
  }
