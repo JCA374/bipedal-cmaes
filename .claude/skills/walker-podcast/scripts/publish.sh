@@ -31,7 +31,7 @@ log "episode-$NN.mp3: ${dur%.*} s"
 log "tests"
 .venv/bin/python -m pytest -q 2>&1 | tail -1
 git add docs/podcast/episode-$NN.mp3 docs/data/podcast.json podcast/episode-$NN.md podcast/episode-$NN.notes.json
-title=$(head -1 podcast/episode-$NN.md | sed 's/^# //')
+title=$(head -1 podcast/episode-$NN.md | sed -e 's/^# //' -e 's/^Episode [0-9]*: //')
 git commit -q -m "Podcast: $title
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" || log "nothing new to commit"
