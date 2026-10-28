@@ -133,7 +133,8 @@
     "expect": "The same alternating walk, faster and cheaper: reaches the finish with less effort and few falls, raw score \u2265 250.",
     "risk": "Speed returns the skip (cheaper per unit) if the tax is too small; or more falls as it speeds up."
    }
-  ]
+  ],
+  "start_date": "2026-10-28"
  },
  {
   "prefix": "d",
@@ -273,7 +274,8 @@
     "expect": "The same alternating walk, faster and cheaper: reaches the finish with less effort and few falls, raw score \u2265 250.",
     "risk": "Speed returns the skip (cheaper per unit) if the tax is too small; or more falls as it speeds up."
    }
-  ]
+  ],
+  "start_date": "2026-10-28"
  },
  {
   "prefix": "e",
@@ -397,7 +399,8 @@
     "expect": "The same alternating walk, faster and cheaper: reaches the finish with less effort and few falls, raw score \u2265 250.",
     "risk": "Speed returns the skip (cheaper per unit) if the tax is too small; or more falls as it speeds up."
    }
-  ]
+  ],
+  "start_date": "2026-10-28"
  },
  {
   "prefix": "f",
@@ -598,6 +601,7 @@
     "expect": "The same alternating walk, faster and cheaper: raw score \u2265 250 with few falls.",
     "risk": "Speed brings back the skip, or more falls."
    }
-  ]
+  ],
+  "start_date": "2026-10-28"
  }
 ]
