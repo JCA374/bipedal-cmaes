@@ -113,7 +113,7 @@ function attempts() {
         <p style="margin-top:6px">${sm ? `${sm.generations} gens · ${f(sm.hours)} h · champion ${f(ch.selection ?? ch.mean)}` : "not started"}</p>
         ${last ? `<p>last check ${last.time}: ${last.passed ? "passed" : "not yet"} (falls ${last.falls}, changes ${f(last.lead_changes)}, x ${f(last.x)})</p>` : ""}</div>`;
     }).join("")}</div>`).join("") +
-    (D.extra.length ? `<h3>Comparison runs</h3><div class="pipeline">${D.extra.map((e, ei) => `<div class="stagecard" data-x="${ei}"><div>${badge("running")}</div><h3>${e.run}</h3>
+    (D.extra.length ? `<h3>Comparison runs</h3><div class="pipeline">${D.extra.map((e, ei) => `<div class="stagecard" data-x="${ei}"><div>${badge("stopped")}</div><h3>${e.run}</h3>
       <p>${e.config.init_from ? "warm start from " + e.config.init_from.split("/").pop() : "from scratch"} · ${e.generations} gens · champion ${f(e.champion.selection ?? e.champion.mean)}</p></div>`).join("")}</div>` : "");
   document.querySelectorAll(".stagecard").forEach(c => c.onclick = () => {
     const s = c.dataset.x != null ? { name: D.extra[+c.dataset.x].run, run: D.extra[+c.dataset.x].run, summary: D.extra[+c.dataset.x], checks: [], outcome: "comparison" }

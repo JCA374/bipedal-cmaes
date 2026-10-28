@@ -46,7 +46,8 @@ def jobs():
     out = subprocess.run(["ps", "-eo", "pid,pcpu,etime,args"], capture_output=True, text=True).stdout.splitlines()[1:]
     want = {"training": r"train\.py --name", "train queue": r"train_queue\.sh", "finalize": r"finalize\.sh",
             "voice (Kokoro/Whisper)": r"voice-text/scripts|kokoro-narrate/|listen-check/|narration-prep/", "video render": r"make_lessons\.py",
-            "site refresh": r"site_refresh\.sh"}
+            "site refresh": r"site_refresh\.sh", "curriculum driver": r"curriculum\.sh",
+            "site publisher": r"curriculum_publish\.sh"}
     res = {}
     for name, pat in want.items():
         rows = [r.split(None, 3) for r in out if re.search(pat, r) and "ps -eo" not in r]
@@ -70,8 +71,26 @@ def deadline():
     return (t if t > now else t + timedelta(days=1)).isoformat(timespec="minutes")
 
 
+def active_run():
+    """--run auto: the stage the curriculum is training now (latest '=== stage X' in the newest curriculum log)."""
+    if ARGS.run_arg != "auto":
+        return ARGS.run
+    logs = sorted(ROOT.glob("curriculum*.log"), key=lambda p: p.stat().st_mtime)
+    for lp in reversed(logs):
+        m = re.findall(r"=== stage (\S+)", lp.read_text())
+        if m:
+            return str(ROOT / "runs" / m[-1])
+    return ARGS.run
+
+
 def status():
+    ARGS.run = active_run()
     run = Path(ARGS.run)
+    if not (run / "stats.csv").exists():
+        return {"now": datetime.now().isoformat(timespec="seconds"), "run": run.name + " (starting)", "deadline": deadline(),
+                "stats": [], "gait": [], "config": {}, "history": [], "champion": {}, "hof": [], "milestones": [],
+                "overrides": {}, "load": os.getloadavg(), "cpus": os.cpu_count(), "mem": meminfo(), "jobs": jobs(),
+                "logs": {"training": [], "queue": tail(ROOT / "curriculum.log", 6), "finalize": []}, "champion_mtime": None}
     rows = list(csv.DictReader(open(run / "stats.csv"))) if (run / "stats.csv").exists() else []
     num = lambda v: None if v in ("", None) else float(v)
     stats = [{k: num(v) for k, v in r.items()} for r in rows]
@@ -92,7 +111,8 @@ def status():
         "champion": best, "hof": hof[:12], "milestones": ms, "overrides": ov,
         "load": os.getloadavg(), "cpus": os.cpu_count(), "mem": meminfo(), "jobs": jobs(),
         "logs": {"training": [l for l in tail(log, 400) if not l.startswith("gen ")][-8:],
-                 "queue": tail(ROOT / "train_queue.log", 6), "finalize": tail(ROOT / "finalize.log", 8)},
+                 "queue": tail(ROOT / ("curriculum.log" if ARGS.run_arg == "auto" else "train_queue.log"), 6),
+                 "finalize": tail(ROOT / "finalize.log", 8)},
         "champion_mtime": (run / "best" / "params.npy").stat().st_mtime if (run / "best" / "params.npy").exists() else None,
     }
 
@@ -154,7 +174,11 @@ def main():
     ap.add_argument("--port", type=int, default=8770)
     ap.add_argument("--deadline", default="09:00")
     ARGS = ap.parse_args()
-    ARGS.run = str((ROOT / ARGS.run).resolve()) if not os.path.isabs(ARGS.run) else ARGS.run
+    ARGS.run_arg = ARGS.run
+    if ARGS.run != "auto":
+        ARGS.run = str((ROOT / ARGS.run).resolve()) if not os.path.isabs(ARGS.run) else ARGS.run
+    else:
+        ARGS.run = active_run()
     print(f"dashboard for {ARGS.run}: http://localhost:{ARGS.port}")
     ThreadingHTTPServer(("127.0.0.1", ARGS.port), H).serve_forever()
 
