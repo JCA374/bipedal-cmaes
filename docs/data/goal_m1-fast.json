@@ -1,0 +1,1 @@
+{"run": "/home/jonas/code/games/bi-pedal/bipedal-CMA-ES/runs/m1-fast", "champion_gen": 9, "score": 277.0028385080009, "x": 87.64958045959473, "falls": 4, "lead_changes": 101.94, "lopsided": 0.06600761847114958, "effort": 73.19792723667935, "steps": 898.36, "checks": {"alternates": true, "far": true, "safe": true, "fast": true}, "met": true}
