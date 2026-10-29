@@ -51,5 +51,10 @@ for u in podcast/index.html podcast/episode-$NN.mp3 data/podcast.json; do
   log "  $code $SITE/$u"
   [ "$code" = 200 ] || fail "$u returned $code"
 done
-curl -s "$SITE/data/podcast.json?v=$sha" | grep -q "episode-$NN.mp3" || fail "feed doesn't list episode $NN yet"
+# The Pages CDN can serve the old feed for a minute or two after a build: retry for up to 5 minutes.
+for i in $(seq 1 30); do
+  curl -s "$SITE/data/podcast.json?v=$sha-$i" | grep -q "episode-$NN.mp3" && break
+  sleep 10
+done
+curl -s "$SITE/data/podcast.json?v=$sha-x" | grep -q "episode-$NN.mp3" || fail "feed doesn't list episode $NN after 5 minutes"
 echo "DEPLOYED $SITE/podcast/index.html (episode $NN: $title, ${dur%.*} s)"
