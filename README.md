@@ -27,3 +27,7 @@ Change settings between chunks with `runs/<name>/overrides.json`
 - `evaluate.py`: 100 full episodes with raw reward: mean/std/falls/≥300/timeouts.
 - `make_site.py`, `docs/`: the GitHub Pages site (static HTML + vanilla JS demos).
 - `PLAN.md`: the design; `TRAINING_LOG.md`: every change and why (including three failed starts).
+
+## How the work was run
+
+See [METHOD.md](METHOD.md) (2-hour check-ins, one change at a time, verification, the log page and the podcast) and [CONTINUE.md](CONTINUE.md) (the paused state and how to resume).

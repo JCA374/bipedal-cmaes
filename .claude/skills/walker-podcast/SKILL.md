@@ -5,6 +5,9 @@ description: Write, voice and deploy an episode of the Bipedal CMA-ES project po
 
 # Walker podcast: write → voice → deploy
 
+> A general version for any project lives at `~/.claude/skills/project-podcast/` (same steps, the settings in
+> `podcast.conf`). This repo has a `podcast.conf`, so either skill works here.
+
 Each episode is a short spoken update (2-6 minutes) for the user, who follows the project by ear. The value
 is that it's **true, current and easy to follow**: real numbers from the logs, in plain spoken language, with
 what happened, what worked, what failed and what's next. Episodes are published on the site's Podcast tab.
