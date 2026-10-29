@@ -731,7 +731,7 @@
   "log": "curriculum_j.log",
   "start_date": "2026-10-28",
   "title": "Attempt 8: precision. More tracks per candidate and for choosing the champion",
-  "note": "The goal check exposed the winner's curse: attempt 5's newer champion looked better on its 20 selection tracks but scored 270.6 with 2 falls on the goal tracks (its earlier one had 279.4 and no falls), and attempt 6's latest champion fell 3 times (250.0, failing the safe requirement). At this level falls are rare events, and 5 training tracks plus 20 selection tracks pick lucky walkers. Attempt 8 continues from the best walker, attempt 7's champion (284.4 on the goal check, no falls), with 10 tracks per candidate and 40 selection tracks, a small step size, the 64-neuron network, the 1.5\u00d7 effort cost and the gait tax. Attempt 6 was stopped (converged).",
+  "note": "The goal check exposed the winner's curse: attempt 5's newer champion looked better on its 20 selection tracks but scored 270.6 with 2 falls on the goal tracks (its earlier one had 279.4 and no falls), and attempt 6's latest champion fell 3 times (250.0, failing the safe requirement). At this level falls are rare events, and 5 training tracks plus 20 selection tracks pick lucky walkers. Attempt 8 continues from the best walker, attempt 7's champion (284.4 on the goal check, no falls), with 10 tracks per candidate and 40 selection tracks, a small step size, the 64-neuron network, the 1.5\u00d7 effort cost and the gait tax. Attempt 6 was stopped (converged). Stopped Thu 02:40: converged (\u03c3 0.004); its champion fell 9 times in 50 on the goal check.",
   "stages": [
    {
     "key": "1-fast",
@@ -807,6 +807,48 @@
     "pass": "no stage test: runs until it plateaus; goal check on the page",
     "expect": "Keeps most of the speed and the cheap, alternating steps but falls far less: under 10% falls on 50 goal-check tracks, so the average score rises.",
     "risk": "Slows down to stay safe (like yesterday's 1,100-step walker), giving up the speed it gained."
+   }
+  ]
+ },
+ {
+  "prefix": "l",
+  "log": "curriculum_l.log",
+  "start_date": "2026-10-29",
+  "title": "Attempt 10: even safer. Falls cost three times as much in training",
+  "note": "Attempt 9 (falls cost 200 in training) produced the best walker so far, verified on 100 tracks: 284.7 \u00b1 26.7 with 2 falls, +21.8 over the walker it started from (95% CI +8.1 to +35.9), and above the old skipper's 270.2 on the same tracks. Attempt 10 continues from that champion with a fall costing 300, to see if more safety pays further. Attempt 8 (precision) was stopped: converged, 9 falls in 50. Also tried and dropped: a second hidden layer (6,019 parameters, sep-CMA). The deepened network walked like the original, but was so fragile to perturbation that even tiny noise (\u03c3 0.002) broke 25-75% of candidates, while the one-layer walker stays robust at \u03c3 0.02.",
+  "stages": [
+   {
+    "key": "1-fast",
+    "name": "Walk fast, even safer",
+    "short": "fall cost 300 in training",
+    "reward": "game reward with a fall costing 300 instead of 100 \u2212 0.5 \u00d7 effort \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "extra, training only (effort counts 1.5 times)"
+     ],
+     [
+      "\u2212 300",
+      "a fall: three times the real game's 100, training only"
+     ],
+     [
+      "\u2212 gait tax",
+      "(40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course: keeps the feet taking turns"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall, no support; each candidate is scored on 10 tracks (was 5) and champions on 40 held-out tracks (was 20) (cap 10 h)",
+    "start": "attempt 9's champion (100 tracks: 284.7 \u00b1 26.7, 2 falls), \u03c30 0.02, population 64",
+    "pass": "no stage test: runs until it plateaus; goal check on the page",
+    "expect": "Even fewer falls than attempt 9 without slowing down, so the average rises a little further.",
+    "risk": "Too cautious: slows down or stops trying long steps, losing more score than the falls it saves."
    }
   ]
  }

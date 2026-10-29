@@ -134,8 +134,9 @@ def gen_seeds(base_seed, generation, k):
     return [int(x) for x in rng.integers(*common.SEED_RANGES["train"], size=k)]
 
 
-def new_es(x0, sigma, popsize, seed):
-    return cma.CMAEvolutionStrategy(x0, sigma, {
+def new_es(x0, sigma, popsize, seed, diagonal=False):
+    opts = {"CMA_diagonal": True} if diagonal else {}   # sep-CMA: learn only the diagonal (for thousands of params)
+    return cma.CMAEvolutionStrategy(x0, sigma, {**opts,
         "popsize": popsize, "seed": seed + 1, "verbose": -9,
         # Noisy fitness: don't let flat-fitness / tolfun checks end the run early.
         "tolfun": 0, "tolfunhist": 0, "tolflatfitness": 1000, "tolstagnation": 10**6,
@@ -217,6 +218,10 @@ def main(argv=None):
                     help="training wheels: upright torque on the hull, × common.SUPPORT_K_*; 0 = the real game")
     ap.add_argument("--gait-per-distance", type=int, default=0,
                     help="1: scale the gait penalty by the share of the course covered (standing pays nothing)")
+    ap.add_argument("--diagonal", action="store_true",
+                    help="sep-CMA (diagonal covariance): needed for networks with thousands of parameters")
+    ap.add_argument("--deepen", type=float, default=0.0,
+                    help="with --init-from: insert a second hidden layer, near-identity with this scale (e.g. 0.1)")
     ap.add_argument("--widen", type=int, default=0,
                     help="with --init-from: grow the hidden layer to this many units without changing the policy (Net2Net)")
     ap.add_argument("--init-from", default=None,
@@ -283,11 +288,15 @@ def main(argv=None):
             x0 = np.load(Path(args.init_from) / "best" / "params.npy") if (Path(args.init_from) / "best").exists() \
                 else np.load(Path(args.init_from) / "params.npy")
             print(f"Warm start from {args.init_from} ({kind} {list(sizes)}, held-out {src_meta.get('mean')})")
+            if args.deepen and len(sizes) == 3:
+                x0, sizes = common.deepen(kind, x0, sizes, alpha=args.deepen)
+                print(f"  deepened to {list(sizes)} (new layer ≈ identity × {args.deepen}: almost the same walk to start with)")
             if args.widen and args.widen > sizes[1]:
                 x0, sizes = common.widen(kind, x0, sizes, args.widen, np.random.default_rng(args.seed))
                 print(f"  widened to {list(sizes)} (new units have zero outgoing weights: same walk to start with)")
         args.popsize = args.popsize or 48
-        es = new_es(np.zeros(common.make_policy(kind, sizes).n_params) if x0 is None else x0, args.sigma0, args.popsize, args.seed)
+        es = new_es(np.zeros(common.make_policy(kind, sizes).n_params) if x0 is None else x0, args.sigma0, args.popsize, args.seed,
+                    diagonal=args.diagonal)
         state = {"generation": 0, "sizes": list(sizes), "policy": kind, "action_repeat": args.action_repeat,
                  "env_steps_total": 0, "steps_saved_total": 0, "wall_seconds": 0.0,
                  "best_score": None, "milestones": {}, "hof": [], "seed": args.seed,

@@ -142,3 +142,16 @@ def test_widen_keeps_the_policy_identical():
         for _ in range(30):
             x = rng.uniform(-1, 1, 24)
             assert np.allclose(a.activate(x), b.activate(x))
+
+
+def test_deepen_keeps_the_policy_nearly_identical():
+    rng = np.random.default_rng(6)
+    for kind, sizes in (("mlp", (24, 8, 4)), ("symclock", (26, 8, 2))):
+        pol = common.make_policy(kind, sizes)
+        theta = rng.normal(0, 0.5, pol.n_params)
+        new_theta, new_sizes = common.deepen(kind, theta, sizes, alpha=0.1)
+        a, b = common.make_policy(kind, sizes, theta), common.make_policy(kind, new_sizes, new_theta)
+        assert len(new_sizes) == 4 and b.n_hidden_layers == 2
+        for _ in range(30):
+            x = rng.uniform(-1, 1, 24)
+            assert np.allclose(a.activate(x), b.activate(x), atol=0.03)

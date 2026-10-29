@@ -76,5 +76,11 @@
   "iso": "2026-10-29T00:32",
   "title": "Correction: the faster walkers fall more than the 20-track check showed",
   "text": "I have to correct last night's headline. On twenty goal-check tracks, the wider network with cheaper steps scored 288 with no falls. On a hundred comparison tracks it scores 262.9, give or take 63, and falls on fourteen of them. The precision run's champion is the same: 267.0 with twelve falls, and the difference between the two is noise. Both walkers really are faster, finishing in about 880 steps, and cheaper, with effort about 73. But yesterday afternoon's walker scored 263.9 with a spread of only one point and no falls in a hundred, finishing in about 1,100 steps. So the speed was bought with safety, and the average hasn't improved. The lesson, once more, is the winner's curse: twenty tracks are too few when falls are rare. Changes: the goal check now uses fifty tracks and allows at most ten percent falls; the wider network's run is stopped; and attempt 9 starts from it with falls costing double in training, to buy the safety back without losing the speed. The precision run continues alongside."
+ },
+ {
+  "time": "Thu 29 Oct 02:33",
+  "iso": "2026-10-29T02:33",
+  "title": "Safety paid: 285 on 100 tracks with 2 falls (new best, verified)",
+  "text": "Making a fall cost double in training worked. Attempt 9's champion scores 284.7 on a hundred comparison tracks with only two falls, against 262.9 with fourteen falls for the walker it started from: a difference of about 22 points with a 95% interval of +8 to +36, better on 65 of 100 tracks. On the 50-track goal check it scores 282.8 with two falls (4%), 109 front-foot changes per run, lopsidedness 0.08, effort 75, finishing in about 914 steps. It also beats the old skipping walker's 270.2 on the same hundred tracks, with real alternating steps. Two other things: the precision run (attempt 8) converged with too many falls and was stopped, and a second hidden layer failed: the deeper network walked like the original but was so fragile that even tiny random changes made most candidates fall, so evolution couldn't fine-tune it. Next: attempt 10 starts from the new best with a fall costing three times as much, to see if more safety pays further."
  }
 ]

@@ -174,6 +174,24 @@ def make_policy(kind, sizes, theta=None):
     return POLICIES[kind](sizes, theta)
 
 
+def deepen(kind, theta, sizes, alpha=0.1, rng=None, noise=0.0):
+    """Insert a second hidden layer (same width) into a one-hidden-layer policy so it walks almost the
+    same: the new layer is tanh(alpha·h1) (identity weights × alpha, zero bias), which for small alpha is
+    ≈ alpha·h1, and the output weights are divided by alpha to compensate. Exact up to the tanh curvature
+    (relative error ≈ (alpha·h)²/3, under 0.4% for alpha 0.1). Returns (new_theta, new_sizes)."""
+    assert len(sizes) == 3, "deepen handles one hidden layer"
+    theta = np.asarray(theta, dtype=np.float64)
+    extra = theta[-1:] if kind == "symclock" else theta[:0]
+    core = theta[:-1] if kind == "symclock" else theta
+    (W1, b1), (W2, b2) = unflatten(core, tuple(sizes))
+    h = sizes[1]
+    Wm = alpha * np.eye(h)
+    if noise:
+        Wm = Wm + noise * (rng or np.random.default_rng(0)).normal(size=(h, h))
+    new_sizes = (sizes[0], h, h, sizes[2])
+    return np.concatenate([flatten([(W1, b1), (Wm, np.zeros(h)), (W2 / alpha, b2)]), extra]), new_sizes
+
+
 def n_params(sizes):
     return sum(o * i + o for i, o in zip(sizes[:-1], sizes[1:]))
 
