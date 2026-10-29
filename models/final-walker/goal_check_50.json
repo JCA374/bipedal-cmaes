@@ -1,0 +1,1 @@
+{"run": "models/final-walker", "champion_gen": 9, "score": 277.003, "x": 87.65, "falls": 4, "lead_changes": 101.94, "lopsided": 0.066, "effort": 73.198, "steps": 898.36, "checks": {"alternates": true, "far": true, "safe": true, "fast": true}, "met": true}

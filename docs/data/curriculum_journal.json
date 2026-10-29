@@ -88,5 +88,11 @@
   "iso": "2026-10-29T04:37",
   "title": "Lucky champions, a lost walker, and a fix",
   "text": "Both safety runs reported new champions around 292 on their forty selection tracks. On a hundred comparison tracks they were worse: 268.2 with fourteen falls, and 234.0 with twenty five falls. They were individual candidates that happened to survive those forty tracks: faster, but riskier. The search's average walkers did better: 267.1 with fourteen falls and 273.5 with ten. Worse, the verified best walker from three hours ago, 284.7 with two falls, had been replaced as champion, and its exact parameters are gone; the nearest saved copy, one generation later, scores only 258.3 with eighteen falls, which shows how sensitive these walkers are. Fixes: every champion is now archived and can always be re-tested; new runs choose their champion from the search's average walker only, on sixty tracks. Attempts 11 and 12 start from the best walker we still have (273.5, ten falls on a hundred tracks) and differ only in the fall cost, three hundred versus two hundred."
+ },
+ {
+  "time": "Thu 29 Oct 06:03",
+  "iso": "2026-10-29T06:03",
+  "title": "Paused here: the final walker",
+  "text": "The project is paused at the user's request, with a result they're happy with. Final walker: attempt 11's champion, a shared leg controller with a clock and 64 hidden neurons, trained with the curriculum (training wheels, then walking fast), a 1.5 times effort cost, falls costing three times in training, and champions chosen from the search's average walker. On a hundred comparison tracks it scores 281.8, give or take 38, with four falls, against 270.2 with seven falls for the old skipping walker on the same tracks. It finishes in about 900 steps, changes its leading foot about a hundred times per run with each foot leading half the time, and spends about 73 on motor effort. On the fifty-track goal check it meets all four requirements: 277.0, four falls in fifty, about 102 front-foot changes, lopsidedness 0.07. It is saved in the repository under models/final-walker, so it can't be overwritten. All training is stopped with checkpoints, so any run can be resumed later."
  }
 ]
