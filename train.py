@@ -385,6 +385,8 @@ def main(argv=None):
                         "wall_seconds": wall(), "held_out_seeds": seeds,
                         "saved_at": time.strftime("%Y-%m-%d %H:%M:%S")}
                 save_best(run_dir / "best", theta, meta)
+                # keep every champion: a later "best" can turn out worse on more tracks (Thu 04:30)
+                save_best(run_dir / "champions" / f"gen{generation:05d}_{label}", theta, meta)
                 print(f"  HOF: new champion ({label}) mean={mean:.1f} ±{std:.1f} falls={entry['falls']}"
                       + (f" | foot2 front {f2:.2f}, |offset| {lm:.2f}, selection {sel:.1f}" if args.gait_weight or args.offset_weight else ""))
                 for name, thr in MILESTONES:

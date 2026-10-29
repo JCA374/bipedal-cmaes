@@ -96,3 +96,14 @@ def test_warm_start_and_gait_weights_persist(tmp_path):
     assert cfg["effective"]["gait_weight"] == 40 and cfg["effective"]["offset_weight"] == 20
     assert cfg["effective"]["init_from"] == str(tmp_path / "src") and len(cfg["history"]) == 1
     assert (tmp_path / "ws" / "gait.csv").read_text().splitlines()[0].endswith("lead_mean")
+
+
+def test_every_champion_is_archived(tmp_path):
+    a = ["--name", "arc", "--runs-dir", str(tmp_path), "--workers", "1", "--hidden", "3", "--popsize", "4",
+         "--k", "1", "--hof-every", "1", "--hof-seeds", "1", "--hof-top", "1", "--generations", "3"]
+    train.main(a)
+    run = tmp_path / "arc"
+    archived = sorted((run / "champions").iterdir())
+    assert archived, "no champion archived"
+    best = np.load(run / "best" / "params.npy")
+    assert any(np.array_equal(best, np.load(d / "params.npy")) for d in archived)

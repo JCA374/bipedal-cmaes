@@ -773,7 +773,7 @@
   "log": "curriculum_k.log",
   "start_date": "2026-10-29",
   "title": "Attempt 9: safety. Falls cost double in training",
-  "note": "A 100-track paired check overturned the 20-track goal checks: attempt 7's champion (288 with 0 falls on 20 goal tracks) scored 262.9 \u00b1 62.9 with 14 falls on 100 comparison tracks, attempt 8's 267.0 \u00b1 60.2 with 12 falls; the difference between them is noise. They are faster (about 880 steps) and cheaper (effort 73) than yesterday's 263.9 \u00b1 1.1, 0-fall walker, but trade safety for it. The goal check now uses 50 tracks (\u2264 10% falls). Attempt 9 continues from attempt 7's champion with a fall costing 200 in training, 10 tracks per candidate and 40 selection tracks. Attempt 7 was stopped; attempt 8 continues.",
+  "note": "A 100-track paired check overturned the 20-track goal checks: attempt 7's champion (288 with 0 falls on 20 goal tracks) scored 262.9 \u00b1 62.9 with 14 falls on 100 comparison tracks, attempt 8's 267.0 \u00b1 60.2 with 12 falls; the difference between them is noise. They are faster (about 880 steps) and cheaper (effort 73) than yesterday's 263.9 \u00b1 1.1, 0-fall walker, but trade safety for it. The goal check now uses 50 tracks (\u2264 10% falls). Attempt 9 continues from attempt 7's champion with a fall costing 200 in training, 10 tracks per candidate and 40 selection tracks. Attempt 7 was stopped; attempt 8 continues. Stopped Thu 04:40: converged. Its verified best (generation 109: 284.7 \u00b1 26.7, 2 falls on 100 tracks) was later replaced by a riskier pick (268.2, 14 falls) and its parameters were lost.",
   "stages": [
    {
     "key": "1-fast",
@@ -815,7 +815,7 @@
   "log": "curriculum_l.log",
   "start_date": "2026-10-29",
   "title": "Attempt 10: even safer. Falls cost three times as much in training",
-  "note": "Attempt 9 (falls cost 200 in training) produced the best walker so far, verified on 100 tracks: 284.7 \u00b1 26.7 with 2 falls, +21.8 over the walker it started from (95% CI +8.1 to +35.9), and above the old skipper's 270.2 on the same tracks. Attempt 10 continues from that champion with a fall costing 300, to see if more safety pays further. Attempt 8 (precision) was stopped: converged, 9 falls in 50. Also tried and dropped: a second hidden layer (6,019 parameters, sep-CMA). The deepened network walked like the original, but was so fragile to perturbation that even tiny noise (\u03c3 0.002) broke 25-75% of candidates, while the one-layer walker stays robust at \u03c3 0.02.",
+  "note": "Attempt 9 (falls cost 200 in training) produced the best walker so far, verified on 100 tracks: 284.7 \u00b1 26.7 with 2 falls, +21.8 over the walker it started from (95% CI +8.1 to +35.9), and above the old skipper's 270.2 on the same tracks. Attempt 10 continues from that champion with a fall costing 300, to see if more safety pays further. Attempt 8 (precision) was stopped: converged, 9 falls in 50. Also tried and dropped: a second hidden layer (6,019 parameters, sep-CMA). The deepened network walked like the original, but was so fragile to perturbation that even tiny noise (\u03c3 0.002) broke 25-75% of candidates, while the one-layer walker stays robust at \u03c3 0.02. Stopped Thu 04:40: its picked champions were risky (234.0, 25 falls on 100 tracks); its average walker (273.5, 10 falls) seeds attempts 11 and 12.",
   "stages": [
    {
     "key": "1-fast",
@@ -849,6 +849,90 @@
     "pass": "no stage test: runs until it plateaus; goal check on the page",
     "expect": "Even fewer falls than attempt 9 without slowing down, so the average rises a little further.",
     "risk": "Too cautious: slows down or stops trying long steps, losing more score than the falls it saves."
+   }
+  ]
+ },
+ {
+  "prefix": "m",
+  "log": "curriculum_m.log",
+  "start_date": "2026-10-29",
+  "title": "Attempt 11: fall cost 300, champions chosen from the average walker only",
+  "note": "Thursday 04:30: both new champions from attempts 9 and 10 looked better on their 40 selection tracks (292 and 292) but were worse on 100 comparison tracks: 268.2 with 14 falls and 234.0 with 25 falls. They were lucky individual candidates. The search's average walkers did better: 267.1 (14 falls) and 273.5 (10 falls). Worse, the verified best (284.7, 2 falls) had been overwritten and couldn't be recovered (its snapshot is one generation later and scores 258.3 with 18 falls). Fixes: every champion is now archived; attempts 11 and 12 pick champions from the average walker only, on 60 tracks. Both start from attempt 10's average walker, and differ only in the fall cost (300 vs 200) for a fair comparison.",
+  "stages": [
+   {
+    "key": "1-fast",
+    "name": "Walk fast, mean-only champions (fall 300)",
+    "short": "fall cost 300, champion = the search's average walker",
+    "reward": "game reward with a fall costing 300 instead of 100 \u2212 0.5 \u00d7 effort \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "extra, training only (effort counts 1.5 times)"
+     ],
+     [
+      "\u2212 300",
+      "a fall, training only (3 times the real game's 100)"
+     ],
+     [
+      "\u2212 gait tax",
+      "(40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall; 10 tracks per candidate; the champion is chosen only from the CMA mean (the search's average walker), on 60 held-out tracks; every champion is archived (cap 10 h)",
+    "start": "attempt 10's CMA mean after generation 120 (100 tracks: 273.5 \u00b1 53.9, 10 falls), \u03c30 0.015, population 64",
+    "pass": "no stage test: runs until it plateaus; goal check on the page",
+    "expect": "Champions that hold up on new tracks: fewer falls than 10 in 100, and a higher 100-track score than 273.5.",
+    "risk": "The average walker improves more slowly than lucky individual candidates appear to; the 300 version may also slow down."
+   }
+  ]
+ },
+ {
+  "prefix": "n",
+  "log": "curriculum_n.log",
+  "start_date": "2026-10-29",
+  "title": "Attempt 12: fall cost 200, champions chosen from the average walker only",
+  "note": "Thursday 04:30: both new champions from attempts 9 and 10 looked better on their 40 selection tracks (292 and 292) but were worse on 100 comparison tracks: 268.2 with 14 falls and 234.0 with 25 falls. They were lucky individual candidates. The search's average walkers did better: 267.1 (14 falls) and 273.5 (10 falls). Worse, the verified best (284.7, 2 falls) had been overwritten and couldn't be recovered (its snapshot is one generation later and scores 258.3 with 18 falls). Fixes: every champion is now archived; attempts 11 and 12 pick champions from the average walker only, on 60 tracks. Both start from attempt 10's average walker, and differ only in the fall cost (300 vs 200) for a fair comparison.",
+  "stages": [
+   {
+    "key": "1-fast",
+    "name": "Walk fast, mean-only champions (fall 200)",
+    "short": "fall cost 200, champion = the search's average walker",
+    "reward": "game reward with a fall costing 200 instead of 100 \u2212 0.5 \u00d7 effort \u2212 (40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course",
+    "terms": [
+     [
+      "+ 4.33 per unit forward",
+      "progress"
+     ],
+     [
+      "\u2212 0.028 \u00d7 effort",
+      "the game's motor cost"
+     ],
+     [
+      "\u2212 0.5 \u00d7 effort",
+      "extra, training only (effort counts 1.5 times)"
+     ],
+     [
+      "\u2212 200",
+      "a fall, training only (2 times the real game's 100)"
+     ],
+     [
+      "\u2212 gait tax",
+      "(40 \u00d7 lopsided + 20 \u00d7 |offset|) \u00d7 share of course"
+     ]
+    ],
+    "episode": "1600 steps, early stop on stall; 10 tracks per candidate; the champion is chosen only from the CMA mean (the search's average walker), on 60 held-out tracks; every champion is archived (cap 10 h)",
+    "start": "attempt 10's CMA mean after generation 120 (100 tracks: 273.5 \u00b1 53.9, 10 falls), \u03c30 0.015, population 64",
+    "pass": "no stage test: runs until it plateaus; goal check on the page",
+    "expect": "Champions that hold up on new tracks: fewer falls than 10 in 100, and a higher 100-track score than 273.5.",
+    "risk": "The average walker improves more slowly than lucky individual candidates appear to; the 300 version may also slow down."
    }
   ]
  }
